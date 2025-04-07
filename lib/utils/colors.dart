@@ -33,7 +33,7 @@ class colors {
   static const Color greenDark = Color(0xFF2C4134);
   static const Color greenBorder = Color(0xFF159F50);
 
-  static const Color red = Color(0xFFD95F63);
+  static const Color red = Color.fromARGB(255, 255, 0, 8);
   static const Color redLight = Color(0xFFFFEDED);
   static const Color redDark = Color(0xFF4E3737);
   static const Color redBorder = Color(0xFF9F1515);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Add this import for orientation lock
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
+import 'package:parkingapp/pages/HomeScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
 import 'package:parkingapp/pages/SignupScreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -18,13 +19,12 @@ void main() async {
   ]);
 
   runApp(
-  //   DevicePreview(
-  //     enabled: true, // You can conditionally enable/disable DevicePreview
-  //     builder: (context) => MyApp(),
-  //   ),
-  // );
-  const MyApp()
-  );
+      //   DevicePreview(
+      //     enabled: true, // You can conditionally enable/disable DevicePreview
+      //     builder: (context) => MyApp(),
+      //   ),
+      // );
+      const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
             '/signUp': (context) => Signupscreen(),
             '/forgot': (context) => Forgotpassword(),
             '/otp': (context) => OtpScreen(),
+            '/home': (context) => HomeScreen(),
           },
         );
       },

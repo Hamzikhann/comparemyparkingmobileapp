@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                   text: "Login",
                   onPressed: () {
                     // Handle login
-                    Navigator.pushReplacementNamed(context, MyRoutes.otp);
+                    Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
                   },
                 ),
 
