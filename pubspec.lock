@@ -73,6 +73,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  dio:
+    dependency: "direct main"
+    description:
+      name: dio
+      sha256: "253a18bbd4851fecba42f7343a1df3a9a4c1d31a2c1b37e221086b4fa8c8dbc9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.8.0+1"
+  dio_web_adapter:
+    dependency: transitive
+    description:
+      name: dio_web_adapter
+      sha256: "7586e476d70caecaf1686d21eee7247ea43ef5c345eab9e0cc3583ff13378d78"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
   fake_async:
     dependency: transitive
     description:
@@ -102,6 +118,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_easyloading:
+    dependency: "direct main"
+    description:
+      name: flutter_easyloading
+      sha256: ba21a3c883544e582f9cc455a4a0907556714e1e9cf0eababfcb600da191d17c
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.5"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -123,6 +147,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.9.3"
+  flutter_spinkit:
+    dependency: transitive
+    description:
+      name: flutter_spinkit
+      sha256: d2696eed13732831414595b98863260e33e8882fc069ee80ec35d4ac9ddb0472
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.1"
   flutter_svg:
     dependency: "direct main"
     description:
@@ -150,7 +182,7 @@ packages:
     source: hosted
     version: "2.4.4"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: fe7ab022b76f3034adc518fb6ea04a82387620e19977665ea18d30a1cf43442f
@@ -166,7 +198,7 @@ packages:
     source: hosted
     version: "4.1.2"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
@@ -309,8 +341,16 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  pretty_dio_logger:
+    dependency: "direct main"
+    description:
+      name: pretty_dio_logger
+      sha256: "36f2101299786d567869493e2f5731de61ce130faa14679473b26905a92b6407"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
   provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: provider
       sha256: "489024f942069c2920c844ee18bb3d467c69e48955a4f32d1677f71be103e310"

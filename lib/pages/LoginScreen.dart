@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/providers/AlertNotifier.dart';
+import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/widgets/CustomAlert.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
-class LoginScreen extends StatelessWidget {
-  final TextEditingController phoneController = TextEditingController();
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   @override
@@ -36,9 +49,9 @@ class LoginScreen extends StatelessWidget {
 
                 // Phone Input
                 CustomTextField(
-                  hintText: "Phone number",
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
+                  hintText: "Email",
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
                 SizedBox(height: 40.h),
@@ -71,13 +84,17 @@ class LoginScreen extends StatelessWidget {
                 ),
 
                 SizedBox(height: 60.h),
+                const CustomAlert(
+                  alertKey: 'login',
+                ),
 
                 // Login Button
                 PrimaryButton(
                   text: "Login",
                   onPressed: () {
                     // Handle login
-                    Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+                    signin(emailController.text.toString(),
+                        passwordController.text.toString());
                   },
                 ),
 
@@ -115,5 +132,23 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> signin(String userName, String password) async {
+    GeneralRepository().signin(userName, password).then((value) => {
+          Alertify.showAlert(
+            duration: 1,
+            alertKey: 'login',
+            message: 'Login successfully!',
+            type: AlertType.success,
+            onClose: () {
+              Globals.user = value;
+              SharedStorage.saveUser(value);
+              emailController.clear();
+              passwordController.clear();
+              Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+            },
+          ),
+        });
   }
 }
