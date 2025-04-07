@@ -61,14 +61,15 @@ class _IntroScreenState extends State<IntroScreen> {
               },
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.w),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SvgPicture.asset(
                         _pages[index]["image"]!,
-                        height: 300.h,
+                        height: 250.h,
                         fit: BoxFit.contain,
                       ),
                       SizedBox(height: 40.h),
@@ -77,7 +78,7 @@ class _IntroScreenState extends State<IntroScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Archivo',
-                          fontSize: 10.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
@@ -88,7 +89,7 @@ class _IntroScreenState extends State<IntroScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Archivo',
-                          fontSize: 8.sp,
+                          fontSize: 14.sp,
                           color: Colors.grey,
                         ),
                       ),
@@ -105,12 +106,13 @@ class _IntroScreenState extends State<IntroScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 _pages.length,
-                    (index) => Container(
+                (index) => Container(
                   margin: EdgeInsets.symmetric(horizontal: 4.w),
                   width: _currentIndex == index ? 10.w : 6.w,
                   height: 6.h,
                   decoration: BoxDecoration(
-                    color: _currentIndex == index ? colors.primary : colors.gray,
+                    color:
+                        _currentIndex == index ? colors.primary : colors.gray,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -125,44 +127,44 @@ class _IntroScreenState extends State<IntroScreen> {
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: _currentIndex < _pages.length - 1
                   ? Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, MyRoutes.loginRoute);
-                    },
-                    child: Text(
-                      "SKIP",
-                      style: TextStyle(
-                        fontFamily: 'Archivo',
-                        fontSize: 8.sp,
-                        color: colors.gray,
-                        fontWeight: FontWeight.bold,
-                      ),
-
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _nextPage,
-                    child: Text(
-                      "NEXT",
-                      style: TextStyle(
-                        fontFamily: 'Archivo',
-                        fontSize: 8.sp,
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              )
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(
+                                context, MyRoutes.loginRoute);
+                          },
+                          child: Text(
+                            "SKIP",
+                            style: TextStyle(
+                              fontFamily: 'Archivo',
+                              fontSize: 14.sp,
+                              color: colors.gray,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _nextPage,
+                          child: Text(
+                            "NEXT",
+                            style: TextStyle(
+                              fontFamily: 'Archivo',
+                              fontSize: 14.sp,
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
                   : PrimaryButton(
-                text: "Get Started",
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context,
-                      MyRoutes.loginRoute);
-                },
-              ),
+                      text: "Get Started",
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(
+                            context, MyRoutes.loginRoute);
+                      },
+                    ),
             ),
           ),
         ],

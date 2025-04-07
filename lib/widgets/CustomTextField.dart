@@ -23,12 +23,13 @@ class CustomTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: TextStyle(
-        fontSize: 8.sp,
+        fontSize: 14.sp,
         fontFamily: 'Archivo',
       ),
       decoration: InputDecoration(
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 0), // Removed left padding
+        contentPadding: EdgeInsets.symmetric(
+            vertical: 12.h, horizontal: 0), // Removed left padding
         hintText: hintText,
         hintStyle: TextStyle(
           color: colors.textGray,

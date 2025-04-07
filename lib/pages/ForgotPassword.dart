@@ -8,7 +8,8 @@ import '../widgets/PrimaryButton.dart';
 class Forgotpassword extends StatelessWidget {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -20,18 +21,18 @@ class Forgotpassword extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 20.h),
+              SizedBox(height: 60.h),
 
               // Back button and logo row
               Row(
                 children: [
                   // Back button
                   IconButton(
-                    icon: Icon(Icons.arrow_back, size: 16.w),
+                    icon: Icon(Icons.arrow_back, size: 24.w),
                     color: Colors.black,
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context,
-                          MyRoutes.loginRoute);
+                      Navigator.pushReplacementNamed(
+                          context, MyRoutes.loginRoute);
                     },
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
@@ -41,7 +42,7 @@ class Forgotpassword extends StatelessWidget {
                   // Logo from SVG asset
                   SvgPicture.asset(
                     'assets/images/logo.svg',
-                    height: 120.h,
+                    height: 80.h,
                     width: 200.w,
                   ),
 
@@ -49,7 +50,9 @@ class Forgotpassword extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 100.h), // Reduced from 150.h to account for the row height
+              SizedBox(
+                  height: 100
+                      .h), // Reduced from 150.h to account for the row height
 
               // Phone Input
               CustomTextField(
@@ -80,7 +83,8 @@ class Forgotpassword extends StatelessWidget {
 
               // Forgot Password Button
               PrimaryButton(
-                text: "Reset Password", // Changed from "Forgot Password" to be more action-oriented
+                text:
+                    "Reset Password", // Changed from "Forgot Password" to be more action-oriented
                 onPressed: () {
                   // Handle password reset
                 },

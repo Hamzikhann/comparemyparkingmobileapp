@@ -9,7 +9,8 @@ import '../widgets/PrimaryButton.dart';
 class Signupscreen extends StatelessWidget {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class Signupscreen extends StatelessWidget {
               Center(
                 child: SvgPicture.asset(
                   'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
-                  height: 120.h,
+                  height: 80.h,
                   width: 200.w,
                 ),
               ),
@@ -66,8 +67,7 @@ class Signupscreen extends StatelessWidget {
                 text: "Signup",
                 onPressed: () {
                   // Handle Signup
-                  Navigator.pushReplacementNamed(context,
-                      MyRoutes.otp);
+                  Navigator.pushReplacementNamed(context, MyRoutes.otp);
                 },
               ),
 
@@ -79,18 +79,18 @@ class Signupscreen extends StatelessWidget {
                 children: [
                   Text(
                     "Already have an account?  ",
-                    style: TextStyle(fontSize: 8.sp,fontFamily: 'Archivo'),
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
                   ),
                   GestureDetector(
                     onTap: () {
                       // Navigate to signup
-                      Navigator.pushReplacementNamed(context,
-                          MyRoutes.loginRoute);
+                      Navigator.pushReplacementNamed(
+                          context, MyRoutes.loginRoute);
                     },
                     child: Text(
                       "Login",
                       style: TextStyle(
-                        fontSize: 8.sp,
+                        fontSize: 14.sp,
                         color: colors.primary,
                         fontFamily: 'Archivo',
                         fontWeight: FontWeight.bold,

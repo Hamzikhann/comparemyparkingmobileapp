@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
               Center(
                 child: SvgPicture.asset(
                   'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
-                  height: 120.h,
+                  height: 80.h,
                   width: 200.w,
                 ),
               ),
@@ -56,13 +56,12 @@ class LoginScreen extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context,
-                        MyRoutes.forgot);
+                    Navigator.pushReplacementNamed(context, MyRoutes.forgot);
                   },
                   child: Text(
                     "Forgot Password?",
                     style: TextStyle(
-                      fontSize: 8.sp,
+                      fontSize: 14.sp,
                       fontFamily: 'Archivo',
                       color: colors.primary,
                     ),
@@ -77,8 +76,7 @@ class LoginScreen extends StatelessWidget {
                 text: "Login",
                 onPressed: () {
                   // Handle login
-                  Navigator.pushReplacementNamed(context,
-                      MyRoutes.otp);
+                  Navigator.pushReplacementNamed(context, MyRoutes.otp);
                 },
               ),
 
@@ -90,18 +88,18 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   Text(
                     "or ",
-                    style: TextStyle(fontSize: 8.sp,fontFamily: 'Archivo'),
+                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
                   ),
                   GestureDetector(
                     onTap: () {
                       // Navigate to signup
-                      Navigator.pushReplacementNamed(context,
-                          MyRoutes.signUpRoute);
+                      Navigator.pushReplacementNamed(
+                          context, MyRoutes.signUpRoute);
                     },
                     child: Text(
                       "Signup",
                       style: TextStyle(
-                        fontSize: 8.sp,
+                        fontSize: 14.sp,
                         color: colors.primary,
                         fontFamily: 'Archivo',
                         fontWeight: FontWeight.bold,
