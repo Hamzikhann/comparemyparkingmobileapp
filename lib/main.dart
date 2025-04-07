@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
     EasyLoading.instance.dismissOnTap = true;
     EasyLoading.instance.loadingStyle = EasyLoadingStyle.light;
     EasyLoading.instance.indicatorWidget =
-        Image.asset('assets/images/b-icon.gif');
+        Image.asset('assets/images/load.gif');
     return ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
