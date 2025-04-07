@@ -15,100 +15,102 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 60.h),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 60.h),
 
-              // Logo from SVG asset
-              Center(
-                child: SvgPicture.asset(
-                  'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
-                  height: 80.h,
-                  width: 200.w,
-                ),
-              ),
-
-              SizedBox(height: 150.h),
-
-              // Phone Input
-              CustomTextField(
-                hintText: "Phone number",
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-              ),
-
-              SizedBox(height: 40.h),
-
-              // Password Input
-              CustomTextField(
-                hintText: "Password",
-                controller: passwordController,
-                obscureText: true,
-              ),
-
-              SizedBox(height: 40.h),
-
-              // Forgot Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, MyRoutes.forgot);
-                  },
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontFamily: 'Archivo',
-                      color: colors.primary,
-                    ),
+                // Logo from SVG asset
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
+                    height: 80.h,
+                    width: 200.w,
                   ),
                 ),
-              ),
 
-              SizedBox(height: 60.h),
+                SizedBox(height: 150.h),
 
-              // Login Button
-              PrimaryButton(
-                text: "Login",
-                onPressed: () {
-                  // Handle login
-                  Navigator.pushReplacementNamed(context, MyRoutes.otp);
-                },
-              ),
+                // Phone Input
+                CustomTextField(
+                  hintText: "Phone number",
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                ),
 
-              SizedBox(height: 50.h),
+                SizedBox(height: 40.h),
 
-              // OR Sign up
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "or ",
-                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to signup
-                      Navigator.pushReplacementNamed(
-                          context, MyRoutes.signUpRoute);
+                // Password Input
+                CustomTextField(
+                  hintText: "Password",
+                  controller: passwordController,
+                  obscureText: true,
+                ),
+
+                SizedBox(height: 40.h),
+
+                // Forgot Password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, MyRoutes.forgot);
                     },
                     child: Text(
-                      "Signup",
+                      "Forgot Password?",
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: colors.primary,
                         fontFamily: 'Archivo',
-                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                SizedBox(height: 60.h),
+
+                // Login Button
+                PrimaryButton(
+                  text: "Login",
+                  onPressed: () {
+                    // Handle login
+                    Navigator.pushReplacementNamed(context, MyRoutes.otp);
+                  },
+                ),
+
+                SizedBox(height: 50.h),
+
+                // OR Sign up
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "or ",
+                      style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to signup
+                        Navigator.pushReplacementNamed(
+                            context, MyRoutes.signUpRoute);
+                      },
+                      child: Text(
+                        "Signup",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: colors.primary,
+                          fontFamily: 'Archivo',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

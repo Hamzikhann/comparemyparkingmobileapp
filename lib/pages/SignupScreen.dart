@@ -17,89 +17,91 @@ class Signupscreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 60.h),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 60.h),
 
-              // Logo from SVG asset
-              Center(
-                child: SvgPicture.asset(
-                  'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
-                  height: 80.h,
-                  width: 200.w,
-                ),
-              ),
-
-              SizedBox(height: 150.h),
-
-              // Phone Input
-              CustomTextField(
-                hintText: "Phone number",
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-              ),
-
-              SizedBox(height: 40.h),
-
-              // Password Input
-              CustomTextField(
-                hintText: "Password",
-                controller: passwordController,
-                obscureText: true,
-              ),
-
-              SizedBox(height: 40.h),
-
-              // Password Input
-              CustomTextField(
-                hintText: " Confirm Password",
-                controller: confirmPasswordController,
-                obscureText: true,
-              ),
-
-              SizedBox(height: 60.h),
-
-              // Signup Button
-              PrimaryButton(
-                text: "Signup",
-                onPressed: () {
-                  // Handle Signup
-                  Navigator.pushReplacementNamed(context, MyRoutes.otp);
-                },
-              ),
-
-              SizedBox(height: 50.h),
-
-              // OR Sign up
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Already have an account?  ",
-                    style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
+                // Logo from SVG asset
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
+                    height: 80.h,
+                    width: 200.w,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to signup
-                      Navigator.pushReplacementNamed(
-                          context, MyRoutes.loginRoute);
-                    },
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: colors.primary,
-                        fontFamily: 'Archivo',
-                        fontWeight: FontWeight.bold,
+                ),
+
+                SizedBox(height: 150.h),
+
+                // Phone Input
+                CustomTextField(
+                  hintText: "Phone number",
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                ),
+
+                SizedBox(height: 40.h),
+
+                // Password Input
+                CustomTextField(
+                  hintText: "Password",
+                  controller: passwordController,
+                  obscureText: true,
+                ),
+
+                SizedBox(height: 40.h),
+
+                // Password Input
+                CustomTextField(
+                  hintText: " Confirm Password",
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                ),
+
+                SizedBox(height: 60.h),
+
+                // Signup Button
+                PrimaryButton(
+                  text: "Signup",
+                  onPressed: () {
+                    // Handle Signup
+                    Navigator.pushReplacementNamed(context, MyRoutes.otp);
+                  },
+                ),
+
+                SizedBox(height: 50.h),
+
+                // OR Sign up
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Already have an account?  ",
+                      style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to signup
+                        Navigator.pushReplacementNamed(
+                            context, MyRoutes.loginRoute);
+                      },
+                      child: Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: colors.primary,
+                          fontFamily: 'Archivo',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
