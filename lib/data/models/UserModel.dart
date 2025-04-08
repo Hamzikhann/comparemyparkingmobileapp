@@ -20,16 +20,16 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final user = json['user'];
+    final user = json['user'] ?? {};
     return UserModel(
-      id: user['id'],
-      firstName: user['firstName'],
-      lastName: user['lastName'],
-      email: user['email'],
-      roleId: user['roleId'],
+      id: user['id'] ?? '',
+      firstName: user['firstName'] ?? '',
+      lastName: user['lastName'] ?? '',
+      email: user['email'] ?? '',
+      roleId: user['roleId'] ?? '',
       imageUrl: user['userProfile']?['imageUrl'],
       roleTitle: user['role']?['title'] ?? '',
-      token: json['token'],
+      token: json['token'] ?? '',
     );
   }
 

@@ -1,0 +1,202 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:parkingapp/utils/colors.dart';
+
+class CustomDropdown<T> extends StatefulWidget {
+  final String? hint;
+  final List<T> items;
+  final double? height;
+  final Color? borderColor;
+  final String? defaultValue;
+  final bool? isSearchable;
+  final Function(T?) onSelectItem;
+
+  const CustomDropdown({
+    super.key,
+    this.hint,
+    required this.items,
+    required this.onSelectItem,
+    this.height,
+    this.borderColor,
+    this.defaultValue,
+    this.isSearchable,
+  });
+
+  @override
+  State<CustomDropdown<T>> createState() => _CustomDropdownState<T>();
+}
+
+class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
+  T? selectedValue;
+  final TextEditingController textEditingController = TextEditingController();
+  bool isClearedManually = false;
+
+  @override
+  void didUpdateWidget(CustomDropdown<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.defaultValue != oldWidget.defaultValue) {
+      if (!isClearedManually) {
+        selectedValue = null;
+        if (widget.defaultValue != null) {
+          for (T item in widget.items) {
+            if (item.toString() == widget.defaultValue) {
+              selectedValue = item;
+              break;
+            }
+          }
+        }
+      }
+      setState(() {});
+    }
+
+    if (!listEquals(widget.items, oldWidget.items)) {
+      setState(() {
+        selectedValue = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.defaultValue != null &&
+        selectedValue == null &&
+        !isClearedManually) {
+      for (T item in widget.items) {
+        if (item.toString() == widget.defaultValue) {
+          selectedValue = item;
+          break;
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.hint != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              widget.hint!,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        Container(
+          width: double.infinity, // Match parent width
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.transparent,
+            border:
+                Border.all(color: widget.borderColor ?? colors.textFieldBorder),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton2<T>(
+                dropdownStyleData: DropdownStyleData(
+                  maxHeight: 300,
+                  width: MediaQuery.of(context).size.width -
+                      32, // Account for padding
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 8,
+                ),
+                iconStyleData: IconStyleData(
+                  icon: selectedValue == null
+                      ? const Icon(Icons.arrow_drop_down_outlined)
+                      : IconButton(
+                          onPressed: () {
+                            setState(() {
+                              selectedValue = null;
+                              isClearedManually = true;
+                              widget.onSelectItem(null);
+                            });
+                          },
+                          icon: const Icon(Icons.clear),
+                          splashRadius: 14,
+                          constraints: const BoxConstraints(minWidth: 0),
+                          padding: EdgeInsets.zero,
+                        ),
+                  iconSize: 18,
+                ),
+                isExpanded: true,
+                value: selectedValue,
+                hint: Text(
+                  widget.hint ?? 'Select Item',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
+                items: widget.items
+                    .map((item) => DropdownMenuItem<T>(
+                          value: item,
+                          child: Text(
+                            item.toString(),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    if (selectedValue != value) {
+                      selectedValue = value;
+                      isClearedManually = false;
+                      widget.onSelectItem(selectedValue);
+                    }
+                  });
+                },
+                buttonStyleData: ButtonStyleData(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                menuItemStyleData: const MenuItemStyleData(height: 40),
+                dropdownSearchData: widget.isSearchable == true
+                    ? DropdownSearchData(
+                        searchController: textEditingController,
+                        searchInnerWidgetHeight: 50,
+                        searchInnerWidget: Container(
+                          height: 50,
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextFormField(
+                            maxLines: 1,
+                            controller: textEditingController,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              hintText: "Search",
+                              suffixIcon: const Icon(Icons.search),
+                              hintStyle: const TextStyle(fontSize: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        searchMatchFn: (item, searchValue) {
+                          String itemValue =
+                              item.value.toString().toLowerCase();
+                          String searchVal = searchValue.toLowerCase();
+                          return itemValue.contains(searchVal);
+                        },
+                      )
+                    : null,
+                onMenuStateChange: (isOpen) {
+                  if (!isOpen) {
+                    textEditingController.clear();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

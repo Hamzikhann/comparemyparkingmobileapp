@@ -16,7 +16,8 @@ class SharedStorage {
 
     if (jsonString != null) {
       final data = json.decode(jsonString);
-      Globals.user = UserModel.fromJson(data['user']);
+      Globals.user =
+          UserModel.fromJson(data); // pass full data, not data['user']
     }
   }
 

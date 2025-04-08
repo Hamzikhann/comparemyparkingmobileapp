@@ -6,7 +6,7 @@ import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
 class Forgotpassword extends StatelessWidget {
-  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
@@ -57,9 +57,9 @@ class Forgotpassword extends StatelessWidget {
 
                 // Phone Input
                 CustomTextField(
-                  hintText: "Phone number",
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
+                  hintText: "Email",
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
                 SizedBox(height: 40.h),

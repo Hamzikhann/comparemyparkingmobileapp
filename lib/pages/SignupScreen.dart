@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/widgets/CustomDropdown.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
 class Signupscreen extends StatelessWidget {
+  late final String? decision;
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -34,8 +39,42 @@ class Signupscreen extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: 150.h),
+                SizedBox(height: 20.h),
+                //Mr Mrs
+                CustomDropdown(
+                  hint: "Title",
+                  items: const ["Mr", "Mrs", "Do not want to Specify"],
+                  isSearchable: false,
+                  onSelectItem: (item) {
+                    decision = item;
+                  },
+                ),
 
+                SizedBox(height: 10.h),
+                //FirstName input
+                CustomTextField(
+                  hintText: "First Name",
+                  controller: firstNameController,
+                  keyboardType: TextInputType.name,
+                ),
+
+                SizedBox(height: 10.h),
+                //LastName input
+                CustomTextField(
+                  hintText: "Last Name",
+                  controller: lastNameController,
+                  keyboardType: TextInputType.name,
+                ),
+
+                SizedBox(height: 10.h),
+                //Email input
+                CustomTextField(
+                  hintText: "Email",
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+
+                SizedBox(height: 10.h),
                 // Phone Input
                 CustomTextField(
                   hintText: "Phone number",
@@ -43,7 +82,7 @@ class Signupscreen extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                 ),
 
-                SizedBox(height: 40.h),
+                SizedBox(height: 10.h),
 
                 // Password Input
                 CustomTextField(
@@ -52,7 +91,7 @@ class Signupscreen extends StatelessWidget {
                   obscureText: true,
                 ),
 
-                SizedBox(height: 40.h),
+                SizedBox(height: 10.h),
 
                 // Password Input
                 CustomTextField(
@@ -61,7 +100,7 @@ class Signupscreen extends StatelessWidget {
                   obscureText: true,
                 ),
 
-                SizedBox(height: 60.h),
+                SizedBox(height: 20.h),
 
                 // Signup Button
                 PrimaryButton(

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:async'; // Import Future.delayed
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:parkingapp/pages/IntroScreen.dart'; // Import the IntroScreen
+import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/pages/IntroScreen.dart';
+import 'package:parkingapp/pages/MainScreen.dart'; // Import the IntroScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,13 +18,20 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Navigate to IntroScreen after 3 seconds
-    Future.delayed(Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => IntroScreen()),
-      );
+    SharedStorage.loadUser();
+    // Navigate to IntroScreen after 5 seconds
+    Future.delayed(Duration(seconds: 5), () {
+      if (Globals.user == null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => IntroScreen()),
+        );
+      }
     });
   }
 
@@ -63,7 +73,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   'Your no.1 parking assistant',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Archivo', // Ensure Archivo font is in assets/fonts
+                    fontFamily:
+                        'Archivo', // Ensure Archivo font is in assets/fonts
                     fontSize: 8.sp, // Adjusted text size
                     fontWeight: FontWeight.w700,
                     color: Colors.black87,
