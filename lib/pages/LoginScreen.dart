@@ -22,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginPageState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this
 
   @override
   Widget build(BuildContext context) {
@@ -31,102 +32,112 @@ class _LoginPageState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 60.h),
-
-                // Logo from SVG asset
-                Center(
-                  child: SvgPicture.asset(
-                    'assets/images/logo.svg', // Make sure this path matches your actual SVG file location
-                    height: 80.h,
-                    width: 200.w,
+            child: Form(
+              // 👈 Wrap with Form
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: 60.h),
+                  Center(
+                    child: SvgPicture.asset(
+                      'assets/images/logo.svg',
+                      height: 80.h,
+                      width: 200.w,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 150.h),
 
-                SizedBox(height: 150.h),
-
-                // Phone Input
-                CustomTextField(
-                  hintText: "Email",
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-
-                SizedBox(height: 40.h),
-
-                // Password Input
-                CustomTextField(
-                  hintText: "Password",
-                  controller: passwordController,
-                  obscureText: true,
-                ),
-
-                SizedBox(height: 40.h),
-
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, MyRoutes.forgot);
+                  // Email Input
+                  CustomTextField(
+                    hintText: "Email",
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Please enter email";
+                      }
+                      return null;
                     },
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontFamily: 'Archivo',
-                        color: colors.primary,
-                      ),
-                    ),
                   ),
-                ),
 
-                SizedBox(height: 60.h),
-                const CustomAlert(
-                  alertKey: 'login',
-                ),
+                  SizedBox(height: 40.h),
 
-                // Login Button
-                PrimaryButton(
-                  text: "Login",
-                  onPressed: () {
-                    // Handle login
-                    signin(emailController.text.toString(),
-                        passwordController.text.toString());
-                  },
-                ),
+                  // Password Input
+                  CustomTextField(
+                    hintText: "Password",
+                    controller: passwordController,
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Please enter password";
+                      }
+                      return null;
+                    },
+                  ),
 
-                SizedBox(height: 50.h),
+                  SizedBox(height: 40.h),
 
-                // OR Sign up
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "or ",
-                      style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate to signup
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
                         Navigator.pushReplacementNamed(
-                            context, MyRoutes.signUpRoute);
+                            context, MyRoutes.forgot);
                       },
                       child: Text(
-                        "Signup",
+                        "Forgot Password?",
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: colors.primary,
                           fontFamily: 'Archivo',
-                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  SizedBox(height: 60.h),
+                  const CustomAlert(alertKey: 'login'),
+
+                  // Login Button
+                  PrimaryButton(
+                    text: "Login",
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        signin(emailController.text.trim(),
+                            passwordController.text.trim());
+                      }
+                    },
+                  ),
+
+                  SizedBox(height: 50.h),
+
+                  // OR Sign up
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("or ",
+                          style: TextStyle(
+                              fontSize: 14.sp, fontFamily: 'Archivo')),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacementNamed(
+                              context, MyRoutes.signUpRoute);
+                        },
+                        child: Text(
+                          "Signup",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: colors.primary,
+                            fontFamily: 'Archivo',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -135,20 +146,20 @@ class _LoginPageState extends State<LoginScreen> {
   }
 
   Future<void> signin(String userName, String password) async {
-    GeneralRepository().signin(userName, password).then((value) => {
-          Alertify.showAlert(
-            duration: 1,
-            alertKey: 'login',
-            message: 'Login successfully!',
-            type: AlertType.success,
-            onClose: () {
-              Globals.user = value;
-              SharedStorage.saveUser(value);
-              emailController.clear();
-              passwordController.clear();
-              Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
-            },
-          ),
-        });
+    GeneralRepository().signin(userName, password).then((value) {
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'login',
+        message: 'Login successfully!',
+        type: AlertType.success,
+        onClose: () {
+          Globals.user = value;
+          SharedStorage.saveUser(value);
+          emailController.clear();
+          passwordController.clear();
+          Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+        },
+      );
+    });
   }
 }

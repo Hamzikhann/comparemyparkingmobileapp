@@ -7,6 +7,7 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final bool obscureText;
   final TextInputType keyboardType;
+  final FormFieldValidator<String>? validator;
 
   const CustomTextField({
     Key? key,
@@ -14,14 +15,17 @@ class CustomTextField extends StatelessWidget {
     required this.controller,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
+    this.validator,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
+      // Changed from TextField to TextFormField
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      validator: validator,
       style: TextStyle(
         fontSize: 14.sp,
         fontFamily: 'Archivo',
@@ -29,7 +33,9 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(
-            vertical: 12.h, horizontal: 0), // Removed left padding
+          vertical: 12.h,
+          horizontal: 0,
+        ),
         hintText: hintText,
         hintStyle: TextStyle(
           color: colors.textGray,
