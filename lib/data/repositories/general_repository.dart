@@ -48,4 +48,59 @@ class GeneralRepository {
 
     return completer.future;
   }
+
+  Future<UserModel> signup({
+  required String title,
+  required String firstName,
+  required String lastName,
+  required String email,
+  required String phoneNo,
+  required String password,
+  required String confirmPassword,
+}) async {
+  Completer<UserModel> completer = Completer();
+  
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.signup,  // Make sure you have this endpoint defined
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "title": title,
+      "firstName": firstName,
+      "lastName": lastName,
+      "email": email,
+      "phoneNo": phoneNo,
+      "password": password,
+      "confirmPassword": confirmPassword,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Creating account...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      
+      // Assuming the response structure is the same as signin
+      final userData = res['data']['user'];
+      final token = res['token'];
+      final combinedJson = {
+        'user': userData,
+        'token': token,
+      };
+
+      UserModel user = UserModel.fromJson(combinedJson);
+      completer.complete(user);
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      Alertify.showAlert(
+        alertKey: 'signup',
+        message: errorMessage,
+        duration: 10,
+        type: AlertType.error,
+      );
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
 }

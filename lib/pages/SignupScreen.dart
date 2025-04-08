@@ -1,23 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/providers/AlertNotifier.dart';
+import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/widgets/CustomAlert.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
-class Signupscreen extends StatelessWidget {
-  final _formKey = GlobalKey<FormState>();
-  late final String? decision;
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String? selectedTitle;
+  
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +46,7 @@ class Signupscreen extends StatelessWidget {
                 children: [
                   SizedBox(height: 60.h),
 
+                  // Logo
                   Center(
                     child: SvgPicture.asset(
                       'assets/images/logo.svg',
@@ -44,13 +57,15 @@ class Signupscreen extends StatelessWidget {
 
                   SizedBox(height: 20.h),
 
-                  // Mr / Mrs dropdown
+                  // Title Dropdown
                   CustomDropdown(
                     hint: "Title",
                     items: const ["Mr", "Mrs", "Do not want to Specify"],
                     isSearchable: false,
                     onSelectItem: (item) {
-                      decision = item;
+                      setState(() {
+                        selectedTitle = item;
+                      });
                     },
                   ),
 
@@ -62,8 +77,9 @@ class Signupscreen extends StatelessWidget {
                     controller: firstNameController,
                     keyboardType: TextInputType.name,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Enter first name';
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your first name';
+                      }
                       return null;
                     },
                   ),
@@ -76,8 +92,9 @@ class Signupscreen extends StatelessWidget {
                     controller: lastNameController,
                     keyboardType: TextInputType.name,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Enter last name';
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your last name';
+                      }
                       return null;
                     },
                   ),
@@ -90,24 +107,30 @@ class Signupscreen extends StatelessWidget {
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Enter email';
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
-                        return 'Enter valid email';
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
                       return null;
                     },
                   ),
 
                   SizedBox(height: 10.h),
 
-                  // Phone number
+                  // Phone Number
                   CustomTextField(
                     hintText: "Phone number",
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Enter phone number';
-                      if (value.length < 10) return 'Enter valid phone number';
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your phone number';
+                      }
+                      if (value.length < 10) {
+                        return 'Phone number must be at least 10 digits';
+                      }
                       return null;
                     },
                   ),
@@ -120,10 +143,12 @@ class Signupscreen extends StatelessWidget {
                     controller: passwordController,
                     obscureText: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Enter password';
-                      if (value.length < 8)
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      if (value.length < 8) {
                         return 'Password must be at least 8 characters';
+                      }
                       return null;
                     },
                   ),
@@ -136,23 +161,31 @@ class Signupscreen extends StatelessWidget {
                     controller: confirmPasswordController,
                     obscureText: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Re-enter password';
-                      if (value != passwordController.text)
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != passwordController.text) {
                         return 'Passwords do not match';
+                      }
                       return null;
                     },
                   ),
 
                   SizedBox(height: 20.h),
+                  const CustomAlert(alertKey: 'signup'),
 
-                  // Signup Button
+                  // Sign Up Button
                   PrimaryButton(
                     text: "Signup",
                     onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // All fields valid, navigate
-                        Navigator.pushReplacementNamed(context, MyRoutes.otp);
+                      if (_formKey.currentState!.validate() && selectedTitle != null) {
+                        registerUser(selectedTitle!,firstNameController.text,lastNameController.text,emailController.text,phoneController.text,passwordController.text,confirmPasswordController.text);
+                      } else if (selectedTitle == null) {
+                        Alertify.showAlert(
+                          alertKey: 'signup',
+                          message: 'Please select a title',
+                          type: AlertType.error,
+                        );
                       }
                     },
                   ),
@@ -192,4 +225,37 @@ class Signupscreen extends StatelessWidget {
       ),
     );
   }
+  // In your signup screen or provider
+Future<void> registerUser(String title,
+   String firstName,
+   String lastName,
+   String email,
+   String phoneNo,
+   String password,
+   String confirmPassword) async {
+    GeneralRepository().signup(
+      title: title,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phoneNo: phoneNo,
+      password: password,
+      confirmPassword: confirmPassword,
+    ).then((value) {
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'signup',
+        message: 'Signup successfully!',
+        type: AlertType.success,
+        onClose: () {
+          Globals.user = value;
+          SharedStorage.saveUser(value);
+          emailController.clear();
+          passwordController.clear();
+          Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+        },
+      );
+    });
+ 
+}
 }

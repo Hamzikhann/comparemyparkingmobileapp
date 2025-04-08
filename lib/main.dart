@@ -7,7 +7,7 @@ import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
 import 'package:parkingapp/pages/ReserveBookingScreen.dart';
-import 'package:parkingapp/pages/SignupScreen.dart';
+import 'package:parkingapp/pages/Signupscreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
           home: SplashScreen(),
           routes: {
             '/login': (context) => LoginScreen(),
-            '/signUp': (context) => Signupscreen(),
+            '/signUp': (context) => SignupScreen(),
             '/forgot': (context) => Forgotpassword(),
             '/otp': (context) => OtpScreen(),
             '/reserveBooking': (context) => ReserveBookingScreen(),
