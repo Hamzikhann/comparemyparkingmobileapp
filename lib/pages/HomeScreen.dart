@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 
@@ -116,7 +117,12 @@ class HomeScreen extends StatelessWidget {
                     /// Reserve Button
                     CustomButton(
                       text: "Reserve",
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          MyRoutes.reserveBooking,
+                        );
+                      },
                     ),
 
                     SizedBox(height: 24.h),

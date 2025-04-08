@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
     SharedStorage.loadUser();
     // Navigate to IntroScreen after 5 seconds
     Future.delayed(Duration(seconds: 5), () {
-      if (Globals.user == null) {
+      if (Globals.user != null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => MainScreen()),
@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   style: TextStyle(
                     fontFamily:
                         'Archivo', // Ensure Archivo font is in assets/fonts
-                    fontSize: 8.sp, // Adjusted text size
+                    fontSize: 16.sp, // Adjusted text size
                     fontWeight: FontWeight.w700,
                     color: Colors.black87,
                   ),
