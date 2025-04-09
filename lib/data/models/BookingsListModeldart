@@ -32,7 +32,7 @@ class Parking {
   final String endTime;
   final String airport;
   final String? promoCode;  // Nullable
-  final String? status;     // Nullable
+  final String status;     // Nullable
   final String isActive;
   final String createdAt;
   final String updatedAt;
@@ -50,7 +50,7 @@ class Parking {
     required this.endTime,
     required this.airport,
     this.promoCode,        // Nullable
-    this.status,           // Nullable
+    required this.status,           // Nullable
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,

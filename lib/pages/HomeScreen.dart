@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/IconDropDown.dart';
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Hi, John!',
+            'Hi,${Globals.user?.firstName}',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,

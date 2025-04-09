@@ -66,10 +66,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           buildSection(
-                              "Active Session", reserved, Icons.schedule),
+                              "Reserved Session", reserved, Icons.schedule),
+                              buildSection("Pending Session", pending, Icons.star),
                           buildSection("Completed Sessions", completed,
                               Icons.check_circle),
-                          buildSection("Reserved Spots", pending, Icons.star),
+                          
                         ],
                       ),
                     );
@@ -117,6 +118,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       ),
       SessionCard(
         title: "${first.registrations.first.outboundTerminal} Airport",
+        status: first.status,
         subTitle: first.registrations.first.outboundTerminal,
         date: first.startDate,
         time: first.startTime,

@@ -41,7 +41,8 @@ class ViewAllScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: SessionCard(
                       title: "${item.airport} Airport",
-                      subTitle: "Space 4c",
+                      status: item.status,
+                      subTitle: item.registrations.first.inboundFlightNo,
                       date: item.startDate,
                       time: "02:00pm",
                       price: "\$100",
