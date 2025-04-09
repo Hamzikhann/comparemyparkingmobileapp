@@ -69,6 +69,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
             children: [
               TopBar(
                 greeting: "Registration",
+                showBackButton: true,
                 onBackPressed: () => _onBackPressed(context),
               ),
               Expanded(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parkingapp/pages/BookingsScreen';
+import 'package:parkingapp/pages/BookingsScreen.dart';
 import 'package:parkingapp/pages/HomeScreen.dart';
 import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/SettingsScreen.dart';

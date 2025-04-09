@@ -19,38 +19,36 @@ class APIService {
       onLoad.call(); // Call onLoad callback if provided
 
       late Response response;
+      final headers = {
+        'access-token': Globals.user?.token ?? '',
+      };
+
       if (requestMethod == RequestMethod.get) {
         response = await api.sendRequest.get(
           apiEndpoint,
-          options: Options(headers: {
-            'authorization': 'Bearer ${Globals.user?.token ?? ''}'
-          }), // Add token to headers
+          options: Options(headers: headers),
         );
       } else if (requestMethod == RequestMethod.post) {
         response = await api.sendRequest.post(
           apiEndpoint,
           data: requestData,
-          options: Options(headers: {
-            'authorization': 'Bearer ${Globals.user?.token ?? ''}'
-          }), // Add token to headers
+          options: Options(headers: headers),
         );
       }
 
       // Check if the 'title' field is present in the response
       if (response.data.containsKey('title')) {
-        // If 'title' exists, treat it as an error response
         String errorMessage = response.data['message'];
-        onError.call(errorMessage); // Call onError callback
+        onError.call(errorMessage);
       } else {
-        // If 'title' doesn't exist, treat it as a success response
         Map<String, dynamic> responseData = response.data;
-        onSuccess.call(responseData); // Pass data to onSuccess callback
+        onSuccess.call(responseData);
       }
     } on DioException catch (e) {
       if (!offlineNotifier.getOfflineStatus()) {
         try {
           if (e.response?.statusCode == 404) {
-            onError.call(e.message.toString()); // Call onError callback
+            onError.call(e.message.toString());
           } else if (e.type == DioExceptionType.badResponse &&
               (e.response?.statusCode == 401 ||
                   e.response?.statusCode == 403)) {
@@ -58,20 +56,18 @@ class APIService {
           } else if (e.response != null) {
             Map<String, dynamic> errorData = e.response?.data["error"];
             String errorMessage = errorData["errorMessage"];
-            onError.call(errorMessage); // Call onError callback
+            onError.call(errorMessage);
           } else {
-            onError.call(e.error.toString()); // Call onError callback
+            onError.call(e.error.toString());
           }
         } catch (e) {
-          onError.call(
-              'Something Went Wrong: ${e.toString()}'); // Call onError callback
+          onError.call('Something Went Wrong: ${e.toString()}');
         }
       } else {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      onError.call(
-          'Something Went Wrong: ${e.toString()}'); // Call onError callback
+      onError.call('Something Went Wrong: ${e.toString()}');
     }
   }
 }

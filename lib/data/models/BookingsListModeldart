@@ -1,0 +1,110 @@
+class BookingResponse {
+  final List<Parking> reservedParkings;
+  final List<Parking> pendingParkings;
+  final List<Parking> completedParkings;
+
+  BookingResponse({
+    required this.reservedParkings,
+    required this.pendingParkings,
+    required this.completedParkings,
+  });
+
+  factory BookingResponse.fromJson(Map<String, dynamic> json) {
+    return BookingResponse(
+      reservedParkings: (json['reservedParkings'] as List)
+          .map((data) => Parking.fromJson(data))
+          .toList(),
+      pendingParkings: (json['pendingParkings'] as List)
+          .map((data) => Parking.fromJson(data))
+          .toList(),
+      completedParkings: (json['completedParkings'] as List)
+          .map((data) => Parking.fromJson(data))
+          .toList(),
+    );
+  }
+}
+
+class Parking {
+  final String id;
+  final String startDate;
+  final String endDate;
+  final String airport;
+  final List<Registration> registrations;
+  final List<Vehicle> vehicles;
+
+  Parking({
+    required this.id,
+    required this.startDate,
+    required this.endDate,
+    required this.airport,
+    required this.registrations,
+    required this.vehicles,
+  });
+
+  factory Parking.fromJson(Map<String, dynamic> json) {
+    return Parking(
+      id: json['id'],
+      startDate: json['startDate'],
+      endDate: json['endDate'],
+      airport: json['airport'],
+      registrations: (json['registrations'] as List)
+          .map((data) => Registration.fromJson(data))
+          .toList(),
+      vehicles: (json['vehicles'] as List)
+          .map((data) => Vehicle.fromJson(data))
+          .toList(),
+    );
+  }
+}
+
+class Registration {
+  final String title;
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String phoneNo;
+
+  Registration({
+    required this.title,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.phoneNo,
+  });
+
+  factory Registration.fromJson(Map<String, dynamic> json) {
+    return Registration(
+      title: json['title'],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      email: json['email'],
+      phoneNo: json['phoneNo'],
+    );
+  }
+}
+
+class Vehicle {
+  final String vehicleRegistration;
+  final String vehicleManufacturer;
+  final String vehicleModel;
+  final String vehicleColour;
+  final String numberofPassengers;
+
+  Vehicle({
+    required this.vehicleRegistration,
+    required this.vehicleManufacturer,
+    required this.vehicleModel,
+    required this.vehicleColour,
+    required this.numberofPassengers,
+  });
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(
+      vehicleRegistration: json['vehicleRegistration'],
+      vehicleManufacturer: json['vehicleManufacturer'],
+      vehicleModel: json['vehicleModel'],
+      vehicleColour: json['vehicleColour'],
+      numberofPassengers: json['numberofPassengers'],
+    );
+  }
+}

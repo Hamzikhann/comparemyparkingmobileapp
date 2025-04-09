@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/utils/colors.dart';
 
 class Custombottomnavbar extends StatelessWidget {
@@ -20,26 +21,26 @@ class Custombottomnavbar extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Shadow color with opacity
-            blurRadius: 10.0, // Soften the shadow
-            spreadRadius: 0.0, // No expansion
-            offset: const Offset(0, -5), // Shadow position (top offset)
-            blurStyle: BlurStyle.normal, // Default blur style
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10.0,
+            spreadRadius: 0.0,
+            offset: const Offset(0, -5),
+            blurStyle: BlurStyle.normal,
           ),
         ],
       ),
       child: Row(
         children: [
-          _buildNavItem(0, Icons.home, "Home"),
-          _buildNavItem(1, Icons.calendar_today, "Bookings"),
-          _buildNavItem(2, Icons.payment, "Payments"),
-          _buildNavItem(3, Icons.settings, "Settings"),
+          _buildNavItem(0, "assets/images/home.svg", "Home"),
+          _buildNavItem(1, "assets/images/bookings.svg", "Bookings"),
+          _buildNavItem(2, "assets/images/wallets.svg", "Payments"),
+          _buildNavItem(3, "assets/images/settings.svg", "Settings"),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, String svgIconPath, String label) {
     final isSelected = index == currentIndex;
     return Expanded(
       child: InkWell(
@@ -47,17 +48,13 @@ class Custombottomnavbar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? colors.primary : Colors.grey,
-              size: 24.sp,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: isSelected ? colors.primary : Colors.grey,
+            SvgPicture.asset(
+              svgIconPath,
+              width: 24.w,
+              height: 24.h,
+              colorFilter: ColorFilter.mode(
+                isSelected ? colors.primary : colors.textGray,
+                BlendMode.srcIn,
               ),
             ),
           ],

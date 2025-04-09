@@ -5,9 +5,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class TopBar extends StatelessWidget {
   final String greeting;
   final VoidCallback onBackPressed;
+  final bool showBackButton; // Added showBackButton parameter
 
-  const TopBar(
-      {super.key, required this.greeting, required this.onBackPressed});
+  const TopBar({
+    super.key,
+    required this.greeting,
+    required this.onBackPressed,
+    this.showBackButton = true, // Default value is true
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +33,15 @@ class TopBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 24.sp,
+              if (showBackButton) // Conditionally show the back button
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 24.sp,
+                  ),
+                  onPressed: onBackPressed,
                 ),
-                onPressed: onBackPressed,
-              ),
               Text(
                 greeting,
                 style: TextStyle(
