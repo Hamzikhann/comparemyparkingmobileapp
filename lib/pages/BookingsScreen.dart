@@ -77,7 +77,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text("Error: ${snapshot.error}"));
                   }
-                  return Center(child: CircularProgressIndicator());
+                  return Center();
                 },
               ),
             )
@@ -93,8 +93,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
   final first = parkings.first;
 
   String type = 'reserved';
-  if (title.contains('Active')) {
-    type = 'active';
+  if (title.contains('Pending')) {
+    type = 'pending';
   } else if (title.contains('Completed')) {
     type = 'completed';
   }

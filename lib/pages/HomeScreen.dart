@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/IconDropDown.dart';
 import 'package:parkingapp/widgets/InputBox.dart';
+import 'package:parkingapp/widgets/SessionCard.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,10 +20,42 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedAirport;
   final List<String> airportOptions = ['LHR', 'STN', 'LGW'];
-
   String? selectedDateRange;
   String? checkInTime;
   String? checkOutTime;
+  Future<BookingResponse>? _bookingsFuture;
+  final GeneralRepository _repository = GeneralRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookings();
+  }
+
+  void _loadBookings() {
+    try {
+      setState(() {
+        _bookingsFuture = _repository.getBookings()
+          .then((value) {
+            debugPrint('Bookings loaded successfully: ${value.reservedParkings.length} items');
+            return value;
+          })
+          .catchError((error) {
+            debugPrint('Error loading bookings: $error');
+            throw error; // Re-throw to let FutureBuilder handle it
+          });
+      });
+    } catch (e) {
+      debugPrint('Exception in _loadBookings: $e');
+      setState(() {
+        _bookingsFuture = Future.error(e);
+      });
+    }
+  }
+
+  void _retryLoading() {
+    _loadBookings();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,68 +66,64 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Top Bar
+              // Top Bar (unchanged from your original code)
               Container(
-  height: 170.h,
-  decoration: BoxDecoration(
-    color: const Color(0xFF201A56),
-    borderRadius: BorderRadius.only(
-      bottomLeft: Radius.circular(24.r),
-      bottomRight: Radius.circular(24.r),
-    ),
-  ),
-  padding: EdgeInsets.symmetric(horizontal: 16.w),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      SizedBox(height: 40.h),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Airport Parking',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14.sp,
-            ),
-          ),
-          const CircleAvatar(
-            backgroundColor: Colors.white,
-            radius: 18,
-            backgroundImage: AssetImage('assets/images/male.png'),
-          ),
-        ],
-      ),
-      SizedBox(height: 20.h),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Hi,${Globals.user?.firstName}',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18.sp,
-            ),
-          ),
-          
-        ],
-      ),
-    ],
-  ),
-),
+                height: 170.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF201A56),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24.r),
+                    bottomRight: Radius.circular(24.r),
+                  ),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 40.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Airport Parking',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        const CircleAvatar(
+                          backgroundColor: Colors.white,
+                          radius: 18,
+                          backgroundImage: AssetImage('assets/images/male.png'),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Hi,${Globals.user?.firstName}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
 
-
-              /// Content Below
+              // Main Content
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 24.h),
-
-                    /// Airport Dropdown
                     IconDropdown(
                       hint: "Select an airport",
                       icon: Icons.flight,
@@ -103,10 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-
                     SizedBox(height: 16.h),
-
-                    /// Date Input
                     InputBox(
                       hint: "Check In - Check Out",
                       icon: Icons.calendar_month,
@@ -117,10 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-
                     SizedBox(height: 16.h),
-
-                    /// Time Inputs
                     Row(
                       children: [
                         Expanded(
@@ -130,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             inputType: InputType.time,
                             onValueChanged: (value) {
                               setState(() {
-                                checkInTime = value; // Handle Check-in time separately
+                                checkInTime = value;
                               });
                             },
                           ),
@@ -143,34 +169,59 @@ class _HomeScreenState extends State<HomeScreen> {
                             inputType: InputType.time,
                             onValueChanged: (value) {
                               setState(() {
-                                checkOutTime = value; // Handle Check-out time separately
+                                checkOutTime = value;
                               });
                             },
                           ),
                         ),
                       ],
                     ),
-
                     SizedBox(height: 16.h),
-
-                    /// Reserve Button
                     CustomButton(
                       text: "Reserve",
                       onPressed: () {
                         Navigator.pushNamed(context, MyRoutes.reserveBooking);
                       },
                     ),
-
                     SizedBox(height: 24.h),
-
-                    /// Reservation Info
                     Text("Reserve Booking",
                         style: TextStyle(
                             fontSize: 16.sp, fontWeight: FontWeight.bold)),
-
                     SizedBox(height: 12.h),
 
-                    _bookingCard(),
+                    // Improved Booking Card with better loading and error states
+                    FutureBuilder<BookingResponse>(
+                      future: _bookingsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return _buildLoadingState();
+                        }
+                        if (snapshot.hasError) {
+                          return _buildErrorState(snapshot.error.toString());
+                        }
+                        if (snapshot.hasData) {
+                          final reserved = snapshot.data!.reservedParkings;
+                          if (reserved.isEmpty) {
+                            return _noBookingCard();
+                          }
+                          final first = reserved.first;
+                          return SessionCard(
+                            title: "${first.airport} Airport",
+                            status: first.status,
+                            subTitle: first.registrations.isNotEmpty 
+                              ? first.registrations.first.inboundFlightNo 
+                              : 'No flight number',
+                            date: first.startDate,
+                            time: first.startTime,
+                            price: "100",
+                            type: "reserved",
+                            timeRemaining: "01 hr:30min",
+                            rate: "/HR",
+                          );
+                        }
+                        return _noBookingCard();
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -181,45 +232,66 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Reserve Booking Card
-  Widget _bookingCard() {
+  Widget _buildLoadingState() {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
+        color: Colors.red[50],
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Birmingham Airport",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              Text("\$5",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
-            ],
+          Text(
+            'Failed to load bookings',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
-          Text("per hour", style: TextStyle(fontSize: 10.sp)),
-
-          SizedBox(height: 12.h),
-
-          /// Location Details
-          Row(
-            children: [
-              const Icon(Icons.home, size: 16),
-              SizedBox(width: 6.w),
-              const Text("House No 23"),
-              const Spacer(),
-              const Icon(Icons.route, size: 16),
-              SizedBox(width: 6.w),
-              const Text("1.3 Km"),
-            ],
+          SizedBox(height: 8.h),
+          Text(
+            error,
+            style: TextStyle(color: Colors.red),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 16.h),
+          ElevatedButton(
+            onPressed: _retryLoading,
+            child: Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              iconColor: colors.primary,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _noBookingCard() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colors.gray,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            Text(
+              "No current bookings",
+              style: TextStyle(color: colors.textFieldBorder),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              "Tap 'Reserve' to book parking",
+              style: TextStyle(color: colors.textFieldBorder, fontSize: 12.sp),
+            ),
+          ],
+        ),
       ),
     );
   }

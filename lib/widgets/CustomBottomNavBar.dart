@@ -45,18 +45,31 @@ class Custombottomnavbar extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SvgPicture.asset(
-              svgIconPath,
-              width: 24.w,
-              height: 24.h,
-              colorFilter: ColorFilter.mode(
-                isSelected ? colors.primary : colors.textGray,
-                BlendMode.srcIn,
+            Container(
+              width: 40.w,
+              height: 40.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? colors.primary : Colors.transparent,
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  svgIconPath,
+                  width: 24.w,
+                  height: 24.h,
+                  colorFilter: ColorFilter.mode(
+                    isSelected ? Colors.white : colors.textGray,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
             ),
+            
           ],
         ),
       ),

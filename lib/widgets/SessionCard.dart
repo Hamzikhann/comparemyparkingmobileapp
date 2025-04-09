@@ -35,7 +35,7 @@ class SessionCard extends StatelessWidget {
         return _buildReservedCard();
       case 'completed':
         return _buildCompletedCard();
-      case 'active':
+      case 'pending':
         return _buildActiveCard();
       default:
         return _buildReservedCard();
@@ -252,7 +252,7 @@ class SessionCard extends StatelessWidget {
           children: [
             // Price on left
             SvgPicture.asset(
-              'assets/images/reserve.svg',  // Replace with your SVG file path
+              'assets/images/pending.svg',  // Replace with your SVG file path
               height: 24.h,  // Adjust the size as needed
               width: 24.w,   // Adjust the size as needed
             ),
