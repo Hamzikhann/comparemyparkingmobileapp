@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:parkingapp/utils/colors.dart';
 
 class SessionCard extends StatelessWidget {
   final String title;

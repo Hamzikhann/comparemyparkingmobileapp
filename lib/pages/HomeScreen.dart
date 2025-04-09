@@ -31,50 +31,56 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               /// Top Bar
               Container(
-                height: 170.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF201A56),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(24.r),
-                    bottomRight: Radius.circular(24.r),
-                  ),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 30.h),
-                    Text(
-                      'Airport Parking',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Hi, John!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18.sp,
-                          ),
-                        ),
-                        const CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 18,
-                          backgroundImage:
-                              AssetImage('assets/images/user.png'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+  height: 170.h,
+  decoration: BoxDecoration(
+    color: const Color(0xFF201A56),
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(24.r),
+      bottomRight: Radius.circular(24.r),
+    ),
+  ),
+  padding: EdgeInsets.symmetric(horizontal: 16.w),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(height: 40.h),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Airport Parking',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14.sp,
+            ),
+          ),
+          const CircleAvatar(
+            backgroundColor: Colors.white,
+            radius: 18,
+            backgroundImage: AssetImage('assets/images/male.png'),
+          ),
+        ],
+      ),
+      SizedBox(height: 20.h),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Hi, John!',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18.sp,
+            ),
+          ),
+          
+        ],
+      ),
+    ],
+  ),
+),
+
 
               /// Content Below
               Padding(

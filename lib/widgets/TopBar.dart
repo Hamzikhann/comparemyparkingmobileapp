@@ -1,17 +1,16 @@
-// lib/widgets/TopBar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TopBar extends StatelessWidget {
   final String greeting;
   final VoidCallback onBackPressed;
-  final bool showBackButton; // Added showBackButton parameter
+  final bool showBackButton;
 
   const TopBar({
     super.key,
     required this.greeting,
     required this.onBackPressed,
-    this.showBackButton = true, // Default value is true
+    this.showBackButton = true,
   });
 
   @override
@@ -30,30 +29,44 @@ class TopBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 30.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Stack(
+            alignment: Alignment.center,
             children: [
-              if (showBackButton) // Conditionally show the back button
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 24.sp,
+              // Back button (left-aligned when visible)
+              if (showBackButton)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                    onPressed: onBackPressed,
                   ),
-                  onPressed: onBackPressed,
                 ),
-              Text(
-                greeting,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18.sp,
+              
+              // Centered title text
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  greeting,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.sp,
+                  ),
                 ),
               ),
-              const CircleAvatar(
-                backgroundColor: Colors.white,
-                radius: 18,
-                backgroundImage: AssetImage('assets/images/user.png'),
+              
+              // Avatar (right-aligned)
+              Align(
+                alignment: Alignment.centerRight,
+                child: const CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 18,
+                  backgroundImage: AssetImage('assets/images/male.png'),
+                ),
               ),
             ],
           ),
