@@ -79,17 +79,25 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
               widget.hint!,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.black,
+                fontFamily: 'Archivo',
+              ),
             ),
           ),
         Container(
-          width: double.infinity, // Match parent width
+          width: double.infinity,
           height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: Colors.transparent,
-            border:
-                Border.all(color: widget.borderColor ?? colors.textFieldBorder),
+            border: Border.all(
+              color: selectedValue != null
+                  ? colors.greenBorderspinner
+                  : (widget.borderColor ?? colors.textFieldBorder),
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -97,8 +105,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
               child: DropdownButton2<T>(
                 dropdownStyleData: DropdownStyleData(
                   maxHeight: 300,
-                  width: MediaQuery.of(context).size.width -
-                      32, // Account for padding
+                  width: MediaQuery.of(context).size.width - 32,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -125,10 +132,11 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                 isExpanded: true,
                 value: selectedValue,
                 hint: Text(
-                  widget.hint ?? 'Select Item',
+                  'Select',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).hintColor,
+                    color: colors.textGray,
+                    fontFamily: 'Archivo',
                   ),
                 ),
                 items: widget.items
@@ -136,7 +144,11 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                           value: item,
                           child: Text(
                             item.toString(),
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: colors.textGray,
+                              fontFamily: 'Archivo',
+                            ),
                           ),
                         ))
                     .toList(),
@@ -171,11 +183,17 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                                 vertical: 8,
                               ),
                               hintText: "Search",
+                              hintStyle: const TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Archivo',
+                              ),
                               suffixIcon: const Icon(Icons.search),
-                              hintStyle: const TextStyle(fontSize: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                            ),
+                            style: const TextStyle(
+                              fontFamily: 'Archivo',
                             ),
                           ),
                         ),

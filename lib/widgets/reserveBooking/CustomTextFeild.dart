@@ -50,7 +50,7 @@ class CustomTextField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.r),
           borderSide: BorderSide(
-            color: colors.primary, // Border color when focused
+            color: colors.greenBorderspinner, // Border color when focused
             width: 1.0, // 1dp width
           ),
         ),

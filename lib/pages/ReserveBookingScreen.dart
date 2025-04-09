@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/utils/colors.dart';
-import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
+import 'package:parkingapp/widgets/PrimaryButton.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:parkingapp/widgets/reserveBooking/CustomTextFeild.dart';
 
@@ -16,17 +16,22 @@ class ReserveBookingScreen extends StatefulWidget {
 class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  // Flight Details
+  final TextEditingController departureFlightController =
+      TextEditingController();
+  final TextEditingController returnFlightController = TextEditingController();
+
+  // User Details
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController licensePlateController = TextEditingController();
-  final TextEditingController stateController = TextEditingController();
-  final TextEditingController modelController = TextEditingController();
-  final TextEditingController colorController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController streetController = TextEditingController();
-  final TextEditingController lineAddressController = TextEditingController();
+
+  // Vehicle Details
+  final TextEditingController vehicleRegNoController = TextEditingController();
+  final TextEditingController carMakerController = TextEditingController();
+  final TextEditingController carModelController = TextEditingController();
+  final TextEditingController numPassengersController = TextEditingController();
 
   bool agreedToTerms = false;
 
@@ -63,7 +68,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
           child: Column(
             children: [
               TopBar(
-                greeting: "Reserve Booking",
+                greeting: "Registration",
                 onBackPressed: () => _onBackPressed(context),
               ),
               Expanded(
@@ -75,11 +80,107 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Parking Application",
+                        Text("Flight Details",
                             style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 16.h),
-                        Text("Name", style: TextStyle(color: colors.textGray)),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CustomDropdown(
+                                hint: "Outbound Terminal",
+                                height: 45.h,
+                                items: const [
+                                  "California",
+                                  "New York",
+                                  "Texas",
+                                  "Florida"
+                                ],
+                                isSearchable: false,
+                                onSelectItem: (item) {},
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: CustomDropdown(
+                                hint: "Inbound Terminal",
+                                height: 45.h,
+                                items: const [
+                                  "California",
+                                  "New York",
+                                  "Texas",
+                                  "Florida"
+                                ],
+                                isSearchable: false,
+                                onSelectItem: (item) {},
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text("Departure Flight",
+                                  style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo')),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Text("Return Flight",
+                                  style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo')),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CustomTextField(
+                                hintText: "",
+                                controller: departureFlightController,
+                                validator: (val) =>
+                                    validateRequired(val, "Departure Flight"),
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: CustomTextField(
+                                hintText: "",
+                                controller: returnFlightController,
+                                validator: (val) =>
+                                    validateRequired(val, "Return Flight"),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Text("User Details",
+                            style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
+                        SizedBox(height: 16.h),
+                        CustomDropdown(
+                          hint: "Title",
+                          height: 45.h,
+                          items: const ["Mr", "Mrs", "Others"],
+                          isSearchable: false,
+                          onSelectItem: (item) {},
+                        ),
+                        SizedBox(height: 16.h),
+                        Text("Name",
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 8.h),
                         Row(
                           children: [
@@ -103,7 +204,11 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                           ],
                         ),
                         SizedBox(height: 16.h),
-                        Text("Phone", style: TextStyle(color: colors.textGray)),
+                        Text("Phone",
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 8.h),
                         CustomTextField(
                           hintText: "**********",
@@ -112,7 +217,11 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                           validator: (val) => validateRequired(val, "Phone"),
                         ),
                         SizedBox(height: 16.h),
-                        Text("Email", style: TextStyle(color: colors.textGray)),
+                        Text("Email",
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 8.h),
                         CustomTextField(
                           hintText: "**********",
@@ -121,73 +230,78 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                           validator: validateEmail,
                         ),
                         SizedBox(height: 24.h),
-                        Text("Vehicle Information",
+                        Text("Vehicle Detail",
                             style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter plate number",
-                          controller: licensePlateController,
-                          validator: (val) =>
-                              validateRequired(val, "License plate"),
-                        ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter state",
-                          controller: stateController,
-                          validator: (val) => validateRequired(val, "State"),
-                        ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter vehicle model",
-                          controller: modelController,
-                          validator: (val) => validateRequired(val, "Model"),
-                        ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter vehicle color",
-                          controller: colorController,
-                          validator: (val) => validateRequired(val, "Color"),
-                        ),
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 24.h),
-                        Text("Address",
+                        Text("Vehicle Registration No",
                             style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter address",
-                          controller: addressController,
-                          validator: (val) => validateRequired(val, "Address"),
-                        ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter street address",
-                          controller: streetController,
-                          validator: (val) =>
-                              validateRequired(val, "Street address"),
-                        ),
-                        SizedBox(height: 16.h),
-                        CustomTextField(
-                          hintText: "Enter line address",
-                          controller: lineAddressController,
-                          validator: (val) =>
-                              validateRequired(val, "Line address"),
-                        ),
-                        SizedBox(height: 16.h),
-                        Text("State", style: TextStyle(color: colors.textGray)),
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
                         SizedBox(height: 8.h),
-                        CustomDropdown(
-                          hint: "---Select State---",
-                          items: const [
-                            "California",
-                            "New York",
-                            "Texas",
-                            "Florida"
+                        CustomTextField(
+                          hintText: "",
+                          controller: vehicleRegNoController,
+                          validator: (val) =>
+                              validateRequired(val, "Vehicle Registration No"),
+                        ),
+                        SizedBox(height: 16.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text("Car Maker",
+                                  style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo')),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Text("Car Model",
+                                  style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo')),
+                            ),
                           ],
-                          isSearchable: false,
-                          onSelectItem: (item) {
-                            // Handle selection
-                          },
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CustomTextField(
+                                hintText: "",
+                                controller: carMakerController,
+                                validator: (val) =>
+                                    validateRequired(val, "Car Maker"),
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: CustomTextField(
+                                hintText: "",
+                                controller: carModelController,
+                                validator: (val) =>
+                                    validateRequired(val, "Car Model"),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Text("No of Passengers",
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
+                        SizedBox(height: 8.h),
+                        CustomTextField(
+                          hintText: "",
+                          controller: numPassengersController,
+                          validator: (val) =>
+                              validateRequired(val, "No of Passengers"),
                         ),
                         SizedBox(height: 24.h),
                         Row(
@@ -203,7 +317,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                                   MaterialStateProperty.resolveWith<Color>(
                                 (Set<MaterialState> states) {
                                   if (states.contains(MaterialState.selected)) {
-                                    return Color(0xFF201A56);
+                                    return const Color(0xFF201A56);
                                   }
                                   return Colors.grey.shade300;
                                 },
@@ -229,7 +343,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                           ],
                         ),
                         SizedBox(height: 32.h),
-                        CustomButton(
+                        PrimaryButton(
                           text: "Send Now",
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
