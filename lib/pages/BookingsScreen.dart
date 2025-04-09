@@ -116,10 +116,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
         ],
       ),
       SessionCard(
-        title: "${first.airport} Airport",
-        subTitle: "Space 4c",
+        title: "${first.registrations.first.outboundTerminal} Airport",
+        subTitle: first.registrations.first.outboundTerminal,
         date: first.startDate,
-        time: first.airport,
+        time: first.startTime,
         price: "\$100",
         type: type,
         timeRemaining: "01 hr:30min", // Only for active sessions
