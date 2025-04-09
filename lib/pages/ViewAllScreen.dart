@@ -15,6 +15,14 @@ class ViewAllScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine the type based on the title
+    String type = 'reserved';
+    if (title.contains('Active')) {
+      type = 'active';
+    } else if (title.contains('Completed')) {
+      type = 'completed';
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -29,13 +37,18 @@ class ViewAllScreen extends StatelessWidget {
                 itemCount: parkings.length,
                 itemBuilder: (_, index) {
                   final item = parkings[index];
-                  return SessionCard(
-                    title: "${item.airport} Airport",
-                    subTitle: "Space 4c",
-                    date: item.startDate ?? '',
-                    time: "02:00pm",
-                    price: "\$100",
-                    icon: Icon(Icons.airport_shuttle, color: Colors.blue),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SessionCard(
+                      title: "${item.airport} Airport",
+                      subTitle: "Space 4c",
+                      date: item.startDate,
+                      time: "02:00pm",
+                      price: "\$100",
+                      type: type,
+                      timeRemaining: "0thr:30min", // Only for active sessions
+                      rate: "\$40/HR", // Only for active sessions
+                    ),
                   );
                 },
               ),

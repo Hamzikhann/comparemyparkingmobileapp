@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/pages/ViewallScreen.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/SessionCard.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart'; // Import your repository
@@ -41,6 +42,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -85,33 +87,45 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 
   Widget buildSection(String title, List<Parking> parkings, IconData icon) {
-    if (parkings.isEmpty) return SizedBox();
+  if (parkings.isEmpty) return SizedBox();
 
-    final first = parkings.first;
+  final first = parkings.first;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-                child:
-                    Text(title, style: TextStyle(fontWeight: FontWeight.bold))),
-            TextButton(
-              onPressed: () => _viewAll(title, parkings),
-              child: Text("View all"),
-            ),
-          ],
-        ),
-        SessionCard(
-          title: "${first.airport} Airport",
-          subTitle: "Space 4c",
-          date: first.startDate ?? "Date",
-          time: "02:00pm",
-          price: "\$100",
-          icon: Icon(icon, color: Colors.green, size: 30),
-        )
-      ],
-    );
+  String type = 'reserved';
+  if (title.contains('Active')) {
+    type = 'active';
+  } else if (title.contains('Completed')) {
+    type = 'completed';
   }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+              child:
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold,color: colors.textFieldBorder,fontSize: 16.sp))),
+          TextButton(
+            onPressed: () => _viewAll(title, parkings),
+            child: Text("View all",
+            style: TextStyle(
+            color: colors.primary, // Change this to your desired color
+          ),),
+          ),
+        ],
+      ),
+      SessionCard(
+        title: "${first.airport} Airport",
+        subTitle: "Space 4c",
+        date: first.startDate,
+        time: first.airport,
+        price: "\$100",
+        type: type,
+        timeRemaining: "01 hr:30min", // Only for active sessions
+        rate: "\$40/HR", // Only for active sessions
+      )
+    ],
+  );
+}
 }

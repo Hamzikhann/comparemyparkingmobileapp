@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
-import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
+import 'package:parkingapp/widgets/IconDropDown.dart';
+import 'package:parkingapp/widgets/InputBox.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String? selectedAirport;
+  final List<String> airportOptions = ['LHR', 'STN', 'LGW'];
+
+  String? selectedDateRange;
+  String? checkInTime;
+  String? checkOutTime;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Top Bar - No Padding
+              /// Top Bar
               Container(
-                height: 170.h, // Increased height
+                height: 170.h,
                 decoration: BoxDecoration(
                   color: const Color(0xFF201A56),
                   borderRadius: BorderRadius.only(
@@ -28,7 +42,6 @@ class HomeScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     SizedBox(height: 30.h),
                     Text(
@@ -54,7 +67,8 @@ class HomeScreen extends StatelessWidget {
                         const CircleAvatar(
                           backgroundColor: Colors.white,
                           radius: 18,
-                          backgroundImage: AssetImage('assets/images/user.png'),
+                          backgroundImage:
+                              AssetImage('assets/images/user.png'),
                         ),
                       ],
                     ),
@@ -62,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              /// Everything below with padding
+              /// Content Below
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
@@ -70,44 +84,62 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     SizedBox(height: 24.h),
 
-                    /// Airport Selection
-                    _inputBox(
+                    /// Airport Dropdown
+                    IconDropdown(
                       hint: "Select an airport",
                       icon: Icons.flight,
+                      items: airportOptions,
+                      value: selectedAirport,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedAirport = value;
+                        });
+                      },
                     ),
 
                     SizedBox(height: 16.h),
 
-                    /// Date Selection
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _inputBox(
-                            hint: "Check In",
-                            icon: Icons.calendar_month,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: _inputBox(
-                            hint: "Check Out",
-                            icon: Icons.calendar_month,
-                          ),
-                        ),
-                      ],
+                    /// Date Input
+                    InputBox(
+                      hint: "Check In - Check Out",
+                      icon: Icons.calendar_month,
+                      inputType: InputType.date,
+                      onValueChanged: (value) {
+                        setState(() {
+                          selectedDateRange = value;
+                        });
+                      },
                     ),
 
                     SizedBox(height: 16.h),
 
-                    /// Action Buttons
+                    /// Time Inputs
                     Row(
                       children: [
                         Expanded(
-                          child: _actionButton("Check in", Icons.access_time),
+                          child: InputBox(
+                            hint: "Check in",
+                            icon: Icons.access_time,
+                            inputType: InputType.time,
+                            onValueChanged: (value) {
+                              setState(() {
+                                checkInTime = value; // Handle Check-in time separately
+                              });
+                            },
+                          ),
                         ),
                         SizedBox(width: 10.w),
                         Expanded(
-                          child: _actionButton("Check Out", Icons.access_time),
+                          child: InputBox(
+                            hint: "Check out",
+                            icon: Icons.access_time,
+                            inputType: InputType.time,
+                            onValueChanged: (value) {
+                              setState(() {
+                                checkOutTime = value; // Handle Check-out time separately
+                              });
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -118,10 +150,7 @@ class HomeScreen extends StatelessWidget {
                     CustomButton(
                       text: "Reserve",
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          MyRoutes.reserveBooking,
-                        );
+                        Navigator.pushNamed(context, MyRoutes.reserveBooking);
                       },
                     ),
 
@@ -141,44 +170,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Reusable Input Box
-  Widget _inputBox({required String hint, required IconData icon}) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              hint,
-              style: TextStyle(color: colors.textGray, fontSize: 14.sp),
-            ),
-          ),
-          Icon(icon, size: 18.sp),
-        ],
-      ),
-    );
-  }
-
-  /// Reusable Outlined Action Button
-  Widget _actionButton(String text, IconData icon) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        side: BorderSide(color: Colors.grey.shade300),
-      ),
-      onPressed: () {},
-      icon: Icon(icon, size: 18.sp, color: Colors.black),
-      label: Text(
-        text,
-        style: TextStyle(color: Colors.black, fontSize: 14.sp),
       ),
     );
   }

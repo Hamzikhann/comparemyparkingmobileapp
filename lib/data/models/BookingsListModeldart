@@ -28,7 +28,17 @@ class Parking {
   final String id;
   final String startDate;
   final String endDate;
+  final String? startTime;
+  final String? endTime;
   final String airport;
+  final String? promoCode;
+  final String status;
+  final String isActive;
+  final String createdAt;
+  final String updatedAt;
+  final String userId;
+  final String? guestUserId;
+  final String packageId;
   final List<Registration> registrations;
   final List<Vehicle> vehicles;
 
@@ -37,8 +47,18 @@ class Parking {
     required this.startDate,
     required this.endDate,
     required this.airport,
+    required this.status,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.userId,
+    required this.packageId,
     required this.registrations,
     required this.vehicles,
+    this.startTime,
+    this.endTime,
+    this.promoCode,
+    this.guestUserId,
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
@@ -46,7 +66,17 @@ class Parking {
       id: json['id'],
       startDate: json['startDate'],
       endDate: json['endDate'],
+      startTime: json['startTime'],
+      endTime: json['endTime'],
       airport: json['airport'],
+      promoCode: json['promoCode'],
+      status: json['status'],
+      isActive: json['isActive'],
+      createdAt: json['createdAt'],
+      updatedAt: json['updatedAt'],
+      userId: json['userId'],
+      guestUserId: json['guestUserId'],
+      packageId: json['packageId'],
       registrations: (json['registrations'] as List)
           .map((data) => Registration.fromJson(data))
           .toList(),
@@ -56,6 +86,7 @@ class Parking {
     );
   }
 }
+
 
 class Registration {
   final String title;
