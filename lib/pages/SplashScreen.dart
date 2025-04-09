@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/IntroScreen.dart';
-import 'package:parkingapp/pages/MainScreen.dart'; // Import the IntroScreen
+import 'package:parkingapp/pages/MainScreen.dart'; // Import the MainScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,8 +18,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    SharedStorage.loadUser();
-    // Navigate to IntroScreen after 5 seconds
+    _initializeApp(); // Move the async logic to a separate method
+  }
+
+  Future<void> _initializeApp() async {
+    // Load user data asynchronously
+    await SharedStorage.loadUser();
+
+    // Navigate to the appropriate screen after a delay
     Future.delayed(Duration(seconds: 5), () {
       if (Globals.user != null) {
         Navigator.pushReplacement(

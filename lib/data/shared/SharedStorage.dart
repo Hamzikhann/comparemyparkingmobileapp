@@ -24,10 +24,11 @@ class SharedStorage {
   static Future<void> saveUser(UserModel user) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final data = {
-      'user': user.toJson(),
+      'user': user.toJson(), // Save user data as is
+      'token': user.token, // Save token separately at the top level
     };
-    final jsonString = json.encode(data);
 
+    final jsonString = json.encode(data);
     await prefs.setString(userKey, jsonString);
   }
 

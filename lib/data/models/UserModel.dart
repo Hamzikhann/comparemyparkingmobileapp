@@ -29,7 +29,8 @@ class UserModel {
       roleId: user['roleId'] ?? '',
       imageUrl: user['userProfile']?['imageUrl'],
       roleTitle: user['role']?['title'] ?? '',
-      token: json['token'] ?? '',
+      token: json['token'] ??
+          '', // token should come from the root of json, not from user
     );
   }
 
@@ -44,10 +45,5 @@ class UserModel {
       'roleTitle': roleTitle,
       'token': token,
     };
-  }
-
-  @override
-  String toString() {
-    return firstName;
   }
 }

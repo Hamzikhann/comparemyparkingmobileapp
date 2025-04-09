@@ -17,7 +17,6 @@ class APIService {
   }) async {
     try {
       onLoad.call(); // Call onLoad callback if provided
-
       late Response response;
       final headers = {
         'access-token': Globals.user?.token ?? '',

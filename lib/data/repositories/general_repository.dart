@@ -4,6 +4,7 @@ import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/data/models/UserModel.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 
@@ -26,13 +27,14 @@ class GeneralRepository {
         EasyLoading.dismiss();
 
         final userData = res['data']['user'];
-        final token = res['token'];
+        final token = res['token']; // token is fetched correctly
         final combinedJson = {
           'user': userData,
           'token': token,
         };
 
         UserModel user = UserModel.fromJson(combinedJson);
+        SharedStorage.saveUser(user); // Should work now
         completer.complete(user);
       },
       onError: (String errorMessage) {
@@ -130,27 +132,4 @@ class GeneralRepository {
 
     return completer.future;
   }
-
-  // Future<BookingResponse> getBookings() async {
-  //   Completer<BookingResponse> completer = Completer();
-  //   server.makeApiRequest(
-  //     apiEndpoint: ApiFiles.bookingsList, // Use the correct endpoint
-  //     requestMethod: RequestMethod.get,
-  //     onLoad: () {
-  //       EasyLoading.show(status: "Loading...");
-  //     },
-  //     onSuccess: (Map<String, dynamic> res) {
-  //       EasyLoading.dismiss();
-  //       final bookingsData =
-  //           res['data']; // Access the 'data' field from the response
-  //       BookingResponse response = BookingResponse.fromJson(bookingsData);
-  //       completer.complete(response);
-  //     },
-  //     onError: (String errorMessage) {
-  //       EasyLoading.dismiss();
-  //       completer.completeError(errorMessage);
-  //     },
-  //   );
-  //   return completer.future;
-  // }
 }
