@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
@@ -132,4 +133,35 @@ class GeneralRepository {
 
     return completer.future;
   }
+
+  Future<PaymentResponse> getPaymentHistory() async {
+  Completer<PaymentResponse> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.paymentHistoryList, // Define this endpoint
+    requestMethod: RequestMethod.post, // Or GET if that's what your API expects
+    onLoad: () {
+      EasyLoading.show(status: "Loading payments...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      try {
+        final paymentData = res['data']; // Access the 'data' field
+        PaymentResponse response = PaymentResponse.fromJson({
+          'message': res['message'] ?? 'Payments Retrieved',
+          'data': paymentData,
+        });
+        completer.complete(response);
+      } catch (e) {
+        completer.completeError("Error parsing payment data: $e");
+      }
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
 }

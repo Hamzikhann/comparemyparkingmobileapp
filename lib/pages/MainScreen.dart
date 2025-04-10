@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parkingapp/pages/BookingsScreen.dart';
 import 'package:parkingapp/pages/HomeScreen.dart';
-import 'package:parkingapp/pages/PaymentsScreen.dart';
+import 'package:parkingapp/pages/PaymentHistoryScreen.dart';
 import 'package:parkingapp/pages/SettingsScreen.dart';
 import 'package:parkingapp/widgets/CustomBottomNavBar.dart';
 
@@ -18,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const BookingsScreen(),
-    const PaymentsScreen(),
+    const PaymentHistoryScreen(),
     const SettingsScreen(),
   ];
 
