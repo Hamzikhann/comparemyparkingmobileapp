@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
@@ -23,6 +24,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String? selectedDateRange;
   String? checkInTime;
   String? checkOutTime;
+  DateTime? parsedStartDate;
+  DateTime? parsedEndDate;
+  TimeOfDay? parsedStartTime;
+  TimeOfDay? parsedEndTime;
   Future<BookingResponse>? _bookingsFuture;
   final GeneralRepository _repository = GeneralRepository();
 
@@ -42,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           })
           .catchError((error) {
             debugPrint('Error loading bookings: $error');
-            throw error; // Re-throw to let FutureBuilder handle it
+            throw error;
           });
       });
     } catch (e) {
@@ -57,6 +62,53 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadBookings();
   }
 
+  void _parseAndStoreDates() {
+    if (selectedDateRange != null && checkInTime != null && checkOutTime != null) {
+      try {
+        final dateParts = selectedDateRange!.split(' - ');
+        final startDateStr = dateParts[0];
+        final endDateStr = dateParts.length > 1 ? dateParts[1] : dateParts[0];
+        
+        parsedStartDate = DateFormat('MMM d').parse(startDateStr);
+        parsedEndDate = DateFormat('MMM d').parse(endDateStr);
+        parsedStartTime = _parseTimeString(checkInTime!);
+        parsedEndTime = _parseTimeString(checkOutTime!);
+        
+        final now = DateTime.now();
+        parsedStartDate = DateTime(now.year, parsedStartDate!.month, parsedStartDate!.day);
+        parsedEndDate = DateTime(now.year, parsedEndDate!.month, parsedEndDate!.day);
+        
+        if (parsedEndDate!.isBefore(parsedStartDate!)) {
+          parsedEndDate = DateTime(now.year + 1, parsedEndDate!.month, parsedEndDate!.day);
+        }
+      } catch (e) {
+        debugPrint('Error parsing dates: $e');
+      }
+    }
+  }
+
+  TimeOfDay _parseTimeString(String timeStr) {
+    try {
+      final format = DateFormat('hh:mm a');
+      final dateTime = format.parse(timeStr);
+      return TimeOfDay.fromDateTime(dateTime);
+    } catch (e) {
+      debugPrint('Error parsing time: $e');
+      return TimeOfDay.now();
+    }
+  }
+
+  String _formatDateForApi(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  String _formatTimeForApi(TimeOfDay time) {
+    final hour = time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Bar (unchanged from your original code)
               Container(
                 height: 170.h,
                 decoration: BoxDecoration(
@@ -117,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Main Content
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
@@ -143,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onValueChanged: (value) {
                         setState(() {
                           selectedDateRange = value;
+                          Globals.selectedDateRange = value;
                         });
                       },
                     ),
@@ -180,7 +231,39 @@ class _HomeScreenState extends State<HomeScreen> {
                     CustomButton(
                       text: "Reserve",
                       onPressed: () {
-                        Navigator.pushNamed(context, MyRoutes.reserveBooking);
+                        if (selectedAirport == null || 
+                            selectedDateRange == null || 
+                            checkInTime == null || 
+                            checkOutTime == null) {
+                              Globals.startDate = "";
+                            Globals.endDate = "";
+                            Globals.startTime = "";
+                            Globals.endTime = "";
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select all fields')),
+                          );
+                        } else {
+                          _parseAndStoreDates();
+                          
+                          if (parsedStartDate == null || parsedEndDate == null || 
+                              parsedStartTime == null || parsedEndTime == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Invalid date/time format')),
+                            );
+                            return;
+                          }
+                          else{
+                            Globals.startDate = _formatDateForApi(parsedStartDate!);
+                            Globals.endDate = _formatDateForApi(parsedEndDate!);
+                            Globals.startTime = _formatTimeForApi(parsedStartTime!);
+                            Globals.endTime = _formatTimeForApi(parsedEndTime!);
+                          }
+                          
+                          Navigator.pushNamed(
+                            context, 
+                            MyRoutes.packagesScreen,
+                          );
+                        }
                       },
                     ),
                     SizedBox(height: 24.h),
@@ -189,7 +272,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 16.sp, fontWeight: FontWeight.bold)),
                     SizedBox(height: 12.h),
 
-                    // Improved Booking Card with better loading and error states
                     FutureBuilder<BookingResponse>(
                       future: _bookingsFuture,
                       builder: (context, snapshot) {
@@ -233,8 +315,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoadingState() {
-    return Container(
-      
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 
@@ -263,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _retryLoading,
             child: Text('Retry'),
             style: ElevatedButton.styleFrom(
-              iconColor: colors.primary,
+              backgroundColor: colors.primary,
             ),
           ),
         ],

@@ -5,32 +5,42 @@ import 'package:parkingapp/utils/colors.dart';
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
+  final bool isSmall;
+  final Color? backgroundColor;
+  final Color? textColor;
 
   const CustomButton({
     super.key,
     required this.text,
     required this.onPressed,
+    this.isSmall = false,
+    this.backgroundColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
-      height: 48.h,
+      width: isSmall ? null : double.infinity,
+      height: isSmall ? 36.h : 48.h,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: colors.red,
+          backgroundColor: backgroundColor ?? colors.red,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6.r),
           ),
+          padding: isSmall 
+              ? EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h)
+              : null,
         ),
         onPressed: onPressed,
         child: Text(
           text,
           style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16.sp),
+            color: textColor ?? Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: isSmall ? 14.sp : 16.sp,
+          ),
         ),
       ),
     );

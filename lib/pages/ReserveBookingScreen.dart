@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
 import 'package:parkingapp/widgets/PrimaryButton.dart';
@@ -7,7 +8,9 @@ import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:parkingapp/widgets/reserveBooking/CustomTextFeild.dart';
 
 class ReserveBookingScreen extends StatefulWidget {
-  const ReserveBookingScreen({Key? key}) : super(key: key);
+  final ParkingOption bookingData;
+
+  const ReserveBookingScreen({super.key, required this.bookingData});
 
   @override
   State<ReserveBookingScreen> createState() => _ReserveBookingScreenState();

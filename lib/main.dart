@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
+import 'package:parkingapp/pages/PackagesScreen.dart';
 import 'package:parkingapp/pages/ReserveBookingScreen.dart';
 import 'package:parkingapp/pages/Signupscreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -68,6 +69,7 @@ class MyApp extends StatelessWidget {
             '/forgot': (context) => Forgotpassword(),
             '/otp': (context) => OtpScreen(),
             '/reserveBooking': (context) => ReserveBookingScreen(),
+            '/packagesScreen': (context) => PackagesScreen(),
             '/main': (context) => MainScreen(),
           },
         );

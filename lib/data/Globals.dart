@@ -4,6 +4,13 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 
 class Globals {
   static int selectedFilter = 1;
+  static String startDate = "";
+  static String endDate = "";
+  static String startTime = "";
+  static String endTime = "";
+  static String selectedDateRange = "";
+
+  
   //**********User**********
   static UserModel? user;
   static IPmodel? ip;

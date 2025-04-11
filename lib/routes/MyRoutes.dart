@@ -5,5 +5,6 @@ class MyRoutes {
   static String forgot = '/forgot';
   static String otp = '/otp';
   static String reserveBooking = '/reserveBooking';
+  static String packagesScreen = '/packagesScreen';
   static String mainPage = '/main';
 }

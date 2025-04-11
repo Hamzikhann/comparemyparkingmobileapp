@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
+import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
@@ -164,4 +166,92 @@ class GeneralRepository {
 
   return completer.future;
 }
+
+Future<SearchResultResponse> searchParking({
+  required String startDate,
+  required String endDate,
+  required String airport,
+  required String startTime,
+  required String endTime,
+}) async {
+  final completer = Completer<SearchResultResponse>();
+
+  try {
+    // Validate input parameters
+    if (startDate.isEmpty || endDate.isEmpty || 
+        airport.isEmpty || startTime.isEmpty || endTime.isEmpty) {
+      throw Exception('All parameters are required');
+    }
+
+    debugPrint('''Making search request with:
+      Start Date: $startDate
+      End Date: $endDate
+      Airport: $airport
+      Start Time: $startTime
+      End Time: $endTime
+    ''');
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.searchParking,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "startDate": startDate,
+        "endDate": endDate,
+        "airport": airport,
+        "startTime": startTime,
+        "endTime": endTime,
+      },
+      onLoad: () {
+        EasyLoading.show(
+          status: "Searching parking options...",
+          maskType: EasyLoadingMaskType.black,
+        );
+      },
+      onSuccess: (Map<String, dynamic> response) {
+        try {
+          debugPrint('API Response: $response');
+          
+          // Validate response structure
+          if (response['data'] == null || response['data']['results'] == null) {
+            throw Exception('Invalid API response structure');
+          }
+
+          final result = SearchResultResponse.fromJson(response);
+          
+          if (result.data.results.isEmpty) {
+            EasyLoading.showInfo('No parking options available');
+          } else {
+            EasyLoading.dismiss();
+          }
+          
+          completer.complete(result);
+        } catch (e) {
+          EasyLoading.dismiss();
+          debugPrint('Response parsing error: $e');
+          completer.completeError('Failed to process parking options: $e');
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        debugPrint('API Error: $errorMessage');
+        
+        // Enhance error message for common cases
+        final enhancedError = errorMessage.contains('timeout')
+            ? 'Request timed out. Please check your connection'
+            : errorMessage.contains('404')
+                ? 'Service not available'
+                : errorMessage;
+        
+        completer.completeError(enhancedError);
+      },
+    );
+  } catch (e) {
+    EasyLoading.dismiss();
+    debugPrint('Search parking error: $e');
+    completer.completeError(e.toString());
+  }
+
+  return completer.future;
+}
+
 }
