@@ -5,4 +5,5 @@ class ApiFiles {
   static String bookingsList = "/api/booking/list";
   static String paymentHistoryList = "/api/payment/list";
   static String searchParking = "/api/search";
+  static String bookParking = "/api/booking/create";
 }

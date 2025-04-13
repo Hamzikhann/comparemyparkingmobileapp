@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingInfoModel.dart';
+import 'package:parkingapp/data/models/CardsModel.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,8 @@ class SharedStorage {
   static const String themeKey = 'theme_data';
   static const String emailsKey = 'emails';
   static const String bookingInfoKey = 'booking_info';
+  static const String savedCardsKey = 'saved_cards';
+
 
   static Future<void> loadUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -103,4 +106,26 @@ static Future<void> clearBookingInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.remove(bookingInfoKey);
 }
+
+static Future<void> saveCard(CardsModel card) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
+
+  // Avoid duplicates by card number
+  savedCards.removeWhere((c) =>
+      CardsModel.fromJson(json.decode(c)).cardNumber == card.cardNumber);
+
+  savedCards.add(json.encode(card.toJson()));
+  await prefs.setStringList(savedCardsKey, savedCards);
+}
+
+static Future<List<CardsModel>> loadSavedCards() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
+
+  return savedCards
+      .map((jsonCard) => CardsModel.fromJson(json.decode(jsonCard)))
+      .toList();
+}
+
 }

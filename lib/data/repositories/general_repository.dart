@@ -254,4 +254,136 @@ Future<SearchResultResponse> searchParking({
   return completer.future;
 }
 
+Future<BookingResponse> bookParking({
+  required String startDate,
+  required String endDate,
+  required String airport,
+  required String startTime,
+  required String endTime,
+  required String outboundTerminal,
+  required String outboundFlightNo,
+  required String inboundTerminal,
+  required String inboundFlightNo,
+  required String title,
+  required String firstName,
+  required String lastName,
+  required String email,
+  required String phoneNo,
+  required String vehicleRegistrationNo,
+  required String vehicleManufacturer,
+  required String vehicleModel,
+  required String vehicleColor,
+  required String numberOfPassengers,
+  required String userId,
+  required String name,
+  required String price,
+  required String description,
+  required List<String> bulletPoints,
+}) async {
+  Completer<BookingResponse> completer = Completer();
+
+  try {
+    // Validate input parameters
+    if (startDate.isEmpty || endDate.isEmpty || airport.isEmpty || startTime.isEmpty || endTime.isEmpty ||
+        outboundTerminal.isEmpty || outboundFlightNo.isEmpty || inboundTerminal.isEmpty || inboundFlightNo.isEmpty ||
+        title.isEmpty || firstName.isEmpty || lastName.isEmpty || email.isEmpty || phoneNo.isEmpty ||
+        vehicleRegistrationNo.isEmpty || vehicleManufacturer.isEmpty || vehicleModel.isEmpty || vehicleColor.isEmpty ||
+        numberOfPassengers.isEmpty || userId.isEmpty || name.isEmpty || price.isEmpty || description.isEmpty || bulletPoints.isEmpty) {
+      throw Exception('All parameters are required');
+    }
+
+    debugPrint('Booking request with: \n'
+      'Start Date: $startDate\n'
+      'End Date: $endDate\n'
+      'Airport: $airport\n'
+      'Start Time: $startTime\n'
+      'End Time: $endTime\n'
+      'Outbound Terminal: $outboundTerminal\n'
+      'Outbound Flight No: $outboundFlightNo\n'
+      'Inbound Terminal: $inboundTerminal\n'
+      'Inbound Flight No: $inboundFlightNo\n'
+      'Title: $title\n'
+      'First Name: $firstName\n'
+      'Last Name: $lastName\n'
+      'Email: $email\n'
+      'Phone No: $phoneNo\n'
+      'Vehicle Registration No: $vehicleRegistrationNo\n'
+      'Vehicle Manufacturer: $vehicleManufacturer\n'
+      'Vehicle Model: $vehicleModel\n'
+      'Vehicle Color: $vehicleColor\n'
+      'Number of Passengers: $numberOfPassengers\n'
+      'User ID: $userId\n'
+      'Name: $name\n'
+      'Price: $price\n'
+      'Description: $description\n'
+      'Bullet Points: ${bulletPoints.join(", ")}'
+    );
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.bookParking, // Ensure this endpoint is defined in ApiFiles
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "startDate": startDate,
+        "endDate": endDate,
+        "airport": airport,
+        "startTime": startTime,
+        "endTime": endTime,
+        "outboundTerminal": outboundTerminal,
+        "outboundFlightNo": outboundFlightNo,
+        "inboundTerminal": inboundTerminal,
+        "inboundFlightNo": inboundFlightNo,
+        "title": title,
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": email,
+        "phoneNo": phoneNo,
+        "vehicleRegistrationNo": vehicleRegistrationNo,
+        "vehicleManufacturer": vehicleManufacturer,
+        "vehicleModel": vehicleModel,
+        "vehicleColor": vehicleColor,
+        "numberOfPassengers": numberOfPassengers,
+        "userId": userId,
+        "name": name,
+        "price": price,
+        "description": description,
+        "bulletPoints": bulletPoints,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Booking parking...");
+      },
+      onSuccess: (Map<String, dynamic> response) {
+        EasyLoading.dismiss();
+
+        try {
+          // Check if the response contains necessary data
+          if (response.isEmpty) {
+            throw Exception('Booking response is empty or invalid');
+          }
+
+          final bookingData = response;
+          BookingResponse bookingResponse = BookingResponse.fromJson(bookingData);
+
+          completer.complete(bookingResponse);
+        } catch (e) {
+          EasyLoading.dismiss();
+          debugPrint('Error processing booking response: $e');
+          completer.completeError('Error processing booking response: $e');
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        debugPrint('API Error: $errorMessage');
+        completer.completeError(errorMessage);
+      },
+    );
+  } catch (e) {
+    EasyLoading.dismiss();
+    debugPrint('Booking error: $e');
+    completer.completeError(e.toString());
+  }
+
+  return completer.future;
+}
+
+
 }

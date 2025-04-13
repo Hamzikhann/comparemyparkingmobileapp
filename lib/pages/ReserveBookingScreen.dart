@@ -454,6 +454,7 @@ Future<void> _loadSavedBookingInfo() async {
                                 }
 
                                 // Proceed to next screen
+                                Globals.booking_info_model = bookingInfo;
                                 Navigator.pushNamed(
                                   context,
                                   MyRoutes.payment,

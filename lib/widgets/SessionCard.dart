@@ -106,14 +106,14 @@ class SessionCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "09/04/2025",
+              date,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
               ),
             ),
             Text(
-              "02:00 PM",
+              time,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
@@ -198,14 +198,14 @@ class SessionCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "09/04/2025",
+              date,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
               ),
             ),
             Text(
-              "02:00 PM",
+              time,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
@@ -290,14 +290,14 @@ class SessionCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "09/04/2025",
+              date,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
               ),
             ),
             Text(
-              "02:00 PM",
+              time,
               style: TextStyle(
                 fontSize: 14.sp,
                 color: Colors.grey,
