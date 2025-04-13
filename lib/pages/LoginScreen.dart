@@ -157,7 +157,13 @@ class _LoginPageState extends State<LoginScreen> {
           SharedStorage.saveUser(value);
           emailController.clear();
           passwordController.clear();
-          Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+          if(Globals.user?.roleTitle == "Employee"){
+            Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
+          }
+          else{
+            Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+          }
+          
         },
       );
     });

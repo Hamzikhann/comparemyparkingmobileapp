@@ -12,6 +12,7 @@ import 'package:parkingapp/pages/ReserveBookingScreen.dart';
 import 'package:parkingapp/pages/Signupscreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
+import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
@@ -73,6 +74,7 @@ class MyApp extends StatelessWidget {
             '/packagesScreen': (context) => PackagesScreen(),
             '/main': (context) => MainScreen(),
             '/payment': (context) => PaymentScreen(),
+            '/driverhome': (context) => Driverhome(),
           },
         );
       },
