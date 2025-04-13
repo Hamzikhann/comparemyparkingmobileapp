@@ -8,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final FormFieldValidator<String>? validator;
+  final String? defaultValue;  // Only add this new parameter
 
   const CustomTextField({
     Key? key,
@@ -16,15 +17,23 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.defaultValue,  // Add this
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Set default value if provided and controller is empty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (defaultValue != null && controller.text.isEmpty) {
+        controller.text = defaultValue!;
+      }
+    });
+
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      validator: validator,
+      validator: validator, // Keep validation as is
       style: TextStyle(
         fontSize: 14.sp,
         fontFamily: 'Archivo',
@@ -41,24 +50,24 @@ class CustomTextField extends StatelessWidget {
           fontFamily: 'Archivo',
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.r), // 8.r for light curve
+          borderRadius: BorderRadius.circular(8.r),
           borderSide: BorderSide(
-            color: colors.textFieldBorder, // Default border color
-            width: 1.0, // 1dp width
+            color: colors.textFieldBorder,
+            width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.r),
           borderSide: BorderSide(
-            color: colors.greenBorderspinner, // Border color when focused
-            width: 1.0, // 1dp width
+            color: colors.greenBorderspinner,
+            width: 1.0,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.r),
           borderSide: BorderSide(
-            color: colors.textFieldBorder, // Default border color
-            width: 1.0, // 1dp width
+            color: colors.textFieldBorder,
+            width: 1.0,
           ),
         ),
       ),

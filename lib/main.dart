@@ -7,6 +7,7 @@ import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
 import 'package:parkingapp/pages/PackagesScreen.dart';
+import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/ReserveBookingScreen.dart';
 import 'package:parkingapp/pages/Signupscreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
             '/reserveBooking': (context) => ReserveBookingScreen(),
             '/packagesScreen': (context) => PackagesScreen(),
             '/main': (context) => MainScreen(),
+            '/payment': (context) => PaymentScreen(),
           },
         );
       },

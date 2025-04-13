@@ -25,6 +25,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
   void initState() {
     super.initState();
     _searchFuture = _performSearch();
+    Globals.option = null;
   }
 
   Future<SearchResultResponse> _performSearch() async {
@@ -277,10 +278,9 @@ class _PackagesScreenState extends State<PackagesScreen> {
 
 
   void _handleBooking(ParkingOption option) {
+    Globals.option = option;
     Navigator.pushNamed(
     context,
-    MyRoutes.reserveBooking,
-    arguments: option, // optional, if you want to pass data
-  );
+    MyRoutes.reserveBooking);
   }
 }

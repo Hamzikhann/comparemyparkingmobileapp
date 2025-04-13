@@ -8,9 +8,10 @@ class CustomDropdown<T> extends StatefulWidget {
   final List<T> items;
   final double? height;
   final Color? borderColor;
-  final String? defaultValue;
+  final T? defaultValue;
   final bool? isSearchable;
   final Function(T?) onSelectItem;
+  final T? selectedItem; // Add this parameter
 
   const CustomDropdown({
     super.key,
@@ -21,6 +22,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.borderColor,
     this.defaultValue,
     this.isSearchable,
+    this.selectedItem, // Add this
   });
 
   @override
@@ -33,44 +35,45 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   bool isClearedManually = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize with selectedItem if provided, otherwise with defaultValue
+    selectedValue = widget.selectedItem ?? widget.defaultValue;
+  }
+
+  @override
   void didUpdateWidget(CustomDropdown<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.defaultValue != oldWidget.defaultValue) {
-      if (!isClearedManually) {
-        selectedValue = null;
-        if (widget.defaultValue != null) {
-          for (T item in widget.items) {
-            if (item.toString() == widget.defaultValue) {
-              selectedValue = item;
-              break;
-            }
-          }
-        }
-      }
+    // Update if selectedItem changed from outside
+    if (widget.selectedItem != oldWidget.selectedItem) {
+      selectedValue = widget.selectedItem;
       setState(() {});
     }
 
+    // Handle defaultValue changes
+    if (widget.defaultValue != oldWidget.defaultValue && 
+        widget.selectedItem == null && 
+        !isClearedManually) {
+      selectedValue = widget.defaultValue;
+      setState(() {});
+    }
+
+    // Reset if items changed
     if (!listEquals(widget.items, oldWidget.items)) {
       setState(() {
-        selectedValue = null;
+        // Only reset if the selected value is no longer in the items list
+        if (selectedValue != null && !widget.items.contains(selectedValue)) {
+          selectedValue = null;
+          isClearedManually = true;
+          widget.onSelectItem(null);
+        }
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.defaultValue != null &&
-        selectedValue == null &&
-        !isClearedManually) {
-      for (T item in widget.items) {
-        if (item.toString() == widget.defaultValue) {
-          selectedValue = item;
-          break;
-        }
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -1,4 +1,5 @@
 import 'package:parkingapp/data/models/IPmodel.dart';
+import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 
@@ -14,7 +15,8 @@ class Globals {
   //**********User**********
   static UserModel? user;
   static IPmodel? ip;
-
+ //**********User**********
+  static ParkingOption? option;
   //**********clear**********
   static void clearVariables() {
     user = null;

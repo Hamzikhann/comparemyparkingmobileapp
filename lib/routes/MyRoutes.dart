@@ -7,4 +7,5 @@ class MyRoutes {
   static String reserveBooking = '/reserveBooking';
   static String packagesScreen = '/packagesScreen';
   static String mainPage = '/main';
+  static String payment = '/payment';
 }

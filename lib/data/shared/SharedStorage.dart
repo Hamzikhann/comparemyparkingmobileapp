@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/models/BookingInfoModel.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ class SharedStorage {
   static const String ipKey = 'ip_data';
   static const String themeKey = 'theme_data';
   static const String emailsKey = 'emails';
+  static const String bookingInfoKey = 'booking_info';
 
   static Future<void> loadUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -80,4 +82,25 @@ class SharedStorage {
     await prefs.remove(themeKey);
     await prefs.remove(emailsKey);
   }
+  static Future<void> saveBookingInfo(BookingInfoModel bookingInfo) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final jsonString = json.encode(bookingInfo.toJson());
+  await prefs.setString(bookingInfoKey, jsonString);
+}
+
+static Future<BookingInfoModel?> loadBookingInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final jsonString = prefs.getString(bookingInfoKey);
+  
+  if (jsonString != null) {
+    final data = json.decode(jsonString);
+    return BookingInfoModel.fromJson(data);
+  }
+  return null;
+}
+
+static Future<void> clearBookingInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.remove(bookingInfoKey);
+}
 }
