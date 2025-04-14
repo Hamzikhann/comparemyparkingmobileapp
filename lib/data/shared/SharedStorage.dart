@@ -14,15 +14,16 @@ class SharedStorage {
   static const String bookingInfoKey = 'booking_info';
   static const String savedCardsKey = 'saved_cards';
 
-
   static Future<void> loadUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(userKey);
 
     if (jsonString != null) {
       final data = json.decode(jsonString);
-      Globals.user =
-          UserModel.fromJson(data); // pass full data, not data['user']
+      final userData = data['user'];
+      Globals.roleTitle = userData['roleTitle'];
+      Globals.user = UserModel.fromJson(data);
+      print('User Role: ${Globals.roleTitle}');
     }
   }
 
@@ -85,47 +86,47 @@ class SharedStorage {
     await prefs.remove(themeKey);
     await prefs.remove(emailsKey);
   }
+
   static Future<void> saveBookingInfo(BookingInfoModel bookingInfo) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final jsonString = json.encode(bookingInfo.toJson());
-  await prefs.setString(bookingInfoKey, jsonString);
-}
-
-static Future<BookingInfoModel?> loadBookingInfo() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final jsonString = prefs.getString(bookingInfoKey);
-  
-  if (jsonString != null) {
-    final data = json.decode(jsonString);
-    return BookingInfoModel.fromJson(data);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final jsonString = json.encode(bookingInfo.toJson());
+    await prefs.setString(bookingInfoKey, jsonString);
   }
-  return null;
-}
 
-static Future<void> clearBookingInfo() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.remove(bookingInfoKey);
-}
+  static Future<BookingInfoModel?> loadBookingInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(bookingInfoKey);
 
-static Future<void> saveCard(CardsModel card) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
+    if (jsonString != null) {
+      final data = json.decode(jsonString);
+      return BookingInfoModel.fromJson(data);
+    }
+    return null;
+  }
 
-  // Avoid duplicates by card number
-  savedCards.removeWhere((c) =>
-      CardsModel.fromJson(json.decode(c)).cardNumber == card.cardNumber);
+  static Future<void> clearBookingInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove(bookingInfoKey);
+  }
 
-  savedCards.add(json.encode(card.toJson()));
-  await prefs.setStringList(savedCardsKey, savedCards);
-}
+  static Future<void> saveCard(CardsModel card) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
 
-static Future<List<CardsModel>> loadSavedCards() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
+    // Avoid duplicates by card number
+    savedCards.removeWhere((c) =>
+        CardsModel.fromJson(json.decode(c)).cardNumber == card.cardNumber);
 
-  return savedCards
-      .map((jsonCard) => CardsModel.fromJson(json.decode(jsonCard)))
-      .toList();
-}
+    savedCards.add(json.encode(card.toJson()));
+    await prefs.setStringList(savedCardsKey, savedCards);
+  }
 
+  static Future<List<CardsModel>> loadSavedCards() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> savedCards = prefs.getStringList(savedCardsKey) ?? [];
+
+    return savedCards
+        .map((jsonCard) => CardsModel.fromJson(json.decode(jsonCard)))
+        .toList();
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:parkingapp/data/models/BookingInfoModel.dart';
+import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
@@ -11,14 +12,15 @@ class Globals {
   static String startTime = "";
   static String endTime = "";
   static String selectedDateRange = "";
+  static String roleTitle = "";
 
-  
   //**********User**********
   static UserModel? user;
   static IPmodel? ip;
- //**********User**********
+  //**********User**********
   static ParkingOption? option;
   static BookingInfoModel? booking_info_model;
+  static Parking? bookingDriverResponse;
   //**********clear**********
   static void clearVariables() {
     user = null;

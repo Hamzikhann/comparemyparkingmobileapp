@@ -5,7 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/IntroScreen.dart';
-import 'package:parkingapp/pages/MainScreen.dart'; // Import the MainScreen
+import 'package:parkingapp/pages/MainScreen.dart';
+import 'package:parkingapp/pages/driver/DriverHome.dart';
+// Import the MainScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,15 +30,29 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigate to the appropriate screen after a delay
     Future.delayed(Duration(seconds: 5), () {
       if (Globals.user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MainScreen()),
-        );
+        if (Globals.roleTitle == "Employee") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Driverhome()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          );
+        }
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => IntroScreen()),
-        );
+        if (Globals.roleTitle == "Employee") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Driverhome()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => IntroScreen()),
+          );
+        }
       }
     });
   }
