@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -26,16 +28,17 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingItem("Change Password", Icons.lock_outline),
                   _buildSettingItem("Change Language", Icons.language_outlined),
                   _buildSettingItem("Change Location", Icons.location_on_outlined),
-                  
+
                   SizedBox(height: 24.h),
                   _buildSectionTitle("Notifications"),
                   _buildSwitchItem("Turn on", Icons.notifications_outlined, true),
-                  
+
                   SizedBox(height: 24.h),
                   _buildSectionTitle("Term and Support"),
                   _buildSettingItem("Terms and conditions", Icons.description_outlined),
                   _buildSettingItem("Privacy Policy", Icons.privacy_tip_outlined),
                   _buildSettingItem("Support", Icons.help_outline_outlined),
+                  _buildLogoutItem(context), // 🚀 Add Logout here
                 ],
               ),
             ),
@@ -89,6 +92,42 @@ class SettingsScreen extends StatelessWidget {
         },
         activeColor: const Color(0xFF201A56),
       ),
+    );
+  }
+
+  Widget _buildLogoutItem(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.logout, size: 24.sp, color: Colors.red),
+      title: Text(
+        "Logout",
+        style: TextStyle(fontSize: 16.sp, color: Colors.red),
+      ),
+      onTap: () async {
+        // Confirm logout
+        final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Confirm Logout"),
+            content: const Text("Are you sure you want to logout?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Logout", style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldLogout == true) {
+          await SharedStorage.removeFromSharedPreferences();
+          Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+        }
+      },
     );
   }
 }

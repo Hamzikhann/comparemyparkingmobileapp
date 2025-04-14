@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/driver/TopBar.dart';
 import 'package:permission_handler/permission_handler.dart'; // <-- New import
@@ -94,7 +96,12 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
               TopBar(
                 title: "Booking Detail",
                 showBackButton: true,
-                onLogoutPressed: () {},
+                onLogoutPressed: () {
+                  // Handle logout
+                  Globals.user = null;
+                  SharedStorage.removeFromSharedPreferences();
+                  Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+                },
                 onBackPressed: () => _onBackPressed(context),
               ),
               Expanded(

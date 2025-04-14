@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
-import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:parkingapp/widgets/driver/SessionCard.dart';
+import 'package:parkingapp/widgets/driver/TopBar.dart' show TopBar;
 
 class ViewAllScreen extends StatelessWidget {
   final String title;
@@ -31,8 +32,14 @@ class ViewAllScreen extends StatelessWidget {
         child: Column(
           children: [
             TopBar(
-              greeting: title,
+              title: title,
               onBackPressed: () => Navigator.pop(context),
+              onLogoutPressed: () {
+                  // Handle logout
+                  Globals.user = null;
+                  SharedStorage.removeFromSharedPreferences();
+                  Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+                },
             ),
             Expanded(
               child: ListView.builder(

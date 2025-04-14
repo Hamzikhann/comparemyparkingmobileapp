@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/driver/ViewAllScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
@@ -70,6 +71,9 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                 onBackPressed: () {},
                 onLogoutPressed: () {
                   // Handle logout
+                  Globals.user = null;
+                  SharedStorage.removeFromSharedPreferences();
+                  Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
                 },
               ),
               Expanded(
