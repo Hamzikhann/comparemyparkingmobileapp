@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:parkingapp/widgets/driver/SessionCard.dart';
 
@@ -54,6 +55,10 @@ class ViewAllScreen extends StatelessWidget {
                       rate: "\$40/HR",
                       onViewRidePressed: () {
                         Globals.bookingDriverResponse = item;
+                        Navigator.pushNamed(
+                          context,
+                          MyRoutes.bookingDetail,
+                        );
                       },
                       onViewLocationPressed: () {
                         // location click
