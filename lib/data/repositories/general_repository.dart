@@ -312,6 +312,8 @@ class GeneralRepository {
     required String price,
     required String description,
     required List<String> bulletPoints,
+    required String totalPrice,
+    required String referenceNo,
   }) async {
     Completer<BookingResponse> completer = Completer();
 
@@ -340,40 +342,14 @@ class GeneralRepository {
           name.isEmpty ||
           price.isEmpty ||
           description.isEmpty ||
-          bulletPoints.isEmpty) {
+          bulletPoints.isEmpty || totalPrice.isEmpty || referenceNo.isEmpty) {
         throw Exception('All parameters are required');
       }
-
-      debugPrint('Booking request with: \n'
-          'Start Date: $startDate\n'
-          'End Date: $endDate\n'
-          'Airport: $airport\n'
-          'Start Time: $startTime\n'
-          'End Time: $endTime\n'
-          'Outbound Terminal: $outboundTerminal\n'
-          'Outbound Flight No: $outboundFlightNo\n'
-          'Inbound Terminal: $inboundTerminal\n'
-          'Inbound Flight No: $inboundFlightNo\n'
-          'Title: $title\n'
-          'First Name: $firstName\n'
-          'Last Name: $lastName\n'
-          'Email: $email\n'
-          'Phone No: $phoneNo\n'
-          'Vehicle Registration No: $vehicleRegistrationNo\n'
-          'Vehicle Manufacturer: $vehicleManufacturer\n'
-          'Vehicle Model: $vehicleModel\n'
-          'Vehicle Color: $vehicleColor\n'
-          'Number of Passengers: $numberOfPassengers\n'
-          'User ID: $userId\n'
-          'Name: $name\n'
-          'Price: $price\n'
-          'Description: $description\n'
-          'Bullet Points: ${bulletPoints.join(", ")}');
-
       server.makeApiRequest(
         apiEndpoint:
             ApiFiles.bookParking, // Ensure this endpoint is defined in ApiFiles
         requestMethod: RequestMethod.post,
+        
         requestData: {
           "startDate": startDate,
           "endDate": endDate,
@@ -399,6 +375,8 @@ class GeneralRepository {
           "price": price,
           "description": description,
           "bulletPoints": bulletPoints,
+          "totalPayment": totalPrice,
+          "referenceNo": referenceNo,
         },
         onLoad: () {
           EasyLoading.show(status: "Booking parking...");

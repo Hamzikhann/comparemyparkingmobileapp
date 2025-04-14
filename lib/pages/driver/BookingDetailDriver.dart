@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +7,6 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/driver/TopBar.dart';
-import 'package:permission_handler/permission_handler.dart'; // <-- New import
 
 class Bookingdetaildriver extends StatefulWidget {
   const Bookingdetaildriver({Key? key}) : super(key: key);
@@ -18,68 +16,229 @@ class Bookingdetaildriver extends StatefulWidget {
 }
 
 class BookingdetaildriverState extends State<Bookingdetaildriver> {
-  List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
   void _onBackPressed(BuildContext context) {
     Navigator.of(context).pop();
   }
 
-  /// Show Bottom Sheet to Choose Image Source (Camera or Gallery)
-  Future<void> _showImageSourceActionSheet() async {
-    showModalBottomSheet(
+  Future<void> _showStartPopup() async {
+    DateTime? selectedStartDate;
+    TimeOfDay? selectedStartTime;
+    TextEditingController pickupController = TextEditingController();
+    List<File> localStartImages = [];
+
+    await showDialog(
       context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text("Gallery"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> _selectDate() async {
+              DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                setState(() => selectedStartDate = picked);
+              }
+            }
+
+            Future<void> _selectTime() async {
+              TimeOfDay? picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+              if (picked != null) {
+                setState(() => selectedStartTime = picked);
+              }
+            }
+
+            Future<void> _pickImage(ImageSource source) async {
+              final XFile? pickedFile = await _picker.pickImage(source: source);
+              if (pickedFile != null) {
+                setState(() => localStartImages.add(File(pickedFile.path)));
+              }
+            }
+
+            return AlertDialog(
+              title: Text('Start'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: pickupController,
+                      decoration: InputDecoration(labelText: 'Pickup Location'),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _selectDate,
+                          child: Text('Pick Date'),
+                        ),
+                        SizedBox(width: 10),
+                        Text(selectedStartDate != null
+                            ? "${selectedStartDate!.toLocal()}".split(' ')[0]
+                            : "No date"),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _selectTime,
+                          child: Text('Pick Time'),
+                        ),
+                        SizedBox(width: 10),
+                        Text(selectedStartTime != null
+                            ? selectedStartTime!.format(context)
+                            : "No time"),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _pickImage(ImageSource.gallery),
+                          child: CircleAvatar(child: Icon(Icons.photo_library)),
+                        ),
+                        GestureDetector(
+                          onTap: () => _pickImage(ImageSource.camera),
+                          child: CircleAvatar(child: Icon(Icons.camera_alt)),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: localStartImages.map((file) {
+                          return Padding(
+                            padding: EdgeInsets.all(4),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(file, width: 60, height: 60, fit: BoxFit.cover),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text("Camera"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Save data or pass it upward
+                    Navigator.pop(context);
+                  },
+                  child: Text("Start"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  /// Request permission and pick image
-  Future<void> _pickImage(ImageSource source) async {
-    final permissionStatus = Platform.isIOS
-        ? await Permission.photos.request()
-        : await Permission.storage.request();
-    final cameraStatus = await Permission.camera.request();
+  Future<void> _showEndPopup() async {
+    DateTime? selectedEndDate;
+    TimeOfDay? selectedEndTime;
+    TextEditingController dropoffController = TextEditingController();
 
-    if (permissionStatus.isGranted || cameraStatus.isGranted) {
-      final XFile? pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImages.add(File(pickedFile.path));
-        });
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Permission denied. Please enable it in settings."),
-        ),
-      );
-    }
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> _selectDate() async {
+              DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                setState(() => selectedEndDate = picked);
+              }
+            }
+
+            Future<void> _selectTime() async {
+              TimeOfDay? picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+              if (picked != null) {
+                setState(() => selectedEndTime = picked);
+              }
+            }
+
+            return AlertDialog(
+              title: Text('End'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: dropoffController,
+                      decoration: InputDecoration(labelText: 'Dropoff Location'),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _selectDate,
+                          child: Text('Drop Off Date'),
+                        ),
+                        SizedBox(width: 10),
+                        Text(selectedEndDate != null
+                            ? "${selectedEndDate!.toLocal()}".split(' ')[0]
+                            : "No date"),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _selectTime,
+                          child: Text('Drop Off Time'),
+                        ),
+                        SizedBox(width: 10),
+                        Text(selectedEndTime != null
+                            ? selectedEndTime!.format(context)
+                            : "No time"),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Save data or pass it upward
+                    Navigator.pop(context);
+                  },
+                  child: Text("End"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -97,7 +256,6 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                 title: "Booking Detail",
                 showBackButton: true,
                 onLogoutPressed: () {
-                  // Handle logout
                   Globals.user = null;
                   SharedStorage.removeFromSharedPreferences();
                   Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
@@ -106,93 +264,45 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "Booking Information",
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Archivo',
-                          ),
-                        ),
-                      ),
+                      Text("Booking Information", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 24.h),
-
-                      // Customer Name
-                      Text("Customer Name",
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Archivo')),
+                      Text("Customer Name", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
-                        value:
-                            "${Globals.bookingDriverResponse?.registrations.first.firstName} ${Globals.bookingDriverResponse?.registrations.first.lastName}",
+                        value: "${Globals.bookingDriverResponse?.registrations.first.firstName} ${Globals.bookingDriverResponse?.registrations.first.lastName}",
                       ),
                       SizedBox(height: 24.h),
-
-                      // Contact Number
-                      Text("Contact Number",
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Archivo')),
+                      Text("Contact Number", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
-                        value:
-                            "${Globals.bookingDriverResponse?.registrations.first.phoneNo}",
+                        value: "${Globals.bookingDriverResponse?.registrations.first.phoneNo}",
                       ),
                       SizedBox(height: 24.h),
-
-                      // Car Details
-                      Text(
-                        "Car Details:",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Archivo',
-                        ),
+                      Text("Car Details:", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 16.h),
+                      Text("Car Registration No", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 8.h),
+                      NonEditableTextField(
+                        hintText: "",
+                        value: "${Globals.bookingDriverResponse?.vehicles.first.vehicleRegistration}",
                       ),
                       SizedBox(height: 16.h),
-
-                      // Car Registration No
-                      Text("Car Registration No",
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Archivo')),
-                      SizedBox(height: 8.h),
-                      NonEditableTextField(
-                        hintText: "",
-                        value:
-                            "${Globals.bookingDriverResponse?.vehicles.first.vehicleRegistration}",
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // Car Maker & Model
                       Row(
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Car Maker",
-                                    style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Archivo')),
+                                Text("Car Maker", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
-                                  hintText:
-                                      "${Globals.bookingDriverResponse?.vehicles.first.vehicleManufacturer}",
+                                  hintText: "${Globals.bookingDriverResponse?.vehicles.first.vehicleManufacturer}",
                                 ),
                               ],
                             ),
@@ -202,122 +312,76 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Car Model",
-                                    style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Archivo')),
+                                Text("Car Model", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
-                                  hintText:
-                                      "${Globals.bookingDriverResponse?.vehicles.first.vehicleColour}",
+                                  hintText: "${Globals.bookingDriverResponse?.vehicles.first.vehicleColour}",
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-
                       SizedBox(height: 24.h),
-
-                      // Upload Photos
-                      Text(
-                        "Upload Photos",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Archivo',
-                        ),
+                      Text("Flight Details:", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 16.h),
+                      Text("Out Bound Terminal", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 8.h),
+                      NonEditableTextField(
+                        hintText: "",
+                        value: "${Globals.bookingDriverResponse?.registrations.first.outboundTerminal}",
                       ),
-                      SizedBox(height: 12.h),
-
-                      // Images Preview
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: _showImageSourceActionSheet,
-                              child: Container(
-                                width: 80.w,
-                                height: 80.w,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: Colors.grey),
+                      SizedBox(height: 16.h),
+                      Text("In Bound Terminal", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 8.h),
+                      NonEditableTextField(
+                        hintText: "",
+                        value: "${Globals.bookingDriverResponse?.registrations.first.inboundTerminal}",
+                      ),
+                      SizedBox(height: 16.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Out Bound Flight", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText: "${Globals.bookingDriverResponse?.registrations.first.outboundFlightNo}",
                                 ),
-                                child: Icon(Icons.add_a_photo,
-                                    size: 30, color: Colors.grey),
-                              ),
+                              ],
                             ),
-                            SizedBox(width: 10.w),
-                            ..._selectedImages.asMap().entries.map(
-                              (entry) {
-                                int index = entry.key;
-                                File file = entry.value;
-
-                                return Stack(
-                                  children: [
-                                    Container(
-                                      margin: EdgeInsets.only(right: 10.w),
-                                      width: 80.w,
-                                      height: 80.w,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        image: DecorationImage(
-                                          image: FileImage(file),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedImages.removeAt(index);
-                                          });
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(Icons.close,
-                                              size: 18, color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("In Bound Flight", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText: "${Globals.bookingDriverResponse?.registrations.first.inboundFlightNo}",
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 32.h),
-
-                      // Deliver Button
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Delivering...')));
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 40.w, vertical: 14.h),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: Text(
-                            "Deliver Now",
-                            style:
-                                TextStyle(fontSize: 16.sp, color: Colors.white),
-                          ),
-                        ),
+                        ],
                       ),
+                      SizedBox(height: 24.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            onPressed: _showStartPopup,
+                            child: Text("Start Booking"),
+                          ),
+                          ElevatedButton(
+                            onPressed: _showEndPopup,
+                            child: Text("End Booking"),
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),

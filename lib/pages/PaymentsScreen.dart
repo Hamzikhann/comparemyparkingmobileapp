@@ -97,6 +97,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       "price": Globals.option?.price ?? '',
       "description": Globals.option?.description ?? '',
       "bulletPoints": Globals.option?.bulletPoints ?? [],
+      "totalPrice": Globals.option?.price ?? '',
+      "referenceNo":"4568765",
+      
     };
 
     try {
@@ -127,6 +130,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     bulletPoints: (bookingData['bulletPoints'] is List)
         ? List<String>.from(bookingData['bulletPoints'] as List)
         : [],
+    totalPrice: bookingData['totalPrice'] as String,
+    referenceNo: bookingData['referenceNo'] as String,
   );
 
   // You can check if the resultMessage matches your expected success value
