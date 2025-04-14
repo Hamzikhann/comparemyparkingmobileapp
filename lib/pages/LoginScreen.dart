@@ -25,15 +25,34 @@ class _LoginPageState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return WillPopScope(
+    onWillPop: () async {
+      return await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Exit App'),
+          content: const Text('Do you really want to exit the app?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      ) ?? false;
+    },
+    child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w),
             child: Form(
-              // 👈 Wrap with Form
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -47,8 +66,6 @@ class _LoginPageState extends State<LoginScreen> {
                     ),
                   ),
                   SizedBox(height: 150.h),
-
-                  // Email Input
                   CustomTextField(
                     hintText: "Email",
                     controller: emailController,
@@ -60,10 +77,7 @@ class _LoginPageState extends State<LoginScreen> {
                       return null;
                     },
                   ),
-
                   SizedBox(height: 40.h),
-
-                  // Password Input
                   CustomTextField(
                     hintText: "Password",
                     controller: passwordController,
@@ -75,15 +89,12 @@ class _LoginPageState extends State<LoginScreen> {
                       return null;
                     },
                   ),
-
                   SizedBox(height: 40.h),
-
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(
-                            context, MyRoutes.forgot);
+                        Navigator.pushReplacementNamed(context, MyRoutes.forgot);
                       },
                       child: Text(
                         "Forgot Password?",
@@ -95,34 +106,25 @@ class _LoginPageState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
                   SizedBox(height: 60.h),
                   const CustomAlert(alertKey: 'login'),
-
-                  // Login Button
                   PrimaryButton(
                     text: "Login",
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        signin(emailController.text.trim(),
-                            passwordController.text.trim());
+                        signin(emailController.text.trim(), passwordController.text.trim());
                       }
                     },
                   ),
-
                   SizedBox(height: 50.h),
-
-                  // OR Sign up
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("or ",
-                          style: TextStyle(
-                              fontSize: 14.sp, fontFamily: 'Archivo')),
+                          style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo')),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(
-                              context, MyRoutes.signUpRoute);
+                          Navigator.pushReplacementNamed(context, MyRoutes.signUpRoute);
                         },
                         child: Text(
                           "Signup",
@@ -142,8 +144,10 @@ class _LoginPageState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Future<void> signin(String userName, String password) async {
     GeneralRepository().signin(userName, password).then((value) {

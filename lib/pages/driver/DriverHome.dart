@@ -50,16 +50,15 @@ class _ReserveBookingScreenState extends State<Driverhome> {
     }
   }
 
-  void _onBackPressed(BuildContext context) {
-    Navigator.of(context).pop();
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _onBackPressed(context);
-        return false;
+        // Show exit confirmation dialog
+        bool shouldExit = await _showExitConfirmationDialog(context);
+        return shouldExit; // If true, allow back navigation; if false, prevent it
       },
       child: Scaffold(
         body: SafeArea(
@@ -96,8 +95,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                         : FutureBuilder<BookingDriverResponse>(
                             future: _bookingsFuture,
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
                                 return const Center();
                               } else if (snapshot.hasError) {
                                 return Center(
@@ -114,17 +112,13 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                   ),
                                 );
                               } else if (snapshot.hasData) {
-                                final reserved =
-                                    snapshot.data!.assignedAssignments;
-                                final completed =
-                                    snapshot.data!.completedAssignmnets;
+                                final reserved = snapshot.data!.assignedAssignments;
+                                final completed = snapshot.data!.completedAssignmnets;
 
                                 return SingleChildScrollView(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 20.w, vertical: 16.h),
+                                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text("Driver Info",
                                           style: TextStyle(
@@ -140,8 +134,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                       SizedBox(height: 8.h),
                                       NonEditableTextField(
                                         hintText: "",
-                                        value:
-                                            "${Globals.user?.firstName ?? ''} ${Globals.user?.lastName ?? ''}",
+                                        value: "${Globals.user?.firstName ?? ''} ${Globals.user?.lastName ?? ''}",
                                       ),
                                       SizedBox(height: 16.h),
                                       Row(
@@ -183,8 +176,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
 
                                       /// 🔄 TASK LIST ROW WITH REFRESH
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             "Task List",
@@ -202,8 +194,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                                 fontSize: 14.sp,
                                                 fontWeight: FontWeight.w500,
                                                 color: colors.primary,
-                                                decoration:
-                                                    TextDecoration.underline,
+                                                decoration: TextDecoration.underline,
                                               ),
                                             ),
                                           ),
@@ -211,16 +202,13 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                       ),
                                       SizedBox(height: 24.h),
 
-                                      buildSection("Active Session", reserved,
-                                          Icons.schedule),
-                                      buildSection("Completed Sessions",
-                                          completed, Icons.check_circle),
+                                      buildSection("Active Session", reserved, Icons.schedule),
+                                      buildSection("Completed Sessions", completed, Icons.check_circle),
                                     ],
                                   ),
                                 );
                               } else {
-                                return const Center(
-                                    child: Text("No data available."));
+                                return const Center(child: Text("No data available."));
                               }
                             },
                           ),
@@ -289,8 +277,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                   : "No flight number",
               date: parking.startDate,
               time: parking.startTime,
-              price:
-                  "\Car Maker: ${parking.vehicles.first.vehicleManufacturer}",
+              price: "Car Maker: ${parking.vehicles.first.vehicleManufacturer}",
               type: type,
               timeRemaining: parking.startTime,
               rate: "aa",
@@ -319,4 +306,38 @@ class _ReserveBookingScreenState extends State<Driverhome> {
       ),
     );
   }
+
+  
+Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+  // Ensure the return type is Future<bool>
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false, // Prevent dismissing by tapping outside
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Exit"),
+        content: Text("Are you sure you want to exit?"),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false); // Don't exit
+            },
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true); // Exit
+            },
+            child: Text("Exit"),
+          ),
+        ],
+      );
+    },
+  );
+
+  // Return the result or false if the result is null (dialog dismissed)
+  return result ?? false;
+}
+
+ // Ensures a default Future<bool> value is returned if the dialog is dismissed.
 }
