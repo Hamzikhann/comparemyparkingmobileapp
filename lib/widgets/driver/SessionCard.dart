@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:parkingapp/utils/colors.dart';
 
 class SessionCard extends StatelessWidget {
   final String title;
@@ -92,7 +93,7 @@ class SessionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                  color: colors.primary,
                 ),
               ),
             ],
@@ -132,7 +133,7 @@ class SessionCard extends StatelessWidget {
                   onPressed: onViewRidePressed,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 12.h),
-                    side: BorderSide(color: Colors.green),
+                    side: BorderSide(color: colors.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -140,7 +141,7 @@ class SessionCard extends StatelessWidget {
                   child: Text(
                     'View Ride',
                     style: TextStyle(
-                      color: Colors.green,
+                      color: colors.primary,
                       fontSize: 14.sp,
                     ),
                   ),
@@ -151,7 +152,7 @@ class SessionCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onViewLocationPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: colors.primary,
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
@@ -255,7 +256,7 @@ class SessionCard extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green),
+                    color: colors.primary),
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/pages/driver/ViewAllScreen.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/driver/SessionCard.dart';
@@ -36,7 +37,6 @@ class _ReserveBookingScreenState extends State<Driverhome> {
 
     try {
       _bookingsFuture = _repository.getBookingsForDriver();
-      // Force the future to complete so we can catch any errors
       await _bookingsFuture;
     } catch (e) {
       setState(() {
@@ -66,6 +66,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
             children: [
               TopBar(
                 title: "Driver",
+                showBackButton: false,
+                onBackPressed: () {},
                 onLogoutPressed: () {
                   // Handle logout
                 },
@@ -174,12 +176,37 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                         ],
                                       ),
                                       SizedBox(height: 16.h),
-                                      Text("Task List",
-                                          style: TextStyle(
+
+                                      /// 🔄 TASK LIST ROW WITH REFRESH
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Task List",
+                                            style: TextStyle(
                                               fontSize: 16.sp,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'Archivo')),
+                                              fontFamily: 'Archivo',
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: _loadData,
+                                            child: Text(
+                                              "Refresh",
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w500,
+                                                color: colors.primary,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                       SizedBox(height: 24.h),
+
                                       buildSection("Active Session", reserved,
                                           Icons.schedule),
                                       buildSection("Completed Sessions",
@@ -247,7 +274,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
           ],
         ),
         ...List.generate(
-          1, // or change to parkings.length if you want to show all
+          1, // or change to parkings.length to show all
           (index) {
             final parking = parkings[index];
             return SessionCard(
@@ -258,12 +285,17 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                   : "No flight number",
               date: parking.startDate,
               time: parking.startTime,
-              price: "\$${parking.vehicles.first.vehicleManufacturer}",
+              price:
+                  "\Car Maker: ${parking.vehicles.first.vehicleManufacturer}",
               type: type,
               timeRemaining: parking.startTime,
               rate: "aa",
               onViewRidePressed: () {
-                Globals.bookingDriverResponse = parking; // ✅ set clicked one
+                Globals.bookingDriverResponse = parking;
+                Navigator.pushNamed(
+                  context,
+                  MyRoutes.bookingDetail,
+                );
               },
               onViewLocationPressed: () {
                 // location click

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
-import 'package:parkingapp/widgets/SessionCard.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
+import 'package:parkingapp/widgets/driver/SessionCard.dart';
 
 class ViewAllScreen extends StatelessWidget {
   final String title;
@@ -45,11 +46,18 @@ class ViewAllScreen extends StatelessWidget {
                       status: item.status,
                       subTitle: item.registrations.first.inboundFlightNo,
                       date: item.startDate,
-                      time: "02:00pm",
-                      price: "\$100",
+                      time: item.startTime,
+                      price:
+                          "\$Car Maker : ${item.vehicles.first.vehicleManufacturer}",
                       type: type,
-                      timeRemaining: "0thr:30min", // Only for active sessions
-                      rate: "\$40/HR", // Only for active sessions
+                      timeRemaining: item.startTime, // Only for active sessions
+                      rate: "\$40/HR",
+                      onViewRidePressed: () {
+                        Globals.bookingDriverResponse = item;
+                      },
+                      onViewLocationPressed: () {
+                        // location click
+                      }, // Only for active sessions
                     ),
                   );
                 },

@@ -3,12 +3,16 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TopBar extends StatelessWidget {
   final String title;
+  final VoidCallback onBackPressed;
+  final bool showBackButton;
   final VoidCallback onLogoutPressed;
 
   const TopBar({
     super.key,
     required this.title,
     required this.onLogoutPressed,
+    required this.onBackPressed,
+    this.showBackButton = true,
   });
 
   @override
@@ -31,6 +35,18 @@ class TopBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Title text (left-aligned)
+              if (showBackButton)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                    onPressed: onBackPressed,
+                  ),
+                ),
               Text(
                 title,
                 style: TextStyle(
@@ -39,7 +55,7 @@ class TopBar extends StatelessWidget {
                   fontSize: 18.sp,
                 ),
               ),
-              
+
               // Logout button (right-aligned)
               IconButton(
                 icon: Icon(

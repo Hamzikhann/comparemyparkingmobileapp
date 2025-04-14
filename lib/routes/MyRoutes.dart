@@ -9,4 +9,5 @@ class MyRoutes {
   static String mainPage = '/main';
   static String driverhome = '/driverhome';
   static String payment = '/payment';
+  static String bookingDetail = '/bookingDetail';
 }
