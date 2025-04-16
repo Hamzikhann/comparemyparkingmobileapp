@@ -5,6 +5,7 @@ import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/OtpModel.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
@@ -45,6 +46,39 @@ class GeneralRepository {
         EasyLoading.dismiss();
         Alertify.showAlert(
           alertKey: 'login',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<Otpmodel> forgotPassword(String email) async {
+    Completer<Otpmodel> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.signin,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "email": email,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+
+        final userData = res['data'];
+        Otpmodel user = Otpmodel.fromJson(userData);
+        completer.complete(user);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'reset',
           message: errorMessage,
           duration: 10,
           type: AlertType.error,
@@ -342,14 +376,16 @@ class GeneralRepository {
           name.isEmpty ||
           price.isEmpty ||
           description.isEmpty ||
-          bulletPoints.isEmpty || totalPrice.isEmpty || referenceNo.isEmpty) {
+          bulletPoints.isEmpty ||
+          totalPrice.isEmpty ||
+          referenceNo.isEmpty) {
         throw Exception('All parameters are required');
       }
       server.makeApiRequest(
         apiEndpoint:
             ApiFiles.bookParking, // Ensure this endpoint is defined in ApiFiles
         requestMethod: RequestMethod.post,
-        
+
         requestData: {
           "startDate": startDate,
           "endDate": endDate,

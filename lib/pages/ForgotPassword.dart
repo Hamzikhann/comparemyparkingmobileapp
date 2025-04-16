@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/providers/AlertNotifier.dart';
+import 'package:parkingapp/providers/Alertify.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
-class Forgotpassword extends StatelessWidget {
+class Forgotpassword extends StatefulWidget {
+  const Forgotpassword({super.key});
+
+  @override
+  State<Forgotpassword> createState() => _ForgotpasswordPageState();
+}
+
+class _ForgotpasswordPageState extends State<Forgotpassword> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -98,5 +108,19 @@ class Forgotpassword extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> forgotPassword(String userName) async {
+    GeneralRepository().forgotPassword(userName).then((value) {
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'login',
+        message: 'Login successfully!',
+        type: AlertType.success,
+        onClose: () {
+          Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
+        },
+      );
+    });
   }
 }
