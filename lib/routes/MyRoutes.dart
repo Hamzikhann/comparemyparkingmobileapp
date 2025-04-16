@@ -10,4 +10,5 @@ class MyRoutes {
   static String driverhome = '/driverhome';
   static String payment = '/payment';
   static String bookingDetail = '/bookingDetail';
+  static String editProfile = '/editProfile';
 }

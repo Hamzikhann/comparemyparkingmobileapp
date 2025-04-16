@@ -25,129 +25,132 @@ class _LoginPageState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this
 
   @override
-Widget build(BuildContext context) {
-  return WillPopScope(
-    onWillPop: () async {
-      return await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Exit App'),
-          content: const Text('Do you really want to exit the app?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Yes'),
-            ),
-          ],
-        ),
-      ) ?? false;
-    },
-    child: Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.w),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(height: 60.h),
-                  Center(
-                    child: SvgPicture.asset(
-                      'assets/images/logo.svg',
-                      height: 80.h,
-                      width: 200.w,
-                    ),
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        return await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Exit App'),
+                content: const Text('Do you really want to exit the app?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('No'),
                   ),
-                  SizedBox(height: 150.h),
-                  CustomTextField(
-                    hintText: "Email",
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return "Please enter email";
-                      }
-                      return null;
-                    },
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Yes'),
                   ),
-                  SizedBox(height: 40.h),
-                  CustomTextField(
-                    hintText: "Password",
-                    controller: passwordController,
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return "Please enter password";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 40.h),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, MyRoutes.forgot);
-                      },
-                      child: Text(
-                        "Forgot Password?",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontFamily: 'Archivo',
-                          color: colors.primary,
-                        ),
+                ],
+              ),
+            ) ??
+            false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 60.h),
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/images/logo.svg',
+                        height: 80.h,
+                        width: 200.w,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 60.h),
-                  const CustomAlert(alertKey: 'login'),
-                  PrimaryButton(
-                    text: "Login",
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        signin(emailController.text.trim(), passwordController.text.trim());
-                      }
-                    },
-                  ),
-                  SizedBox(height: 50.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("or ",
-                          style: TextStyle(fontSize: 14.sp, fontFamily: 'Archivo')),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacementNamed(context, MyRoutes.signUpRoute);
+                    SizedBox(height: 150.h),
+                    CustomTextField(
+                      hintText: "Email",
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Please enter email";
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 40.h),
+                    CustomTextField(
+                      hintText: "Password",
+                      controller: passwordController,
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Please enter password";
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 40.h),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, MyRoutes.forgot);
                         },
                         child: Text(
-                          "Signup",
+                          "Forgot Password?",
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: colors.primary,
                             fontFamily: 'Archivo',
-                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    SizedBox(height: 60.h),
+                    const CustomAlert(alertKey: 'login'),
+                    PrimaryButton(
+                      text: "Login",
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          signin(emailController.text.trim(),
+                              passwordController.text.trim());
+                        }
+                      },
+                    ),
+                    SizedBox(height: 50.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("or ",
+                            style: TextStyle(
+                                fontSize: 14.sp, fontFamily: 'Archivo')),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(
+                                context, MyRoutes.signUpRoute);
+                          },
+                          child: Text(
+                            "Signup",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: colors.primary,
+                              fontFamily: 'Archivo',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Future<void> signin(String userName, String password) async {
     GeneralRepository().signin(userName, password).then((value) {
@@ -161,13 +164,11 @@ Widget build(BuildContext context) {
           SharedStorage.saveUser(value);
           emailController.clear();
           passwordController.clear();
-          if(Globals.user?.roleTitle == "Employee"){
+          if (Globals.user?.roleTitle == "Employee") {
             Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
-          }
-          else{
+          } else {
             Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
           }
-          
         },
       );
     });

@@ -42,8 +42,7 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
                       icon: Icon(Icons.arrow_back, size: 24.w),
                       color: Colors.black,
                       onPressed: () {
-                        Navigator.pushReplacementNamed(
-                            context, MyRoutes.loginRoute);
+                        Navigator.pop(context);
                       },
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),

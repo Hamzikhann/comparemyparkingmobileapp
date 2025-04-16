@@ -24,21 +24,62 @@ class SettingsScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
                 children: [
                   _buildSectionTitle("General"),
-                  _buildSettingItem("Edit Profile", Icons.person_outline),
-                  _buildSettingItem("Change Password", Icons.lock_outline),
-                  _buildSettingItem("Change Language", Icons.language_outlined),
-                  _buildSettingItem("Change Location", Icons.location_on_outlined),
-
+                  _buildSettingItem(
+                    "Edit Profile",
+                    Icons.person_outline,
+                    onTap: () {
+                      // Navigate to edit profile screen
+                      Navigator.pushNamed(context, MyRoutes.editProfile);
+                    },
+                  ),
+                  _buildSettingItem(
+                    "Change Password",
+                    Icons.lock_outline,
+                    onTap: () {
+                      // Navigate to change password screen
+                      Navigator.pushNamed(context, MyRoutes.forgot);
+                    },
+                  ),
                   SizedBox(height: 24.h),
                   _buildSectionTitle("Notifications"),
-                  _buildSwitchItem("Turn on", Icons.notifications_outlined, true),
-
+                  _buildSwitchItem(
+                    "Turn on",
+                    Icons.notifications_outlined,
+                    true,
+                    onChanged: (value) {
+                      // Handle notification toggle
+                      // You might want to save this preference to SharedPreferences
+                      debugPrint(
+                          "Notifications turned ${value ? 'on' : 'off'}");
+                    },
+                  ),
                   SizedBox(height: 24.h),
                   _buildSectionTitle("Term and Support"),
-                  _buildSettingItem("Terms and conditions", Icons.description_outlined),
-                  _buildSettingItem("Privacy Policy", Icons.privacy_tip_outlined),
-                  _buildSettingItem("Support", Icons.help_outline_outlined),
-                  _buildLogoutItem(context), // 🚀 Add Logout here
+                  _buildSettingItem(
+                    "Terms and conditions",
+                    Icons.description_outlined,
+                    onTap: () {
+                      // Navigate to terms screen
+                      // Navigator.pushNamed(context, MyRoutes.termsRoute);
+                    },
+                  ),
+                  _buildSettingItem(
+                    "Privacy Policy",
+                    Icons.privacy_tip_outlined,
+                    onTap: () {
+                      // Navigate to privacy policy screen
+                      //Navigator.pushNamed(context, MyRoutes.privacyPolicyRoute);
+                    },
+                  ),
+                  _buildSettingItem(
+                    "Support",
+                    Icons.help_outline_outlined,
+                    onTap: () {
+                      // Navigate to support screen
+                      // Navigator.pushNamed(context, MyRoutes.supportRoute);
+                    },
+                  ),
+                  _buildLogoutItem(context),
                 ],
               ),
             ),
@@ -62,7 +103,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingItem(String title, IconData icon) {
+  Widget _buildSettingItem(String title, IconData icon, {VoidCallback? onTap}) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, size: 24.sp, color: Colors.grey[600]),
@@ -71,13 +112,16 @@ class SettingsScreen extends StatelessWidget {
         style: TextStyle(fontSize: 16.sp),
       ),
       trailing: Icon(Icons.chevron_right, size: 24.sp, color: Colors.grey),
-      onTap: () {
-        // Handle item tap
-      },
+      onTap: onTap,
     );
   }
 
-  Widget _buildSwitchItem(String title, IconData icon, bool value) {
+  Widget _buildSwitchItem(
+    String title,
+    IconData icon,
+    bool value, {
+    required ValueChanged<bool> onChanged,
+  }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, size: 24.sp, color: Colors.grey[600]),
@@ -87,9 +131,7 @@ class SettingsScreen extends StatelessWidget {
       ),
       trailing: Switch(
         value: value,
-        onChanged: (bool newValue) {
-          // Handle switch toggle
-        },
+        onChanged: onChanged,
         activeColor: const Color(0xFF201A56),
       ),
     );
@@ -117,7 +159,8 @@ class SettingsScreen extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text("Logout", style: TextStyle(color: Colors.red)),
+                child:
+                    const Text("Logout", style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -125,7 +168,8 @@ class SettingsScreen extends StatelessWidget {
 
         if (shouldLogout == true) {
           await SharedStorage.removeFromSharedPreferences();
-          Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
         }
       },
     );

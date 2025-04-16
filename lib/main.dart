@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Add this import for orientation lock
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/pages/EditProfile.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
@@ -77,6 +78,7 @@ class MyApp extends StatelessWidget {
             '/payment': (context) => PaymentScreen(),
             '/driverhome': (context) => Driverhome(),
             '/bookingDetail': (context) => Bookingdetaildriver(),
+            '/editProfile': (context) => Editprofile(),
           },
         );
       },
