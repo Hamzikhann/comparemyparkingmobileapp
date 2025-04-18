@@ -11,4 +11,5 @@ class MyRoutes {
   static String payment = '/payment';
   static String bookingDetail = '/bookingDetail';
   static String editProfile = '/editProfile';
+  static String supportRoute = '/support';
 }

@@ -76,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
                     Icons.help_outline_outlined,
                     onTap: () {
                       // Navigate to support screen
-                      // Navigator.pushNamed(context, MyRoutes.supportRoute);
+                      Navigator.pushNamed(context, MyRoutes.supportRoute);
                     },
                   ),
                   _buildLogoutItem(context),
