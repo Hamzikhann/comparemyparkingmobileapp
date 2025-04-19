@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/SessionCard.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 
@@ -49,7 +52,15 @@ class ViewAllScreen extends StatelessWidget {
                       price: "\$100",
                       type: type,
                       timeRemaining: "0thr:30min", // Only for active sessions
-                      rate: "\$40/HR", // Only for active sessions
+                      rate: "\$40/HR",
+                      onTap: () {
+                        Globals.detailType = type;
+                        GlobalsBookingDetail.bookingdetailuser = item;
+                        Navigator.pushNamed(
+                          context,
+                          MyRoutes.bookingDetailUser,
+                        );
+                      }, // Only for active sessions
                     ),
                   );
                 },

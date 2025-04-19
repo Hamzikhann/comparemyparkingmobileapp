@@ -12,7 +12,8 @@ class SessionCard extends StatelessWidget {
   final Icon? icon;
   final String type; // 'reserved', 'completed', or 'active'
   final String? timeRemaining; // Only for active sessions
-  final String? rate; // Only for active sessions
+  final String? rate;
+  final VoidCallback? onTap; // Only for active sessions
 
   const SessionCard({
     super.key,
@@ -26,10 +27,19 @@ class SessionCard extends StatelessWidget {
     required this.type,
     this.timeRemaining,
     this.rate,
+    this.onTap,
   });
+
 
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap, // Use the provided onTap callback
+      child: _buildCardBasedOnType(),
+    );
+  }
+
+  Widget _buildCardBasedOnType() {
     switch (type) {
       case 'reserved':
         return _buildReservedCard();

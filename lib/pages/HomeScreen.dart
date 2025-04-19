@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
@@ -299,6 +300,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             type: "reserved",
                             timeRemaining: "01 hr:30min",
                             rate: "/HR",
+                            onTap: () {
+                              Globals.detailType = "reserved";
+                              GlobalsBookingDetail.bookingdetailuser = first;
+                                    Navigator.pushNamed(
+                                      context,
+                                      MyRoutes.bookingDetailUser,
+                                    );
+                            },
                           );
                         }
                         return _noBookingCard();

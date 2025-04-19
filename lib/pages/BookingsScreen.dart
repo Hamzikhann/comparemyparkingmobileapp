@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/pages/ViewallScreen.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/SessionCard.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
@@ -125,7 +128,15 @@ class _BookingsScreenState extends State<BookingsScreen> {
         price: "\$100",
         type: type,
         timeRemaining: "01 hr:30min", // Only for active sessions
-        rate: "\$40/HR", // Only for active sessions
+        rate: "\$40/HR",
+        onTap: () {
+          Globals.detailType = type;
+          GlobalsBookingDetail.bookingdetailuser = parkings.first;
+                Navigator.pushNamed(
+                  context,
+                  MyRoutes.bookingDetailUser,
+                );
+        }, // Only for active sessions
       )
     ],
   );
