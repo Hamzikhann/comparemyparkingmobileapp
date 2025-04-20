@@ -138,10 +138,9 @@ class _PackagesScreenState extends State<PackagesScreen> {
                   }
 
                   if (snapshot.hasData) {
-                    final results = snapshot.data!.data.results;
+                    final results = snapshot.data!.data; // Now directly accessing the list
                     final filteredResults = _showAvailableOnly
-                        ? results.where((item) => 
-                            !item.price.contains('Sorry'))
+                        ? results.where((item) => !item.price.contains('Sorry'))
                         : results;
 
                     if (filteredResults.isEmpty) {
@@ -244,7 +243,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
           SizedBox(height: 16.0),
           if (isAvailable) ...[
             Text(
-              'Price: ${option.price}',
+              'Price: £ ${option.price}',
               style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: Colors.black),
             ),
             SizedBox(height: 8.0),

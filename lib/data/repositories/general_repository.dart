@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:http/http.dart' as http;
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
+import 'package:parkingapp/data/models/CheckPointsModel.dart';
 import 'package:parkingapp/data/models/OtpModel.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
@@ -60,7 +66,7 @@ class GeneralRepository {
   Future<Otpmodel> forgotPassword(String email) async {
     Completer<Otpmodel> completer = Completer();
     server.makeApiRequest(
-      apiEndpoint: ApiFiles.signin,
+      apiEndpoint: ApiFiles.forgotPassword,
       requestMethod: RequestMethod.post,
       requestData: {
         "email": email,
@@ -76,6 +82,7 @@ class GeneralRepository {
         completer.complete(user);
       },
       onError: (String errorMessage) {
+        print(errorMessage);
         EasyLoading.dismiss();
         Alertify.showAlert(
           alertKey: 'reset',
@@ -278,14 +285,13 @@ class GeneralRepository {
             debugPrint('API Response: $response');
 
             // Validate response structure
-            if (response['data'] == null ||
-                response['data']['results'] == null) {
+            if (response['data'] == null) {
               throw Exception('Invalid API response structure');
             }
 
             final result = SearchResultResponse.fromJson(response);
 
-            if (result.data.results.isEmpty) {
+            if (result.data.isEmpty) {
               EasyLoading.showInfo('No parking options available');
             } else {
               EasyLoading.dismiss();
@@ -451,4 +457,129 @@ class GeneralRepository {
 
     return completer.future;
   }
+
+Future<CheckpointResponseModel> submitCheckpoint(
+    CheckpointRequestModel model, List<File>? pictures) async {
+  Completer<CheckpointResponseModel> completer = Completer();
+
+  try {
+    EasyLoading.show(status: "Submitting checkpoint...");
+    
+    // Debug prints
+    debugPrint("Booking ID: ${model.bookingId}");
+    debugPrint("Location: ${model.location}");
+    debugPrint("Section: ${model.section}");
+    debugPrint("Type: ${model.type}");
+    debugPrint("Number of pictures: ${pictures?.length ?? 0}");
+
+    if (pictures != null && pictures.isNotEmpty) {
+      // Multipart request with images
+      server.makeMultipartRequest(
+        apiEndpoint: ApiFiles.createCheckpoint,
+        requestMethod: RequestMethod.post,
+        fields: {
+          "bookingId": model.bookingId,
+          "location": model.location,
+          "section": model.section,
+          "type": model.type,
+          
+        },
+        files: pictures.map((file) => MultipartFileInfo(
+          file: file,
+          fieldName: "pictures", // Some APIs expect array notation
+        )).toList(),
+        onSuccess: (Map<String, dynamic> response) {
+          EasyLoading.dismiss();
+          debugPrint("API Response: $response");
+          try {
+            final checkpointResponse = CheckpointResponseModel.fromJson(
+                response['response'] ?? response); // Try both options
+            completer.complete(checkpointResponse);
+          } catch (e) {
+            debugPrint("Parsing error: $e");
+            completer.completeError("Parsing error: $e");
+          }
+        },
+        onError: (String errorMessage) {
+          EasyLoading.dismiss();
+          debugPrint("API Error: $errorMessage");
+          completer.completeError("API Error: $errorMessage");
+        },
+      );
+    } else {
+      // Simple request without files
+      server.makeApiRequest(
+        apiEndpoint: ApiFiles.createCheckpoint,
+        requestMethod: RequestMethod.post,
+        requestData: {
+          "bookingId": model.bookingId,
+          "location": model.location,
+          "section": model.section,
+          "type": model.type,
+        },
+        onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
+        onSuccess: (Map<String, dynamic> response) {
+          EasyLoading.dismiss();
+          debugPrint("API Response: $response");
+          try {
+            final checkpointResponse = CheckpointResponseModel.fromJson(
+                response['response'] ?? response);
+            completer.complete(checkpointResponse);
+          } catch (e) {
+            completer.completeError("Parsing error: $e");
+          }
+        },
+        onError: (String errorMessage) {
+          EasyLoading.dismiss();
+          debugPrint("API Error: $errorMessage");
+          completer.completeError("API Error: $errorMessage");
+        },
+      );
+    }
+  } catch (e) {
+    EasyLoading.dismiss();
+    debugPrint("Exception in submitCheckpoint: $e");
+    completer.completeError("Exception: $e");
+  }
+
+  return completer.future;
 }
+
+Future<Map<String, dynamic>> createPaymentIntent({
+  required String amount,
+  required String currency,
+}) async {
+  final url = Uri.parse('http://137.184.9.55:8000/api/stripe/create-payment-intent');
+
+  final token = Globals.user?.token ?? '';
+  print("Calling payment intent API with amount=$amount, currency=$currency, token=$token");
+
+  // Convert amount to integer
+  final amountInt = int.tryParse(amount) ?? 0;
+  if (amountInt <= 0) {
+    throw Exception('Invalid amount: $amount');
+  }
+
+  final response = await http.post(
+    url,
+    body: jsonEncode({  // Use jsonEncode for proper JSON formatting
+      'amount': amountInt,  // Send as integer
+      'currency': currency.toLowerCase(),  // Ensure lowercase currency
+    }),
+    headers: {
+      'access-token': token,
+      'Content-Type': 'application/json',  // Add content-type header
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to create payment intent: ${response.statusCode} ${response.body}');
+  }
+}
+
+
+}
+
+

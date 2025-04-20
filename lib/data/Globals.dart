@@ -14,6 +14,10 @@ class Globals {
   static String selectedDateRange = "";
   static String detailType = "";
   static String roleTitle = "";
+  static String emailReset = "";
+  static String otp = "";
+  static String passwordReset = "";
+  static String confirmPassword = "";
 
   //**********User**********
   static UserModel? user;
@@ -23,6 +27,7 @@ class Globals {
   static BookingInfoModel? booking_info_model;
   static Parking? bookingDriverResponse;
   static Parking? bookingdetailuser;
+
   //**********clear**********
   static void clearVariables() {
     user = null;

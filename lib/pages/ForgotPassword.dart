@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
+import 'package:parkingapp/widgets/CustomAlert.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
@@ -90,13 +92,14 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
                 ),
 
                 SizedBox(height: 60.h),
-
+                const CustomAlert(alertKey: 'reset'),
                 // Forgot Password Button
                 PrimaryButton(
                   text:
                       "Reset Password", // Changed from "Forgot Password" to be more action-oriented
                   onPressed: () {
                     // Handle password reset
+                    forgotPassword(emailController.text.toString());
                   },
                 ),
 
@@ -113,11 +116,15 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
     GeneralRepository().forgotPassword(userName).then((value) {
       Alertify.showAlert(
         duration: 1,
-        alertKey: 'login',
-        message: 'Login successfully!',
+        alertKey: 'reset',
+        message: 'Navigate to OTP Screen',
         type: AlertType.success,
         onClose: () {
-          Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
+          Globals.otp = value.otp;
+          Globals.emailReset = emailController.text.toString();
+          Globals.passwordReset = passwordController.text.toString();
+          Globals.confirmPassword = passwordController.text.toString();
+          Navigator.pushReplacementNamed(context, MyRoutes.otp);
         },
       );
     });

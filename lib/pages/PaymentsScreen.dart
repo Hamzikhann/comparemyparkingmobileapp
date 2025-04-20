@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/CardsModel.dart';
@@ -24,7 +25,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   final List<Map<String, String>> cardTypes = [
     {'type': 'MasterCard', 'image': 'assets/images/master.png'},
-    {'type': 'Visa', 'image': 'assets/images/visa.png'},
   ];
 
   final _formKey = GlobalKey<FormState>();
@@ -57,7 +57,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
   }
 
-  Future<void> _handlePayment() async {
+  Future<void> _handlePayment(String referenceNo) async {
     if (_formKey.currentState!.validate()) {
       // Save card information if required
       if (saveCard) {
@@ -99,7 +99,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         "description": Globals.option?.description ?? '',
         "bulletPoints": Globals.option?.bulletPoints ?? [],
         "totalPrice": Globals.option?.price ?? '',
-        "referenceNo": "4568765",
+        "referenceNo": referenceNo,
       };
 
       try {
@@ -209,46 +209,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (savedCards.isNotEmpty) ...[
-                        _buildLabel("Select Save card"),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 70,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: savedCards.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final card = savedCards[index];
-                              return GestureDetector(
-                                onTap: () => _fillFormWithCard(card),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey),
-                                  ),
-                                  width: 220,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(card.cardType,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text(card.cardNumber),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      _buildLabel("Add New card"),
+                      const SizedBox(height: 24),
+                      _buildLabel("Card Payment"),
                       SizedBox(
                         height: 150,
                         child: ListView.separated(
@@ -275,8 +237,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 child: Image.asset(
                                   card['image']!,
-                                  height: 200,
-                                  width: 200,
+                                  height: 300,
+                                  width: 300,
                                   fit: BoxFit.contain,
                                 ),
                               ),
@@ -284,93 +246,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      _buildLabel("Cardholder Name"),
-                      CustomTextField(
-                        hintText: "Name",
-                        controller: cardHolderNameController,
-                        keyboardType: TextInputType.name,
-                        validator: (value) => value == null || value.isEmpty
-                            ? "Cardholder name is required"
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLabel("Card Number"),
-                      CustomTextField(
-                        hintText: "1234 5678 9101 1121",
-                        controller: cardNumbercontroller,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return "Card number is required";
-                          if (value.replaceAll(' ', '').length != 16)
-                            return "Enter 16-digit card number";
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel("Expiration Date"),
-                                CustomTextField(
-                                  hintText: "MM/YY",
-                                  controller: expiryDateController,
-                                  keyboardType: TextInputType.datetime,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return "Required";
-                                    final regex = RegExp(r'^\d{2}/\d{2}$');
-                                    if (!regex.hasMatch(value))
-                                      return "MM/YY format only";
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel("CVV"),
-                                CustomTextField(
-                                  hintText: "123",
-                                  controller: cvvController,
-                                  keyboardType: TextInputType.number,
-                                  obscureText: true,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty)
-                                      return "Required";
-                                    if (value.length != 3) return "3-digit CVV";
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: saveCard,
-                            onChanged: (value) =>
-                                setState(() => saveCard = value!),
-                          ),
-                          const Text("Save card details"),
-                        ],
-                      ),
+                      
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _handlePayment,
+                          onPressed: startStripePayment,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -379,12 +260,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   6), // 🔽 Reduce radius here
                             ),
                           ),
-                          child: Text('Pay ${Globals.option?.price}',
+                          child: Text('Proceed to Pay £${Globals.option?.price}',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.white)),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 24),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
                         child: Text(
@@ -412,11 +293,56 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 12.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.bold,
           fontFamily: 'Archivo',
         ),
       ),
     );
   }
+  Future<void> startStripePayment() async {
+  try {
+    final response = await GeneralRepository().createPaymentIntent(
+      amount: Globals.option?.price ?? "0",
+      currency: "gbp",
+    );
+
+    final clientSecret = response['paymentIntent']?['client_secret'] ??
+                        response['clientSecret'];
+
+    if (clientSecret == null) {
+      throw Exception('Missing client secret in response');
+    }
+
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Your Parking App',
+        style: ThemeMode.light,
+      ),
+    );
+
+    await Stripe.instance.presentPaymentSheet();
+
+    final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
+
+    if (paymentId == null) {
+      throw Exception('Missing payment ID in response');
+    }
+
+    await _handlePayment(paymentId);
+    
+  } on StripeException catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
+    );
+  } catch (e) {
+    print("Payment failed: ${e.toString()}");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment failed: ${e.toString()}")),
+    );
+  }
+}
+
+
 }

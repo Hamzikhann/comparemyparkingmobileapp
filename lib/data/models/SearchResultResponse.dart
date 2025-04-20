@@ -1,7 +1,7 @@
 // Create a new file: lib/data/models/search_result_model.dart
 class SearchResultResponse {
   final String message;
-  final SearchResultData data;
+  final List<ParkingOption> data; // Changed from SearchResultData to List<ParkingOption>
 
   SearchResultResponse({
     required this.message,
@@ -9,32 +9,17 @@ class SearchResultResponse {
   });
 
   factory SearchResultResponse.fromJson(Map<String, dynamic> json) {
-    return SearchResultResponse(
-      message: json['message'],
-      data: SearchResultData.fromJson(json['data']),
-    );
-  }
-}
-
-class SearchResultData {
-  final String searchUrl;
-  final List<ParkingOption> results;
-
-  SearchResultData({
-    required this.searchUrl,
-    required this.results,
-  });
-
-  factory SearchResultData.fromJson(Map<String, dynamic> json) {
-    var list = json['results'] as List;
+    var list = json['data'] as List;
     List<ParkingOption> resultsList = list.map((i) => ParkingOption.fromJson(i)).toList();
     
-    return SearchResultData(
-      searchUrl: json['searchUrl'],
-      results: resultsList,
+    return SearchResultResponse(
+      message: json['message'],
+      data: resultsList,
     );
   }
 }
+
+// Remove the SearchResultData class as it's no longer needed
 
 class ParkingOption {
   final String name;
@@ -55,8 +40,8 @@ class ParkingOption {
 
   factory ParkingOption.fromJson(Map<String, dynamic> json) {
     return ParkingOption(
-      name: json['name'],
-      price: json['price'],
+      name: json['name'] ?? '',
+      price: json['price'] ?? '',
       description: json['description'],
       terminalInfo: json['terminalInfo'],
       bulletPoints: List<String>.from(json['bulletPoints']),

@@ -11,6 +11,8 @@
     <key>NSCameraUsageDescription</key>
     <string>We need access to your camera for capturing photos.</string>
 
+    
+
     <key>NSDocumentsFolderUsageDescription</key>
     <string>We need access to documents for file uploads.</string>
 
@@ -47,6 +49,10 @@
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string> <!-- iPad: Portrait only -->
+    </array>
+    <key>com.apple.developer.applepay</key>
+    <array>
+    <string>merchant.com.your.app</string>
     </array>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>

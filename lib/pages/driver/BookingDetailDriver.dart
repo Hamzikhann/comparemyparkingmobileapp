@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
@@ -17,86 +20,50 @@ class Bookingdetaildriver extends StatefulWidget {
 
 class BookingdetaildriverState extends State<Bookingdetaildriver> {
   final ImagePicker _picker = ImagePicker();
-
+  List<File> startImages = [];
+  TextEditingController dropoffController = TextEditingController();
+  TextEditingController sectionEndController = TextEditingController();
+  TextEditingController pickupController = TextEditingController();
+  TextEditingController sectionStartController = TextEditingController();
+ late String type;
   void _onBackPressed(BuildContext context) {
     Navigator.of(context).pop();
   }
 
   Future<void> _showStartPopup() async {
-    DateTime? selectedStartDate;
-    TimeOfDay? selectedStartTime;
-    TextEditingController pickupController = TextEditingController();
-    List<File> localStartImages = [];
-
+    String text = "Start";
+    if(type == "pickup"){
+      text = "Start";
+    }
+    else{
+      text = "End";
+    }
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            Future<void> _selectDate() async {
-              DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) {
-                setState(() => selectedStartDate = picked);
-              }
-            }
-
-            Future<void> _selectTime() async {
-              TimeOfDay? picked = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.now(),
-              );
-              if (picked != null) {
-                setState(() => selectedStartTime = picked);
-              }
-            }
-
             Future<void> _pickImage(ImageSource source) async {
               final XFile? pickedFile = await _picker.pickImage(source: source);
               if (pickedFile != null) {
-                setState(() => localStartImages.add(File(pickedFile.path)));
+                setState(() => startImages.add(File(pickedFile.path)));
               }
             }
 
             return AlertDialog(
-              title: Text('Start'),
+              title: Text(text),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: pickupController,
-                      decoration: InputDecoration(labelText: 'Pickup Location'),
+                      decoration: InputDecoration(labelText: 'Location'),
                     ),
                     SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _selectDate,
-                          child: Text('Pick Date'),
-                        ),
-                        SizedBox(width: 10),
-                        Text(selectedStartDate != null
-                            ? "${selectedStartDate!.toLocal()}".split(' ')[0]
-                            : "No date"),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _selectTime,
-                          child: Text('Pick Time'),
-                        ),
-                        SizedBox(width: 10),
-                        Text(selectedStartTime != null
-                            ? selectedStartTime!.format(context)
-                            : "No time"),
-                      ],
+                    TextField(
+                      controller: sectionStartController,
+                      decoration: InputDecoration(labelText: 'Section'),
                     ),
                     SizedBox(height: 12),
                     Wrap(
@@ -116,7 +83,7 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: localStartImages.map((file) {
+                        children: startImages.map((file) {
                           return Padding(
                             padding: EdgeInsets.all(4),
                             child: ClipRRect(
@@ -137,10 +104,14 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Save data or pass it upward
-                    Navigator.pop(context);
+                    _handleSubmitCheckpoint(
+                      pickupController.text,
+                      sectionStartController.text,
+                      type,
+                      startImages,
+                    );
                   },
-                  child: Text("Start"),
+                  child: Text(text),
                 ),
               ],
             );
@@ -150,96 +121,7 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
     );
   }
 
-  Future<void> _showEndPopup() async {
-    DateTime? selectedEndDate;
-    TimeOfDay? selectedEndTime;
-    TextEditingController dropoffController = TextEditingController();
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            Future<void> _selectDate() async {
-              DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) {
-                setState(() => selectedEndDate = picked);
-              }
-            }
-
-            Future<void> _selectTime() async {
-              TimeOfDay? picked = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.now(),
-              );
-              if (picked != null) {
-                setState(() => selectedEndTime = picked);
-              }
-            }
-
-            return AlertDialog(
-              title: Text('End'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: dropoffController,
-                      decoration: InputDecoration(labelText: 'Dropoff Location'),
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _selectDate,
-                          child: Text('Drop Off Date'),
-                        ),
-                        SizedBox(width: 10),
-                        Text(selectedEndDate != null
-                            ? "${selectedEndDate!.toLocal()}".split(' ')[0]
-                            : "No date"),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _selectTime,
-                          child: Text('Drop Off Time'),
-                        ),
-                        SizedBox(width: 10),
-                        Text(selectedEndTime != null
-                            ? selectedEndTime!.format(context)
-                            : "No time"),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Save data or pass it upward
-                    Navigator.pop(context);
-                  },
-                  child: Text("End"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -373,13 +255,62 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           ElevatedButton(
-                            onPressed: _showStartPopup,
+                            onPressed: () {
+                              type = "pickup";
+                              // Convert endDate to DateTime (update format if needed)
+                            final startDateString = Globals.bookingDriverResponse?.startDate;
+                            if (startDateString != null) {
+                              final startDate = DateTime.tryParse(startDateString);
+
+                              if (startDate != null) {
+                                final now = DateTime.now();
+                                final isSameDate =
+                                    startDate.year == now.year &&
+                                    startDate.month == now.month &&
+                                    startDate.day == now.day;
+
+                                if (isSameDate) {
+                                  _showStartPopup(); // ✅ open popup
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("This booking is start on ${Globals.bookingDriverResponse?.startDate}")),
+                                  );
+                                }
+                              }
+                            }
+                            },
                             child: Text("Start Booking"),
                           ),
                           ElevatedButton(
-                            onPressed: _showEndPopup,
+                            onPressed: () {
+                            type = "pickup";
+
+                            // Convert endDate to DateTime (update format if needed)
+                            final endDateString = Globals.bookingDriverResponse?.endDate;
+                            if (endDateString != null) {
+                              final endDate = DateTime.tryParse(endDateString);
+
+                              if (endDate != null) {
+                                final now = DateTime.now();
+                                final isSameDate =
+                                    endDate.year == now.year &&
+                                    endDate.month == now.month &&
+                                    endDate.day == now.day;
+
+                                if (isSameDate) {
+                                  _showStartPopup(); // ✅ open popup
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("This booking is end on ${Globals.bookingDriverResponse?.startDate}")),
+                                  );
+                                }
+                              }
+                            }
+                          },
+
                             child: Text("End Booking"),
                           ),
+
                         ],
                       )
                     ],
@@ -392,4 +323,71 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
       ),
     );
   }
+  Future<void> _handleSubmitCheckpoint(
+      String location, String section, String type, List<File>? images) async {
+    final checkpointRequest = CheckpointRequestModel(
+      bookingId: Globals.bookingDriverResponse!.registrations.first.bookingId,
+      location: location,
+      section: section,
+      type: type,
+    );
+
+    try {
+      final checkpointResponse = await GeneralRepository().submitCheckpoint(
+        checkpointRequest,
+        images,
+      );
+
+      if (checkpointResponse != null) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            contentPadding: const EdgeInsets.all(24),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/images/success.svg',
+                  height: 80,
+                  width: 80,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Success!',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Your Booking has been successfully submitted.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, MyRoutes.driverhome, (_) => false);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        debugPrint("❌ Checkpoint Submission Failed");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Checkpoint submission failed")),
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Checkpoint Submission Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Checkpoint submission failed: $e')),
+      );
+    }
+  }
+
 }
