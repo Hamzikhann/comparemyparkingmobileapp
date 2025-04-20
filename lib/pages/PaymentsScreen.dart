@@ -9,7 +9,6 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
-import 'package:parkingapp/widgets/reserveBooking/CustomTextFeild.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({Key? key}) : super(key: key);
@@ -47,15 +46,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
   }
 
-  void _fillFormWithCard(CardsModel card) {
-    setState(() {
-      cardHolderNameController.text = card.cardHolderName;
-      cardNumbercontroller.text = card.cardNumber;
-      expiryDateController.text = card.expiryDate;
-      cvvController.text = card.cvv;
-      selectedCardType = card.cardType;
-    });
-  }
+    
 
   Future<void> _handlePayment(String referenceNo) async {
     if (_formKey.currentState!.validate()) {
