@@ -19,9 +19,10 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
   }
 
   Future<void> _launchWhatsApp() async {
-    final phoneNumber = "923147824430";
+    final phoneNumber = "+923114554242";
     final message = Uri.encodeComponent("Hello, I need help with my booking.");
-    final url = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
+    final url = Uri.parse(
+        "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
 
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -50,15 +51,18 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Booking Information",
-                          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 24.h),
                       Text("Customer Name",
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
@@ -67,7 +71,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                       ),
                       SizedBox(height: 24.h),
                       Text("Contact Number",
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
@@ -76,10 +81,12 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                       ),
                       SizedBox(height: 24.h),
                       Text("Car Details:",
-                          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 16.h),
                       Text("Car Registration No",
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
@@ -94,7 +101,9 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("Car Maker",
-                                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
                                   hintText:
@@ -109,7 +118,9 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("Car Model",
-                                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
                                   hintText:
@@ -122,10 +133,12 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                       ),
                       SizedBox(height: 24.h),
                       Text("Flight Details:",
-                          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 16.h),
                       Text("Out Bound Terminal",
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
@@ -134,7 +147,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                       ),
                       SizedBox(height: 16.h),
                       Text("In Bound Terminal",
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 8.h),
                       NonEditableTextField(
                         hintText: "",
@@ -149,7 +163,9 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("Out Bound Flight",
-                                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
                                   hintText:
@@ -164,7 +180,9 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("In Bound Flight",
-                                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
                                   hintText:
@@ -184,11 +202,13 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           onTap: _launchWhatsApp,
                           child: Row(
                             children: [
-                              Icon(Icons.support, color: Colors.green, size: 28.sp),
+                              Icon(Icons.support,
+                                  color: Colors.green, size: 28.sp),
                               SizedBox(width: 10.w),
                               Text(
                                 "Need help? Chat with us on WhatsApp",
-                                style: TextStyle(fontSize: 14.sp, color: Colors.blue),
+                                style: TextStyle(
+                                    fontSize: 14.sp, color: Colors.blue),
                               )
                             ],
                           ),
@@ -197,14 +217,16 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
 
                         /// Reached Terminal Button
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20.w, vertical: 16.h),
                           child: SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text("Thank you! Our driver will pick up your car soon."),
+                                    content: Text(
+                                        "Thank you! Our driver will pick up your car soon."),
                                   ),
                                 );
                               },
@@ -217,7 +239,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               ),
                               child: Text(
                                 "Reached Terminal",
-                                style: TextStyle(fontSize: 16.sp, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: 16.sp, color: Colors.white),
                               ),
                             ),
                           ),

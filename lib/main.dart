@@ -10,9 +10,11 @@ import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
 import 'package:parkingapp/pages/PackagesScreen.dart';
+import 'package:parkingapp/pages/PrivacyPolicyScreen.dart';
 import 'package:parkingapp/pages/ReserveBookingScreen.dart';
 import 'package:parkingapp/pages/SignupScreen.dart';
 import 'package:parkingapp/pages/SupportScreen.dart';
+import 'package:parkingapp/pages/TermsAndConditionsScreen.dart';
 import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +27,8 @@ import 'package:parkingapp/providers/ThemeChanger.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // // Initialize Stripe
-   Stripe.publishableKey = 'pk_test_51RE9h3QsW9cgGLSGZZo6d3ttIhwMgD9fHxU5QGzOe7xgW3RybHokUOQWpq8saaT9Gy23BCcn2m5yJepjYnPmEYzK00QpUXVCtv'; // Replace with your key
+  Stripe.publishableKey =
+      'pk_test_51RE9h3QsW9cgGLSGZZo6d3ttIhwMgD9fHxU5QGzOe7xgW3RybHokUOQWpq8saaT9Gy23BCcn2m5yJepjYnPmEYzK00QpUXVCtv'; // Replace with your key
   await Stripe.instance.applySettings();
 
   // Lock orientation
@@ -80,6 +83,8 @@ class MyApp extends StatelessWidget {
             '/editProfile': (context) => Editprofile(),
             '/support': (context) => SupportScreen(),
             '/bookingDetailUser': (context) => Bookingdetailuser(),
+            '/privacyPolicy': (context) => PrivacyPolicyScreen(),
+            '/termsAndConditions': (context) => TermsAndConditionsScreen(),
           },
         );
       },

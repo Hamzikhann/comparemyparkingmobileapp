@@ -16,7 +16,7 @@ class TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100.h,
+      height: 85.h,
       decoration: BoxDecoration(
         color: const Color(0xFF201A56),
         borderRadius: BorderRadius.only(
@@ -45,7 +45,7 @@ class TopBar extends StatelessWidget {
                     onPressed: onBackPressed,
                   ),
                 ),
-              
+
               // Centered title text
               Align(
                 alignment: Alignment.center,
@@ -58,7 +58,7 @@ class TopBar extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // Avatar (right-aligned)
               Align(
                 alignment: Alignment.centerRight,

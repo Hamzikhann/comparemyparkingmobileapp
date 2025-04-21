@@ -13,4 +13,6 @@ class MyRoutes {
   static String bookingDetailUser = '/bookingDetailUser';
   static String editProfile = '/editProfile';
   static String supportRoute = '/support';
+  static String privacyPolicy = '/privacyPolicy';
+  static String termsAndCondition = '/termsAndConditions';
 }

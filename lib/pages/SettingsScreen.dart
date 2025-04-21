@@ -60,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
                     Icons.description_outlined,
                     onTap: () {
                       // Navigate to terms screen
-                      // Navigator.pushNamed(context, MyRoutes.termsRoute);
+                      Navigator.pushNamed(context, MyRoutes.termsAndCondition);
                     },
                   ),
                   _buildSettingItem(
@@ -68,7 +68,7 @@ class SettingsScreen extends StatelessWidget {
                     Icons.privacy_tip_outlined,
                     onTap: () {
                       // Navigate to privacy policy screen
-                      //Navigator.pushNamed(context, MyRoutes.privacyPolicyRoute);
+                      Navigator.pushNamed(context, MyRoutes.privacyPolicy);
                     },
                   ),
                   _buildSettingItem(

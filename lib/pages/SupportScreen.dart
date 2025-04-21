@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parkingapp/widgets/TopBar.dart' show TopBar;
+import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatefulWidget {
   @override
@@ -41,6 +42,7 @@ class _SupportScreenState extends State<SupportScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -63,7 +65,28 @@ class _SupportScreenState extends State<SupportScreen>
                 controller: _tabController,
                 children: [
                   buildFAQTab(),
-                  Center(child: Text("Contact Form Coming Soon...")),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Need more help?",
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _openWhatsAppChat,
+                          icon: Icon(Icons.chat),
+                          label: Text("Chat on WhatsApp"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -130,5 +153,20 @@ class _SupportScreenState extends State<SupportScreen>
         )
       ],
     );
+  }
+
+  void _openWhatsAppChat() async {
+    final phoneNumber = "+923114554242";
+    final message = Uri.encodeComponent("Hello, I need help with my booking.");
+    final url = Uri.parse(
+        "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open WhatsApp")),
+      );
+    }
   }
 }

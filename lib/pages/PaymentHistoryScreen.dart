@@ -57,7 +57,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            const Icon(Icons.error_outline,
+                                size: 48, color: Colors.red),
                             const SizedBox(height: 16),
                             Text(
                               'Failed to load payments',
@@ -77,12 +78,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ],
                         ),
                       );
-                    } else if (!snapshot.hasData || snapshot.data!.payments.isEmpty) {
+                    } else if (!snapshot.hasData ||
+                        snapshot.data!.payments.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.receipt_long, size: 48, color: Colors.grey),
+                            const Icon(Icons.receipt_long,
+                                size: 48, color: Colors.grey),
                             const SizedBox(height: 16),
                             Text(
                               'No payment history found',
@@ -210,7 +213,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       Text(
                         payment.referenceNo,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
