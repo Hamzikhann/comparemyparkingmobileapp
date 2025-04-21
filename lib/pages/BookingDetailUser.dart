@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Bookingdetailuser extends StatefulWidget {
@@ -222,17 +225,63 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           child: SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        "Thank you! Our driver will pick up your car soon."),
-                                  ),
-                                );
+                              onPressed: () async {
+                                LocationPermission permission =
+                                    await Geolocator.checkPermission();
+
+                                if (permission == LocationPermission.denied) {
+                                  permission =
+                                      await Geolocator.requestPermission();
+                                }
+
+                                if (permission ==
+                                    LocationPermission.deniedForever) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "Location permission is permanently denied. Please enable it in settings."),
+                                      action: SnackBarAction(
+                                        label: "Open Settings",
+                                        onPressed: () {
+                                          openAppSettings();
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                if (permission == LocationPermission.always ||
+                                    permission ==
+                                        LocationPermission.whileInUse) {
+                                  bool isLocationEnabled = await Geolocator
+                                      .isLocationServiceEnabled();
+                                  if (!isLocationEnabled) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              "Please enable location services.")),
+                                    );
+                                    return;
+                                  }
+
+                                  Position position =
+                                      await Geolocator.getCurrentPosition(
+                                          desiredAccuracy:
+                                              LocationAccuracy.high);
+                                  print(
+                                      "Latitude: ${position.latitude}, Longitude: ${position.longitude}");
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            "Location permission is required.")),
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(vertical: 14.h),
-                                backgroundColor: Colors.redAccent,
+                                backgroundColor: colors.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
@@ -244,7 +293,7 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                               ),
                             ),
                           ),
-                        ),
+                        )
                       ],
                     ],
                   ),
