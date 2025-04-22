@@ -8,5 +8,8 @@ class ApiFiles {
   static String bookParking = "/api/booking/create";
   static String forgotPassword = "/api/auth/forgot/password";
   static String createCheckpoint = "/api/booking/checkpoints/create";
+  static String postLocation = "/api/booking/create/location";
+  static String getLocationDetails = "/api/booking/detail/location";
+  static String resetPassword = "/api/auth/reset/password";
   
 }

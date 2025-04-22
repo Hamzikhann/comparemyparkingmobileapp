@@ -97,6 +97,39 @@ class GeneralRepository {
     return completer.future;
   }
 
+Future<String> resetPassword(String password, String confirmPassword) async {
+    Completer<String> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.resetPassword,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "password": password,
+        "confirmPassword": confirmPassword,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+
+        final message = res['message'] ?? 'Location posted successfully';
+      completer.complete(message);
+      },
+      onError: (String errorMessage) {
+        print(errorMessage);
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'reset',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
   Future<UserModel> signup({
     required String title,
     required String firstName,
@@ -577,6 +610,79 @@ Future<Map<String, dynamic>> createPaymentIntent({
   } else {
     throw Exception('Failed to create payment intent: ${response.statusCode} ${response.body}');
   }
+}
+
+Future<String> postLocation(String bookingID, String latitude, String longitude) async {
+  Completer<String> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.postLocation,
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "bookingId": bookingID,
+      "longitude": longitude,
+      "latitude": latitude,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Loading...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      final message = res['message'] ?? 'Location posted successfully';
+      completer.complete(message);
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      Alertify.showAlert(
+        alertKey: 'postLocation',
+        message: errorMessage,
+        duration: 10,
+        type: AlertType.error,
+      );
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
+
+
+Future<Map<String, String>> getLocationCoordinates(String bookingID) async {
+  Completer<Map<String, String>> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.getLocationDetails, // replace with actual endpoint
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "bookingId": bookingID,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Loading...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      final data = res['data'];
+      final longitude = data['longitude'] ?? '';
+      final latitude = data['latitude'] ?? '';
+
+      completer.complete({
+        'longitude': longitude,
+        'latitude': latitude,
+      });
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      Alertify.showAlert(
+        alertKey: 'getLocation',
+        message: errorMessage,
+        duration: 10,
+        type: AlertType.error,
+      );
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
 }
 
 

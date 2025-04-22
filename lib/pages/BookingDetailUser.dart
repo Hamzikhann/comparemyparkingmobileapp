@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
@@ -269,8 +270,7 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                                       await Geolocator.getCurrentPosition(
                                           desiredAccuracy:
                                               LocationAccuracy.high);
-                                  print(
-                                      "Latitude: ${position.latitude}, Longitude: ${position.longitude}");
+                                  postLocation(GlobalsBookingDetail.bookingdetailuser!.registrations.first.bookingId,position.latitude.toString(),position.longitude.toString());
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -304,5 +304,14 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
         ),
       ),
     );
+  }
+   Future<void> postLocation(String bookingID, String latitude, String longitude) async {
+    GeneralRepository().postLocation(bookingID, latitude,longitude).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                "Location shared the driver will reached to the location soon")),
+      );
+    });
   }
 }

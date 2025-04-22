@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -10,6 +12,7 @@ import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/driver/SessionCard.dart';
 import 'package:parkingapp/widgets/driver/TopBar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Driverhome extends StatefulWidget {
   const Driverhome({Key? key}) : super(key: key);
@@ -290,6 +293,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
               },
               onViewLocationPressed: () {
                 // location click
+                getLocation(parking.registrations.first.bookingId);
+
               },
             );
           },
@@ -339,5 +344,43 @@ Future<bool> _showExitConfirmationDialog(BuildContext context) async {
   return result ?? false;
 }
 
- // Ensures a default Future<bool> value is returned if the dialog is dismissed.
+Future<void> getLocation(String bookingID) async {
+  try {
+    final value = await GeneralRepository().getLocationCoordinates(bookingID);
+    final longitude = value['longitude'];
+    final latitude = value['latitude'];
+
+    if (longitude == null || longitude.isEmpty || latitude == null || latitude.isEmpty) {
+      print("No location found.");
+      return;
+    }
+
+    final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
+    final appleMapsUrl = Uri.parse("http://maps.apple.com/?q=$latitude,$longitude");
+
+    if (Platform.isAndroid) {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl);
+      } else {
+        print("Could not open Google Maps on Android.");
+      }
+    } else if (Platform.isIOS) {
+      // Try Google Maps first on iOS
+      final iosGoogleMapsUrl = Uri.parse("comgooglemaps://?q=$latitude,$longitude");
+
+      if (await canLaunchUrl(iosGoogleMapsUrl)) {
+        await launchUrl(iosGoogleMapsUrl);
+      } else {
+        // Fallback to Apple Maps
+        if (await canLaunchUrl(appleMapsUrl)) {
+          await launchUrl(appleMapsUrl);
+        } else {
+          print("Could not open any maps on iOS.");
+        }
+      }
+    }
+  } catch (e) {
+    print("Error: $e");
+  }
+}
 }

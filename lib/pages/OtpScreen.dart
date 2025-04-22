@@ -223,6 +223,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   if (otp.trim().length == 6 && otp.trim() == Globals.otp.trim()) {
                     // Verified successfully
                     // Proceed to next screen or show success message
+                    resetPassword(Globals.passwordReset,Globals.confirmPassword);
 
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -240,4 +241,26 @@ class _OtpScreenState extends State<OtpScreen> {
       ),
     );
   }
+  Future<void> resetPassword(String password, String confirmPassword) async {
+  GeneralRepository().resetPassword(password, confirmPassword).then((value) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Password reset successfully! Login Now"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Delay navigation to let the user see the SnackBar
+    Future.delayed(Duration(seconds: 2), () {
+      Navigator.pushReplacementNamed(context, MyRoutes.loginRoute);
+    });
+  }).catchError((e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error: $e"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  });
+}
 }
