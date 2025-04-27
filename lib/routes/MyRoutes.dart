@@ -15,4 +15,5 @@ class MyRoutes {
   static String supportRoute = '/support';
   static String privacyPolicy = '/privacyPolicy';
   static String termsAndCondition = '/termsAndConditions';
+  static String adminHome = '/adminHome';
 }

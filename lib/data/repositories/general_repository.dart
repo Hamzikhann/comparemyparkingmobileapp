@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
+import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/models/BookingsListModeldart';
 import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
@@ -227,6 +228,32 @@ Future<String> resetPassword(String password, String confirmPassword) async {
             res['data']; // Access the 'data' field from the response
         BookingDriverResponse response =
             BookingDriverResponse.fromJson(bookingsData);
+        completer.complete(response);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+  Future<BookingAdminResponse> getBookingsForAdmin() async {
+    Completer<BookingAdminResponse> completer = Completer();
+
+    server.makeApiRequest(
+      apiEndpoint:
+          ApiFiles.bookingsList, // Make sure you have this endpoint defined
+      requestMethod: RequestMethod.post,
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final bookingsData =
+            res['data']; // Access the 'data' field from the response
+        BookingAdminResponse response =
+            BookingAdminResponse.fromJson(bookingsData);
         completer.complete(response);
       },
       onError: (String errorMessage) {

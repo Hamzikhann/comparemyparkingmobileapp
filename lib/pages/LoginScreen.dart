@@ -166,7 +166,11 @@ class _LoginPageState extends State<LoginScreen> {
           passwordController.clear();
           if (Globals.user?.roleTitle == "Employee") {
             Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
-          } else {
+          }
+          else if(Globals.user?.roleTitle == "Administrator"){
+           Navigator.pushReplacementNamed(context, MyRoutes.adminHome);
+          }
+           else {
             Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
           }
         },

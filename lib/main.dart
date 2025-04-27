@@ -15,6 +15,7 @@ import 'package:parkingapp/pages/ReserveBookingScreen.dart';
 import 'package:parkingapp/pages/SignupScreen.dart';
 import 'package:parkingapp/pages/SupportScreen.dart';
 import 'package:parkingapp/pages/TermsAndConditionsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminHome.dart';
 import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:provider/provider.dart';
@@ -85,6 +86,7 @@ class MyApp extends StatelessWidget {
             '/bookingDetailUser': (context) => Bookingdetailuser(),
             '/privacyPolicy': (context) => PrivacyPolicyScreen(),
             '/termsAndConditions': (context) => TermsAndConditionsScreen(),
+            '/adminHome': (context) => Adminhome(),
           },
         );
       },
