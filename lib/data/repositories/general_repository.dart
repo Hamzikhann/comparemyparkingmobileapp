@@ -712,7 +712,36 @@ Future<Map<String, String>> getLocationCoordinates(String bookingID) async {
   return completer.future;
 }
 
+Future<Map<String, dynamic>> getEmployeesWithBookings() async {
+  Completer<Map<String, dynamic>> completer = Completer();
 
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.getDrivers,
+    requestMethod: RequestMethod.post,
+    onLoad: () {
+      EasyLoading.show(status: "Loading employees...");
+    },
+    onSuccess: (Map<String, dynamic> response) {
+      EasyLoading.dismiss();
+      try {
+        // Validate response structure
+        if (response['data'] == null) {
+          throw Exception('Invalid API response structure');
+        }
+
+        completer.complete(response);
+      } catch (e) {
+        completer.completeError('Failed to process employees data: $e');
+      }
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
 }
 
 

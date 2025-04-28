@@ -6,9 +6,10 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/pages/admin/DriverListScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
-import 'package:parkingapp/widgets/driver/TopBar.dart' show TopBar;
+import 'package:parkingapp/pages/admin/TopBar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ViewAllScreen extends StatelessWidget {
@@ -131,7 +132,7 @@ class ViewAllScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             GestureDetector(
               onTap: () {
-                _openAssignDriverBottomSheet(context);
+                _openAssignDriverBottomSheet(context, parking);
               },
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
@@ -202,7 +203,7 @@ class ViewAllScreen extends StatelessWidget {
     );
   }
 
-  void _openAssignDriverBottomSheet(BuildContext context) {
+  void _openAssignDriverBottomSheet(BuildContext context, Parking parking) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -210,7 +211,7 @@ class ViewAllScreen extends StatelessWidget {
       ),
       isScrollControlled: true,
       builder: (context) {
-        String selectedDriver = "";
+        String? selectedDriverId;
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -241,19 +242,43 @@ class ViewAllScreen extends StatelessWidget {
                       border: OutlineInputBorder(),
                       labelText: "Select Driver",
                     ),
-                    value: selectedDriver.isEmpty ? null : selectedDriver,
-                    items: ["Driver 1", "Driver 2", "Driver 3"]
-                        .map((driver) => DropdownMenuItem(
-                              value: driver,
-                              child: Text(driver),
-                            ))
-                        .toList(),
+                    value: selectedDriverId,
+                    items: Globals.drivers.map((driver) => DropdownMenuItem(
+                      value: driver.id,
+                      child: Text(driver.name),
+                    )).toList(),
                     onChanged: (value) {
                       setState(() {
-                        selectedDriver = value ?? "";
+                        selectedDriverId = value;
                       });
                     },
                   ),
+                  SizedBox(height: 12.h),
+
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => DriverListScreen()),
+                      ).then((_) {
+                        
+                      });
+                    },
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "+ Add New Driver",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: colors.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   SizedBox(height: 24.h),
                   Row(
                     children: [
@@ -263,9 +288,7 @@ class ViewAllScreen extends StatelessWidget {
                             backgroundColor: Colors.grey.shade300,
                             foregroundColor: Colors.black,
                           ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
+                          onPressed: () => Navigator.pop(context),
                           child: Text("Cancel"),
                         ),
                       ),
@@ -276,8 +299,14 @@ class ViewAllScreen extends StatelessWidget {
                             backgroundColor: colors.primary,
                           ),
                           onPressed: () {
-                            // Handle assign driver logic here
-                            Navigator.pop(context);
+                            // if (selectedDriverId != null) {
+                            //   final selectedDriver = Globals.drivers.firstWhere(
+                            //     (driver) => driver.id == selectedDriverId,
+                            //   );
+                            //   // Call your API to assign driver to booking
+                            //   // await assignDriverToBooking(parking.id, selectedDriver.id);
+                            //   Navigator.pop(context);
+                            // }
                           },
                           child: Text(
                             "Apply",

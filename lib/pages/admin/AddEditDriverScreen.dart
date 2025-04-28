@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/Driver.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/providers/AlertNotifier.dart';
+import 'package:parkingapp/providers/Alertify.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/widgets/CustomDropdown.dart';
+import 'package:parkingapp/widgets/CustomTextField.dart';
+import 'package:parkingapp/widgets/PrimaryButton.dart';
+import 'package:parkingapp/pages/admin/TopBar.dart';
 
 class AddEditDriverScreen extends StatefulWidget {
   final Driver? driver;
@@ -12,95 +22,216 @@ class AddEditDriverScreen extends StatefulWidget {
 
 class _AddEditDriverScreenState extends State<AddEditDriverScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _contactController = TextEditingController();
+  String? selectedTitle;
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _licenseController = TextEditingController();
-  final TextEditingController _expiryDateController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.driver != null) {
-      _nameController.text = widget.driver!.name ?? '';
-      _contactController.text = widget.driver!.contact ?? '';
-      _emailController.text = widget.driver!.email ?? '';
-      _licenseController.text = widget.driver!.licenseNumber ?? '';
-      _expiryDateController.text = widget.driver!.expiryDate ?? '';
+      selectedTitle = widget.driver!.title;
+      _firstNameController.text = widget.driver!.firstName;
+      _lastNameController.text = widget.driver!.lastName;
+      _emailController.text = widget.driver!.email;
+      _phoneController.text = widget.driver!.phoneNo ?? '';
     }
   }
 
-  void saveDriver() async {
-    if (_formKey.currentState!.validate()) {
-      if (widget.driver == null) {
-        // Add new driver
-        // await ApiService.addDriver(
-        //   name: _nameController.text,
-        //   contact: _contactController.text,
-        //   email: _emailController.text,
-        //   license: _licenseController.text,
-        //   expiry: _expiryDateController.text,
-        // );
-      } else {
-        // Update driver
-        // await ApiService.updateDriver(
-        //   driverId: widget.driver!.id,
-        //   name: _nameController.text,
-        //   contact: _contactController.text,
-        //   email: _emailController.text,
-        //   license: _licenseController.text,
-        //   expiry: _expiryDateController.text,
-        // );
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveDriver() async {
+    if (_formKey.currentState!.validate() && selectedTitle != null) {
+      try {
+        // Create or update driver logic would go here
+        if (widget.driver == null) {
+          Alertify.showAlert(
+            alertKey: 'driver',
+            message: 'Driver added successfully',
+            type: AlertType.success,
+            onClose: () => Navigator.pop(context, true),
+          );
+        } else {
+          Alertify.showAlert(
+            alertKey: 'driver',
+            message: 'Driver updated successfully',
+            type: AlertType.success,
+            onClose: () => Navigator.pop(context, true),
+          );
+        }
+      } catch (e) {
+        Alertify.showAlert(
+          alertKey: 'driver',
+          message: 'Error saving driver: ${e.toString()}',
+          type: AlertType.error,
+        );
       }
-      Navigator.pop(context);
+    } else if (selectedTitle == null) {
+      Alertify.showAlert(
+        alertKey: 'driver',
+        message: 'Please select a title',
+        type: AlertType.error,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Text(widget.driver == null ? "Add Driver" : "Edit Driver")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: "Full Name"),
-                validator: (value) => value!.isEmpty ? "Enter full name" : null,
-              ),
-              TextFormField(
-                controller: _contactController,
-                decoration: InputDecoration(labelText: "Contact Number"),
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: "Email Address"),
-              ),
-              TextFormField(
-                controller: _licenseController,
-                decoration: InputDecoration(labelText: "License Number"),
-              ),
-              TextFormField(
-                controller: _expiryDateController,
-                decoration: InputDecoration(labelText: "Expiry Date"),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: saveDriver,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            TopBar(
+              title: widget.driver == null ? "Add Driver" : "Edit Driver",
+              onBackPressed: () => Navigator.pop(context),
+              onLogoutPressed: () {
+                Globals.user = null;
+                SharedStorage.removeFromSharedPreferences();
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  MyRoutes.loginRoute, 
+                  (route) => false
+                );
+              },
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 20.h),
+                      // Title Dropdown
+                      CustomDropdown(
+                        hint: "Title",
+                        items: const ["Mr", "Mrs", "Do not want to Specify"],
+                        isSearchable: false,
+                        onSelectItem: (item) {
+                          setState(() {
+                            selectedTitle = item;
+                          });
+                        },
+                      ),
+                      SizedBox(height: 10.h),
+                      // First Name
+                      CustomTextField(
+                        hintText: "First Name",
+                        controller: _firstNameController,
+                        keyboardType: TextInputType.name,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter first name';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 10.h),
+                      // Last Name
+                      CustomTextField(
+                        hintText: "Last Name",
+                        controller: _lastNameController,
+                        keyboardType: TextInputType.name,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter last name';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 10.h),
+                      // Email
+                      CustomTextField(
+                        hintText: "Email",
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter email';
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 10.h),
+                      // Phone Number
+                      CustomTextField(
+                        hintText: "Phone number",
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter phone number';
+                          }
+                          if (value.length < 10) {
+                            return 'Phone number must be at least 10 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      if (widget.driver == null) ...[
+                        SizedBox(height: 10.h),
+                        // Password (only for new drivers)
+                        CustomTextField(
+                          hintText: "Password",
+                          controller: _passwordController,
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a password';
+                            }
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 10.h),
+                        // Confirm Password (only for new drivers)
+                        CustomTextField(
+                          hintText: "Confirm Password",
+                          controller: _confirmPasswordController,
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm password';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                      SizedBox(height: 20.h),
+                      // Save Button
+                      PrimaryButton(
+                        text: "Save",
+                        onPressed: _saveDriver,
+                      ),
+                      SizedBox(height: 20.h),
+                    ],
+                  ),
                 ),
-                child: Text(
-                  "Save",
-                  style: TextStyle(color: Colors.white), // text color white
-                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

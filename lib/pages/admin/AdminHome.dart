@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
+import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/admin/DriverListScreen.dart';
+import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
 import 'package:parkingapp/pages/admin/ViewAllScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/BookingCard.dart';
-import 'package:parkingapp/widgets/driver/TopBar.dart';
+import 'package:parkingapp/pages/admin/TopBar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Adminhome extends StatefulWidget {
@@ -42,6 +44,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     try {
       _bookingsFuture = _repository.getBookingsForAdmin();
       await _bookingsFuture;
+       await fetchDrivers();
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to load data: ${e.toString()}";
@@ -49,6 +52,19 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     } finally {
       setState(() {
         _isLoading = false;
+      });
+    }
+    
+  }
+  Future<void> fetchDrivers() async {
+    try {
+      final response = await GeneralRepository().getEmployeesWithBookings();
+      final employeesData = response['data'] as List;
+        Globals.drivers = employeesData.map((json) => Driver.fromJson(json)).toList();
+     
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load drivers: ${e.toString()}';
       });
     }
   }
@@ -67,8 +83,15 @@ class _ReserveBookingScreenState extends State<Adminhome> {
           child: Column(
             children: [
               TopBar(
-                title: "AirPort Parking",
+                title: '',
+                leftSideText: "AirPort Parking",
                 showBackButton: false,
+                showPayments: true,
+                onPaymentPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => PaymentScreenAdmin()));
+                },
                 onBackPressed: () {},
                 onLogoutPressed: () {
                   // Handle logout
@@ -388,126 +411,136 @@ class _ReserveBookingScreenState extends State<Adminhome> {
   }
 
   void _openAssignDriverBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      isScrollControlled: true,
-      builder: (context) {
-        String selectedDriver = "";
+  showModalBottomSheet(
+    context: context,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+    ),
+    isScrollControlled: true,
+    builder: (context) {
+      String? selectedDriverId; // Changed to store driver ID instead of name
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 5.h,
-                    width: 50.w,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 5.h,
+                  width: 50.w,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(5),
                   ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    "Assigned Driver",
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  "Assign Driver",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
                   ),
-                  SizedBox(height: 20.h),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Select Driver",
-                    ),
-                    value: selectedDriver.isEmpty ? null : selectedDriver,
-                    items: ["Driver 1", "Driver 2", "Driver 3"]
-                        .map((driver) => DropdownMenuItem(
-                              value: driver,
-                              child: Text(driver),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedDriver = value ?? "";
-                      });
-                    },
+                ),
+                SizedBox(height: 20.h),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Select Driver",
                   ),
-                  SizedBox(height: 12.h),
+                  value: selectedDriverId,
+                  items: Globals.drivers.map((driver) => DropdownMenuItem(
+                    value: driver.id,
+                    child: Text(driver.name), // Using driver.name from your Driver model
+                  )).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedDriverId = value;
+                    });
+                  },
+                ),
+                SizedBox(height: 12.h),
 
-                  // New Driver Text
-                  GestureDetector(
-                    onTap: () {
-                      // Handle Add New Driver logic here
-                      Navigator.pop(context); // Close the bottom sheet
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => DriverListScreen()),
-                      );
-                    },
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "+ Add New Driver",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                        ),
+                // New Driver Text
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => DriverListScreen()),
+                    ).then((_) {
+                      // Refresh drivers list after returning from AddEdit screen
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    });
+                  },
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "+ Add New Driver",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),
+                ),
 
-                  SizedBox(height: 24.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade300,
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text("Cancel"),
+                SizedBox(height: 24.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade300,
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text("Cancel"),
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                        ),
+                        onPressed: () {
+                          // if (selectedDriverId != null) {
+                          //   // Find the selected driver from the list
+                          //   final selectedDriver = Globals.drivers.firstWhere(
+                          //     (driver) => driver.id == selectedDriverId,
+                              
+                          //   );
+                            
+                          //   // if (selectedDriver != null) {
+                          //   //   // Handle the assignment with the full driver object
+                          //   //  // _assignDriverToBooking(selectedDriver);
+                          //   // }
+                          // }
+                          // Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Apply",
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                          ),
-                          onPressed: () {
-                            // Handle Assign Driver action
-                            Navigator.pop(context);
-                          },
-                          child: Text(
-                            "Apply",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 
   void _viewAll(String type, List<Parking> parkings) {
     Navigator.push(

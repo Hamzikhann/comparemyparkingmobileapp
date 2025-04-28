@@ -1,5 +1,6 @@
 import 'package:parkingapp/data/models/BookingInfoModel.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
+import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
@@ -27,6 +28,7 @@ class Globals {
   static BookingInfoModel? booking_info_model;
   static Parking? bookingDriverResponse;
   static Parking? bookingdetailuser;
+  static List<Driver> drivers = [];
 
   //**********clear**********
   static void clearVariables() {
