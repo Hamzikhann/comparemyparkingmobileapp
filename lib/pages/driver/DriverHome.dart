@@ -53,8 +53,6 @@ class _ReserveBookingScreenState extends State<Driverhome> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -64,6 +62,7 @@ class _ReserveBookingScreenState extends State<Driverhome> {
         return shouldExit; // If true, allow back navigation; if false, prevent it
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Column(
             children: [
@@ -75,7 +74,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                   // Handle logout
                   Globals.user = null;
                   SharedStorage.removeFromSharedPreferences();
-                  Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                      MyRoutes.loginRoute, (route) => false);
                 },
               ),
               Expanded(
@@ -98,7 +98,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                         : FutureBuilder<BookingDriverResponse>(
                             future: _bookingsFuture,
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
                                 return const Center();
                               } else if (snapshot.hasError) {
                                 return Center(
@@ -115,13 +116,17 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                   ),
                                 );
                               } else if (snapshot.hasData) {
-                                final reserved = snapshot.data!.assignedAssignments;
-                                final completed = snapshot.data!.completedAssignmnets;
+                                final reserved =
+                                    snapshot.data!.assignedAssignments;
+                                final completed =
+                                    snapshot.data!.completedAssignmnets;
 
                                 return SingleChildScrollView(
-                                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 20.w, vertical: 16.h),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text("Driver Info",
                                           style: TextStyle(
@@ -137,7 +142,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                       SizedBox(height: 8.h),
                                       NonEditableTextField(
                                         hintText: "",
-                                        value: "${Globals.user?.firstName ?? ''} ${Globals.user?.lastName ?? ''}",
+                                        value:
+                                            "${Globals.user?.firstName ?? ''} ${Globals.user?.lastName ?? ''}",
                                       ),
                                       SizedBox(height: 16.h),
                                       Row(
@@ -179,7 +185,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
 
                                       /// 🔄 TASK LIST ROW WITH REFRESH
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             "Task List",
@@ -197,7 +204,8 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                                 fontSize: 14.sp,
                                                 fontWeight: FontWeight.w500,
                                                 color: colors.primary,
-                                                decoration: TextDecoration.underline,
+                                                decoration:
+                                                    TextDecoration.underline,
                                               ),
                                             ),
                                           ),
@@ -205,13 +213,16 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                                       ),
                                       SizedBox(height: 24.h),
 
-                                      buildSection("Active Session", reserved, Icons.schedule),
-                                      buildSection("Completed Sessions", completed, Icons.check_circle),
+                                      buildSection("Active Session", reserved,
+                                          Icons.schedule),
+                                      buildSection("Completed Sessions",
+                                          completed, Icons.check_circle),
                                     ],
                                   ),
                                 );
                               } else {
-                                return const Center(child: Text("No data available."));
+                                return const Center(
+                                    child: Text("No data available."));
                               }
                             },
                           ),
@@ -294,7 +305,6 @@ class _ReserveBookingScreenState extends State<Driverhome> {
               onViewLocationPressed: () {
                 // location click
                 getLocation(parking.registrations.first.bookingId);
-
               },
             );
           },
@@ -312,75 +322,80 @@ class _ReserveBookingScreenState extends State<Driverhome> {
     );
   }
 
-  
-Future<bool> _showExitConfirmationDialog(BuildContext context) async {
-  // Ensure the return type is Future<bool>
-  final result = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false, // Prevent dismissing by tapping outside
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Exit"),
-        content: Text("Are you sure you want to exit?"),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false); // Don't exit
-            },
-            child: Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(true); // Exit
-            },
-            child: Text("Exit"),
-          ),
-        ],
-      );
-    },
-  );
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    // Ensure the return type is Future<bool>
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Exit"),
+          content: Text("Are you sure you want to exit?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Don't exit
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Exit
+              },
+              child: Text("Exit"),
+            ),
+          ],
+        );
+      },
+    );
 
-  // Return the result or false if the result is null (dialog dismissed)
-  return result ?? false;
-}
+    // Return the result or false if the result is null (dialog dismissed)
+    return result ?? false;
+  }
 
-Future<void> getLocation(String bookingID) async {
-  try {
-    final value = await GeneralRepository().getLocationCoordinates(bookingID);
-    final longitude = value['longitude'];
-    final latitude = value['latitude'];
+  Future<void> getLocation(String bookingID) async {
+    try {
+      final value = await GeneralRepository().getLocationCoordinates(bookingID);
+      final longitude = value['longitude'];
+      final latitude = value['latitude'];
 
-    if (longitude == null || longitude.isEmpty || latitude == null || latitude.isEmpty) {
-      print("No location found.");
-      return;
-    }
-
-    final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
-    final appleMapsUrl = Uri.parse("http://maps.apple.com/?q=$latitude,$longitude");
-
-    if (Platform.isAndroid) {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl);
-      } else {
-        print("Could not open Google Maps on Android.");
+      if (longitude == null ||
+          longitude.isEmpty ||
+          latitude == null ||
+          latitude.isEmpty) {
+        print("No location found.");
+        return;
       }
-    } else if (Platform.isIOS) {
-      // Try Google Maps first on iOS
-      final iosGoogleMapsUrl = Uri.parse("comgooglemaps://?q=$latitude,$longitude");
 
-      if (await canLaunchUrl(iosGoogleMapsUrl)) {
-        await launchUrl(iosGoogleMapsUrl);
-      } else {
-        // Fallback to Apple Maps
-        if (await canLaunchUrl(appleMapsUrl)) {
-          await launchUrl(appleMapsUrl);
+      final googleMapsUrl = Uri.parse(
+          "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
+      final appleMapsUrl =
+          Uri.parse("http://maps.apple.com/?q=$latitude,$longitude");
+
+      if (Platform.isAndroid) {
+        if (await canLaunchUrl(googleMapsUrl)) {
+          await launchUrl(googleMapsUrl);
         } else {
-          print("Could not open any maps on iOS.");
+          print("Could not open Google Maps on Android.");
+        }
+      } else if (Platform.isIOS) {
+        // Try Google Maps first on iOS
+        final iosGoogleMapsUrl =
+            Uri.parse("comgooglemaps://?q=$latitude,$longitude");
+
+        if (await canLaunchUrl(iosGoogleMapsUrl)) {
+          await launchUrl(iosGoogleMapsUrl);
+        } else {
+          // Fallback to Apple Maps
+          if (await canLaunchUrl(appleMapsUrl)) {
+            await launchUrl(appleMapsUrl);
+          } else {
+            print("Could not open any maps on iOS.");
+          }
         }
       }
+    } catch (e) {
+      print("Error: $e");
     }
-  } catch (e) {
-    print("Error: $e");
   }
-}
 }

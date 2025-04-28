@@ -25,9 +25,9 @@ class BookingCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: isHighlighted ? Color(0xFF221B58) : Colors.white,
+          color: isHighlighted ? Color(0xFF221B58) : colors.navLight,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: Colors.grey),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
