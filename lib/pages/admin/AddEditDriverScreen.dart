@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/Driver.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/widgets/CustomAlert.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
 import 'package:parkingapp/widgets/CustomTextField.dart';
 import 'package:parkingapp/widgets/PrimaryButton.dart';
@@ -29,7 +31,6 @@ class _AddEditDriverScreenState extends State<AddEditDriverScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -53,39 +54,50 @@ class _AddEditDriverScreenState extends State<AddEditDriverScreen> {
     super.dispose();
   }
 
-  Future<void> _saveDriver() async {
-    if (_formKey.currentState!.validate() && selectedTitle != null) {
-      try {
-        // Create or update driver logic would go here
-        if (widget.driver == null) {
-          Alertify.showAlert(
-            alertKey: 'driver',
-            message: 'Driver added successfully',
-            type: AlertType.success,
-            onClose: () => Navigator.pop(context, true),
-          );
-        } else {
-          Alertify.showAlert(
-            alertKey: 'driver',
-            message: 'Driver updated successfully',
-            type: AlertType.success,
-            onClose: () => Navigator.pop(context, true),
-          );
-        }
-      } catch (e) {
-        Alertify.showAlert(
-          alertKey: 'driver',
-          message: 'Error saving driver: ${e.toString()}',
-          type: AlertType.error,
-        );
-      }
-    } else if (selectedTitle == null) {
+  Future<void> registerUser(String title,
+     String firstName,
+     String lastName,
+     String email,
+     String phoneNo,
+     String password,
+     String confirmPassword) async {
+    GeneralRepository().signup(
+      title: title,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phoneNo: phoneNo,
+      password: password,
+      confirmPassword: confirmPassword,
+    ).then((value) {
       Alertify.showAlert(
-        alertKey: 'driver',
-        message: 'Please select a title',
-        type: AlertType.error,
+        duration: 1,
+        alertKey: 'signup',
+        message: 'Driver Add successfully!',
+        type: AlertType.success,
+        onClose: () async {
+          Globals.user = value;
+          SharedStorage.saveUser(value);
+          _emailController.clear();
+          _passwordController.clear();
+          await fetchDrivers();
+          
+        },
       );
+    });
+  }
+  Future<void> fetchDrivers() async {
+      try {
+      final response = await GeneralRepository().getEmployeesWithBookings();
+      final employeesData = response['data'] as List;
+        Globals.drivers = employeesData.map((json) => Driver.fromJson(json)).toList();
+     Navigator.pop(context);
+    } catch (e) {
+      
+        print('Failed to load drivers: ${e.toString()}');
+     
     }
+        
   }
 
   @override
@@ -221,9 +233,20 @@ class _AddEditDriverScreenState extends State<AddEditDriverScreen> {
                       ],
                       SizedBox(height: 20.h),
                       // Save Button
+                      const CustomAlert(alertKey: 'signup'),
                       PrimaryButton(
                         text: "Save",
-                        onPressed: _saveDriver,
+                        onPressed: (){
+                          if (_formKey.currentState!.validate() && selectedTitle != null) {
+                          registerUser(selectedTitle!,_firstNameController.text,_lastNameController.text,_emailController.text,_phoneController.text,_passwordController.text,_confirmPasswordController.text);
+                        } else if (selectedTitle == null) {
+                          Alertify.showAlert(
+                            alertKey: 'signup',
+                            message: 'Please select a title',
+                            type: AlertType.error,
+                          );
+                        }
+                        },
                       ),
                       SizedBox(height: 20.h),
                     ],

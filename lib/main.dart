@@ -29,6 +29,7 @@ import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
 
 void main() async {
+  final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
   WidgetsFlutterBinding.ensureInitialized();
   // // Initialize Stripe
   Stripe.publishableKey =
@@ -48,6 +49,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AlertNotifier()),
       ],
       child: const MyApp(),
+      
     ),
   );
 }

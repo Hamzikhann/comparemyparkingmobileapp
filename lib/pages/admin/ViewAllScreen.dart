@@ -357,7 +357,7 @@ class ViewAllScreen extends StatelessWidget {
                 
       );
       Navigator.pop(context);
-      Navigator.pop(context);
+      Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.adminHome, (route) => false);
       
     });
   }

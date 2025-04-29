@@ -23,7 +23,7 @@ class Adminhome extends StatefulWidget {
   State<Adminhome> createState() => _ReserveBookingScreenState();
 }
 
-class _ReserveBookingScreenState extends State<Adminhome> {
+class _ReserveBookingScreenState  extends State<Adminhome>{
   late Future<BookingAdminResponse> _bookingsFuture;
   final GeneralRepository _repository = GeneralRepository();
   bool _isLoading = true;
@@ -34,7 +34,6 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     super.initState();
     _loadData();
   }
-
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -186,7 +185,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                       // Accept Booking
                                       BookingCard(
                                         title: "Assigned Booking",
-                                        available: reserved.length,
+                                        available: reserved.length - pending.length,
                                         onTap: () {
                                           // navigate to Accept Booking details
                                           _viewAll("Accept Booking", reserved);
