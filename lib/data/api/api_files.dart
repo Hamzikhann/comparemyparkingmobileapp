@@ -12,5 +12,6 @@ class ApiFiles {
   static String getLocationDetails = "/api/booking/detail/location";
   static String resetPassword = "/api/auth/reset/password";
   static String getDrivers = "/api/users/list/employees";
+  static String assignDriver = "/api/booking/assignment/create";
   
 }

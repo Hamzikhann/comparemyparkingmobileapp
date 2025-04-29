@@ -122,7 +122,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       SessionCard(
         title: "${first.airport} Airport",
         status: first.status,
-        subTitle: first.registrations.first.inboundFlightNo,
+        subTitle: first.registrations.first.inboundTerminal,
         date: first.startDate,
         time: first.startTime,
         price: "\$100",

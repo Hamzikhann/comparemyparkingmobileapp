@@ -48,6 +48,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to load data: ${e.toString()}";
+        print(_errorMessage = "Failed to load data: ${e.toString()}");
       });
     } finally {
       setState(() {
@@ -140,6 +141,12 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                 );
                               } else if (snapshot.hasData) {
                                 final pending = snapshot.data!.pendingParkings;
+                                for (var booking in snapshot.data!.reservedParkings) {
+                                  if (booking.bookingAssignments.isEmpty) {
+                                    pending.add(booking);
+                                  }
+                                }
+                              
                                 final reserved =
                                     snapshot.data!.reservedParkings;
                                 final completed =
@@ -241,17 +248,32 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                       ),
                                       SizedBox(height: 24.h),
                                       buildSection(
-                                          "Un-Assigned Session",
-                                          pending,
-                                          Icons.schedule,
-                                          "Not Assigned"),
-                                      buildSection("Assigned Session", reserved,
-                                          Icons.schedule, "Assigned"),
+                                        "Un-Assigned Session",
+                                        pending,
+                                        Icons.schedule,
+                                        "Not Assigned",
+                                      ),
                                       buildSection(
-                                          "Completed Sessions",
-                                          completed,
-                                          Icons.check_circle,
-                                          "Assigned"),
+                                        "Assigned Session",
+                                        reserved,
+                                        Icons.schedule,
+                                        reserved.isNotEmpty &&
+                                                reserved.first.bookingAssignments.isNotEmpty &&
+                                                reserved.first.bookingAssignments.first.employee?.firstName != null
+                                            ? reserved.first.bookingAssignments.first.employee!.firstName
+                                            : 'Assigned',
+                                      ),
+                                      buildSection(
+                                        "Completed Sessions",
+                                        completed,
+                                        Icons.check_circle,
+                                        completed.isNotEmpty &&
+                                                completed.first.bookingAssignments.isNotEmpty &&
+                                                completed.first.bookingAssignments.first.employee?.firstName != null
+                                            ? completed.first.bookingAssignments.first.employee!.firstName
+                                            : 'Assigned',
+                                      ),
+
                                     ],
                                   ),
                                 );
@@ -334,7 +356,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                 SizedBox(height: 16.h),
                 GestureDetector(
                   onTap: () {
-                    _openAssignDriverBottomSheet();
+                    _openAssignDriverBottomSheet(parkings.first);
                   },
                   child: Container(
                     padding:
@@ -410,7 +432,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     );
   }
 
-  void _openAssignDriverBottomSheet() {
+  void _openAssignDriverBottomSheet(Parking parkings) {
   showModalBottomSheet(
     context: context,
     shape: RoundedRectangleBorder(
@@ -418,7 +440,8 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     ),
     isScrollControlled: true,
     builder: (context) {
-      String? selectedDriverId; // Changed to store driver ID instead of name
+      String? selectedDriverId;
+      bool isLoading = false; // Changed to store driver ID instead of name
 
       return StatefulBuilder(
         builder: (context, setState) {
@@ -499,7 +522,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                           backgroundColor: Colors.grey.shade300,
                           foregroundColor: Colors.black,
                         ),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: isLoading ? null : () => Navigator.pop(context),
                         child: Text("Cancel"),
                       ),
                     ),
@@ -507,27 +530,46 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
+                          backgroundColor: isLoading ? Colors.grey : colors.primary,
                         ),
-                        onPressed: () {
-                          // if (selectedDriverId != null) {
-                          //   // Find the selected driver from the list
-                          //   final selectedDriver = Globals.drivers.firstWhere(
-                          //     (driver) => driver.id == selectedDriverId,
-                              
-                          //   );
-                            
-                          //   // if (selectedDriver != null) {
-                          //   //   // Handle the assignment with the full driver object
-                          //   //  // _assignDriverToBooking(selectedDriver);
-                          //   // }
-                          // }
-                          // Navigator.pop(context);
-                        },
-                        child: Text(
-                          "Apply",
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (selectedDriverId != null) {
+                                  setState(() => isLoading = true);
+                                  try {
+                                    // Call the API to assign driver
+                                    await assignDriver(
+                                      parkings.registrations.first.bookingId,
+                                      selectedDriverId!,
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Failed to assign driver: ${e.toString()}"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => isLoading = false);
+                                    }
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Please select a driver"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                        child: isLoading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                "Apply",
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ),
                   ],
@@ -541,6 +583,18 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     },
   );
 }
+Future<void> assignDriver(String bookingID, String userID) async {
+    GeneralRepository().assignDriver(bookingID, userID).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                "Driver Assign Successfull!")),
+                
+      );
+      Navigator.pop(context);
+      _loadData();
+    });
+  }
 
   void _viewAll(String type, List<Parking> parkings) {
     Navigator.push(

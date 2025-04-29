@@ -156,9 +156,9 @@ class _PaymentScreenAdminState extends State<PaymentScreenAdmin> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildInfoColumn('Payment Method', payment.paymentMethod),
+                  _buildInfoColumn('Method', payment.paymentMethod),
                   _buildInfoColumn('Reference No', payment.referenceNo),
-                  _buildInfoColumn('Total Payment', '£${payment.totalPayment}', highlight: true),
+                  _buildInfoColumn('Payment', '£${payment.totalPayment}', highlight: true),
                 ],
               ),
               const SizedBox(height: 12),
@@ -185,7 +185,7 @@ class _PaymentScreenAdminState extends State<PaymentScreenAdmin> {
         Text(
           value,
           style: TextStyle(
-            fontSize: highlight ? 16 : 14,
+            fontSize: highlight ? 16 : 10,
             fontWeight: FontWeight.bold,
             color: highlight ? Colors.green : Colors.black,
           ),

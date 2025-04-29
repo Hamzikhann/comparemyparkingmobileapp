@@ -46,9 +46,9 @@ class ViewAllScreen extends StatelessWidget {
                     child: SessionCard(
                       title: "${item.airport} Airport",
                       status: item.status,
-                      subTitle: item.registrations.first.inboundFlightNo,
+                      subTitle: item.registrations.first.inboundTerminal,
                       date: item.startDate,
-                      time: "02:00pm",
+                      time: item.startTime,
                       price: "\$100",
                       type: type,
                       timeRemaining: "0thr:30min", // Only for active sessions

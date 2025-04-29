@@ -183,7 +183,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Payment Method',
+                        'Method',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -223,7 +223,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const Text(
-                        'Total Payment',
+                        'Payment',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey,

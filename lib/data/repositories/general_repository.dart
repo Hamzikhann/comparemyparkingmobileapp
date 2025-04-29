@@ -239,31 +239,32 @@ Future<String> resetPassword(String password, String confirmPassword) async {
     return completer.future;
   }
   Future<BookingAdminResponse> getBookingsForAdmin() async {
-    Completer<BookingAdminResponse> completer = Completer();
+  Completer<BookingAdminResponse> completer = Completer();
 
-    server.makeApiRequest(
-      apiEndpoint:
-          ApiFiles.bookingsList, // Make sure you have this endpoint defined
-      requestMethod: RequestMethod.post,
-      onLoad: () {
-        EasyLoading.show(status: "Loading...");
-      },
-      onSuccess: (Map<String, dynamic> res) {
-        EasyLoading.dismiss();
-        final bookingsData =
-            res['data']; // Access the 'data' field from the response
-        BookingAdminResponse response =
-            BookingAdminResponse.fromJson(bookingsData);
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.bookingsList,
+    requestMethod: RequestMethod.post,
+    onLoad: () {
+      EasyLoading.show(status: "Loading...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      try {
+        // The response already contains the 'message' and 'data' fields
+        BookingAdminResponse response = BookingAdminResponse.fromJson(res);
         completer.complete(response);
-      },
-      onError: (String errorMessage) {
-        EasyLoading.dismiss();
-        completer.completeError(errorMessage);
-      },
-    );
+      } catch (e) {
+        completer.completeError("Failed to parse response: ${e.toString()}");
+      }
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
 
-    return completer.future;
-  }
+  return completer.future;
+}
 
   Future<PaymentResponse> getPaymentHistory() async {
     Completer<PaymentResponse> completer = Completer();
@@ -736,6 +737,38 @@ Future<Map<String, dynamic>> getEmployeesWithBookings() async {
     },
     onError: (String errorMessage) {
       EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
+Future<String> assignDriver(String bookingID, String userId) async {
+  Completer<String> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.assignDriver,
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "bookingId": bookingID,
+      "userId": userId,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Loading...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      final message = res['message'] ?? ' Driver Assign successfully';
+      completer.complete(message);
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      Alertify.showAlert(
+        alertKey: 'postLocation',
+        message: errorMessage,
+        duration: 10,
+        type: AlertType.error,
+      );
       completer.completeError(errorMessage);
     },
   );

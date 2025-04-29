@@ -2,29 +2,29 @@ class BookingAdminResponse {
   final List<Parking> reservedParkings;
   final List<Parking> completedParkings;
   final List<Parking> pendingParkings;
-  
+  final List<Parking> allBookings;
 
   BookingAdminResponse({
     required this.reservedParkings,
     required this.completedParkings,
     required this.pendingParkings,
+    required this.allBookings,
   });
 
   factory BookingAdminResponse.fromJson(Map<String, dynamic> json) {
     return BookingAdminResponse(
-      reservedParkings: (json['reservedParkings'] as List?)
-              ?.map((data) => Parking.fromJson(data))
-              .toList() ??
-          [],
-      completedParkings: (json['completedParkings'] as List?)
-              ?.map((data) => Parking.fromJson(data))
-              .toList() ??
-          [],
-      
-      pendingParkings: (json['pendingParkings'] as List?)
-              ?.map((data) => Parking.fromJson(data))
-              .toList() ??
-          [],
+      reservedParkings: (json['data']['reservedParkings'] as List)
+          .map((e) => Parking.fromJson(e))
+          .toList(),
+      completedParkings: (json['data']['completedParkings'] as List)
+          .map((e) => Parking.fromJson(e))
+          .toList(),
+      pendingParkings: (json['data']['pendingParkings'] as List)
+          .map((e) => Parking.fromJson(e))
+          .toList(),
+      allBookings: (json['data']['allBookings'] as List)
+          .map((e) => Parking.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -37,15 +37,15 @@ class Parking {
   final String endTime;
   final String airport;
   final String? promoCode;
+  final double? longitude;
+  final double? latitude;
   final String status;
-  final String? isActive;
-  final String? createdAt;
-  final String? updatedAt;
   final String userId;
   final String? guestUserId;
   final String packageId;
   final List<Registration> registrations;
   final List<Vehicle> vehicles;
+  final List<BookingAssignment> bookingAssignments;
 
   Parking({
     required this.id,
@@ -55,15 +55,15 @@ class Parking {
     required this.endTime,
     required this.airport,
     this.promoCode,
+    this.longitude,
+    this.latitude,
     required this.status,
-    this.isActive,
-    this.createdAt,
-    this.updatedAt,
     required this.userId,
     this.guestUserId,
     required this.packageId,
     required this.registrations,
     required this.vehicles,
+    required this.bookingAssignments,
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
@@ -75,10 +75,9 @@ class Parking {
       endTime: json['endTime'] as String? ?? '',
       airport: json['airport'] as String? ?? '',
       promoCode: json['promoCode'] as String?,
+      longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
+      latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
       status: json['status'] as String? ?? '',
-      isActive: json['isActive']?.toString(),
-      createdAt: json['createdAt']?.toString(),
-      updatedAt: json['updatedAt']?.toString(),
       userId: json['userId'] as String? ?? '',
       guestUserId: json['guestUserId'] as String?,
       packageId: json['packageId'] as String? ?? '',
@@ -88,6 +87,10 @@ class Parking {
           [],
       vehicles: (json['vehicles'] as List?)
               ?.map((data) => Vehicle.fromJson(data))
+              .toList() ??
+          [],
+      bookingAssignments: (json['bookingAssignments'] as List?)
+              ?.map((data) => BookingAssignment.fromJson(data))
               .toList() ??
           [],
     );
@@ -106,9 +109,6 @@ class Registration {
   final String lastName;
   final String phoneNo;
   final String? status;
-  final String? isActive;
-  final String? createdAt;
-  final String? updatedAt;
   final String bookingId;
 
   Registration({
@@ -123,9 +123,6 @@ class Registration {
     required this.lastName,
     required this.phoneNo,
     this.status,
-    this.isActive,
-    this.createdAt,
-    this.updatedAt,
     required this.bookingId,
   });
 
@@ -142,9 +139,6 @@ class Registration {
       lastName: json['lastName'] as String? ?? '',
       phoneNo: json['phoneNo'] as String? ?? '',
       status: json['status'] as String?,
-      isActive: json['isActive']?.toString(),
-      createdAt: json['createdAt']?.toString(),
-      updatedAt: json['updatedAt']?.toString(),
       bookingId: json['bookingId'] as String? ?? '',
     );
   }
@@ -157,9 +151,6 @@ class Vehicle {
   final String vehicleModel;
   final String vehicleColour;
   final String numberofPassengers;
-  final String? isActive;
-  final String? createdAt;
-  final String? updatedAt;
   final String bookingId;
 
   Vehicle({
@@ -169,9 +160,6 @@ class Vehicle {
     required this.vehicleModel,
     required this.vehicleColour,
     required this.numberofPassengers,
-    this.isActive,
-    this.createdAt,
-    this.updatedAt,
     required this.bookingId,
   });
 
@@ -183,10 +171,76 @@ class Vehicle {
       vehicleModel: json['vehicleModel'] as String? ?? '',
       vehicleColour: json['vehicleColour'] as String? ?? '',
       numberofPassengers: json['numberofPassengers'] as String? ?? '',
-      isActive: json['isActive']?.toString(),
-      createdAt: json['createdAt']?.toString(),
-      updatedAt: json['updatedAt']?.toString(),
       bookingId: json['bookingId'] as String? ?? '',
+    );
+  }
+}
+
+class BookingAssignment {
+  final String id;
+  final String status;
+  final String bookingId;
+  final String employeeId;
+  final Employee? employee;
+
+  BookingAssignment({
+    required this.id,
+    required this.status,
+    required this.bookingId,
+    required this.employeeId,
+    this.employee,
+  });
+
+  factory BookingAssignment.fromJson(Map<String, dynamic> json) {
+    return BookingAssignment(
+      id: json['id'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      bookingId: json['bookingId'] as String? ?? '',
+      employeeId: json['employeeId'] as String? ?? '',
+      employee: json['employee'] != null
+          ? Employee.fromJson(json['employee'])
+          : null,
+    );
+  }
+}
+
+class Employee {
+  final String id;
+  final String title;
+  final String firstName;
+  final String lastName;
+  final String phoneNo;
+  final String email;
+  final String? imageURL;
+  final String? fcmToken;
+  final String isActive;
+  final String roleId;
+
+  Employee({
+    required this.id,
+    required this.title,
+    required this.firstName,
+    required this.lastName,
+    required this.phoneNo,
+    required this.email,
+    this.imageURL,
+    this.fcmToken,
+    required this.isActive,
+    required this.roleId,
+  });
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      firstName: json['firstName'] as String? ?? '',
+      lastName: json['lastName'] as String? ?? '',
+      phoneNo: json['phoneNo'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      imageURL: json['imageURL'] as String?,
+      fcmToken: json['fcmToken'] as String?,
+      isActive: json['isActive'] as String? ?? '',
+      roleId: json['roleId'] as String? ?? '',
     );
   }
 }

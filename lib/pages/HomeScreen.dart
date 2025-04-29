@@ -292,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: "${first.airport} Airport",
                             status: first.status,
                             subTitle: first.registrations.isNotEmpty 
-                              ? first.registrations.first.inboundFlightNo 
+                              ? first.registrations.first.inboundTerminal 
                               : 'No flight number',
                             date: first.startDate,
                             time: first.startTime,

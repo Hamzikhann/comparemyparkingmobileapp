@@ -58,7 +58,10 @@ class ViewAllScreen extends StatelessWidget {
                     child: buildParkingCard(
                       context,
                       item,
-                      "Assigned",
+                      item.bookingAssignments.isNotEmpty &&
+                      item.bookingAssignments.first.employee?.firstName != null
+                  ? item.bookingAssignments.first.employee!.firstName
+                  : 'Un-Assigned',
                       showAssignDriver: type == 'pending', // showAssignDriver true only if pending
                     ),
                   );
@@ -212,7 +215,7 @@ class ViewAllScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (context) {
         String? selectedDriverId;
-
+        bool isLoading = false;
         return StatefulBuilder(
           builder: (context, setState) {
             return Padding(
@@ -298,21 +301,41 @@ class ViewAllScreen extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
                           ),
-                          onPressed: () {
-                            // if (selectedDriverId != null) {
-                            //   final selectedDriver = Globals.drivers.firstWhere(
-                            //     (driver) => driver.id == selectedDriverId,
-                            //   );
-                            //   // Call your API to assign driver to booking
-                            //   // await assignDriverToBooking(parking.id, selectedDriver.id);
-                            //   Navigator.pop(context);
-                            // }
-                          },
-                          child: Text(
-                            "Apply",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
+                          onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (selectedDriverId != null) {
+                                  setState(() => isLoading = true);
+                                  try {
+                                    // Call the API to assign driver
+                                    await assignDriver(context,
+                                      parking.registrations.first.bookingId,
+                                      selectedDriverId!,
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Failed to assign driver: ${e.toString()}"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  } 
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Please select a driver"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                        child: isLoading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                "Apply",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                      ),
                       ),
                     ],
                   ),
@@ -324,5 +347,18 @@ class ViewAllScreen extends StatelessWidget {
         );
       },
     );
+  }
+  Future<void> assignDriver(BuildContext context,String bookingID, String userID) async {
+    GeneralRepository().assignDriver(bookingID, userID).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                "Driver Assign Successfull!")),
+                
+      );
+      Navigator.pop(context);
+      Navigator.pop(context);
+      
+    });
   }
 }
