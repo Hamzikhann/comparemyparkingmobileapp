@@ -92,7 +92,11 @@ class ViewAllScreen extends StatelessWidget {
     final latitude = value['latitude'];
 
     if (longitude == null || longitude.isEmpty || latitude == null || latitude.isEmpty) {
-      print("No location found.");
+       SnackBar(
+    content: Text("No location found."),
+    duration: Duration(seconds: 2),
+  );
+
       return;
     }
 

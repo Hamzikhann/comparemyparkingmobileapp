@@ -6,6 +6,7 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/admin/AddEditDriverScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/pages/admin/TopBar.dart';
+import 'package:parkingapp/utils/colors.dart';
 
 class DriverListScreen extends StatefulWidget {
   @override
@@ -162,10 +163,24 @@ Widget build(BuildContext context) {
                           children: [
                             Icon(Icons.directions_car, size: 16),
                             SizedBox(width: 8),
-                            Text('Booking ID: ${assignment.bookingId}'),
+                            Flexible(
+                              child: Text(
+                                'Booking ID: ${assignment.bookingId}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12, // slightly increased for readability
+                                  color: colors.blueDark,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
                             SizedBox(width: 16),
                             Chip(
-                              label: Text(assignment.status),
+                              label: Text(
+                                assignment.status,
+                                style: TextStyle(fontSize: 10),
+                              ),
                               backgroundColor: _getStatusColor(assignment.status),
                             ),
                           ],

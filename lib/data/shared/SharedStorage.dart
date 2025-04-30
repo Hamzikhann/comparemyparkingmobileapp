@@ -23,7 +23,6 @@ class SharedStorage {
       final userData = data['user'];
       Globals.roleTitle = userData['roleTitle'];
       Globals.user = UserModel.fromJson(data);
-      print('User Role: ${Globals.roleTitle}');
     }
   }
 

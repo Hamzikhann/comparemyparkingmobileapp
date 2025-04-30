@@ -166,13 +166,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           );
         } else {
-          debugPrint("❌ Booking Failed: $resultMessage");
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Booking failed: $resultMessage")),
           );
         }
       } catch (e) {
-        debugPrint("❌ Booking Error: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Booking failed: $e')),
         );
@@ -328,7 +326,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
     );
   } catch (e) {
-    print("Payment failed: ${e.toString()}");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment failed: ${e.toString()}")),
     );

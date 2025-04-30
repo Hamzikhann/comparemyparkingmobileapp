@@ -363,7 +363,12 @@ class _ReserveBookingScreenState extends State<Driverhome> {
           longitude.isEmpty ||
           latitude == null ||
           latitude.isEmpty) {
-        print("No location found.");
+        ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text("No location found."),
+    duration: Duration(seconds: 2),
+  ),
+);
         return;
       }
 

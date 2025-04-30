@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api.dart';
@@ -25,10 +23,6 @@ class APIService {
         'access-token': Globals.user?.token ?? '',
         
       };
-      debugPrint("Making request to: $apiEndpoint");
-debugPrint("Headers: $headers");
-debugPrint("Body: ${jsonEncode(requestData)}");
-
       if (requestMethod == RequestMethod.get) {
         response = await api.sendRequest.get(
           apiEndpoint,
@@ -87,14 +81,12 @@ debugPrint("Body: ${jsonEncode(requestData)}");
       ...fileMap,
     });
 
-print(formData.toString());
 
     final response = await api.sendRequest.post(
       apiEndpoint,
       data: formData,
       options: Options(headers: headers),
     );
-    print(response);
 
     if (response.data.containsKey('title')) {
       onError.call(response.data['message']);

@@ -333,12 +333,11 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
     );
 
     try {
-      final checkpointResponse = await GeneralRepository().submitCheckpoint(
+      GeneralRepository().submitCheckpoint(
         checkpointRequest,
         images,
       );
-
-      if (checkpointResponse != null) {
+      
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -376,12 +375,6 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
             ),
           ),
         );
-      } else {
-        debugPrint("❌ Checkpoint Submission Failed");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Checkpoint submission failed")),
-        );
-      }
     } catch (e) {
       debugPrint("❌ Checkpoint Submission Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(

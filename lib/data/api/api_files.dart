@@ -13,5 +13,6 @@ class ApiFiles {
   static String resetPassword = "/api/auth/reset/password";
   static String getDrivers = "/api/users/list/employees";
   static String assignDriver = "/api/booking/assignment/create";
+  static String updateDriver = "/api/users/update";
   
 }

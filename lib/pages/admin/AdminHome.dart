@@ -47,7 +47,6 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to load data: ${e.toString()}";
-        print(_errorMessage = "Failed to load data: ${e.toString()}");
       });
     } finally {
       setState(() {
@@ -645,7 +644,6 @@ Future<void> assignDriver(String bookingID, String userID) async {
           longitude.isEmpty ||
           latitude == null ||
           latitude.isEmpty) {
-        print("No location found.");
         return;
       }
 

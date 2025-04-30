@@ -43,16 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _bookingsFuture = _repository.getBookings()
           .then((value) {
-            debugPrint('Bookings loaded successfully: ${value.reservedParkings.length} items');
             return value;
           })
           .catchError((error) {
-            debugPrint('Error loading bookings: $error');
             throw error;
           });
       });
     } catch (e) {
-      debugPrint('Exception in _loadBookings: $e');
       setState(() {
         _bookingsFuture = Future.error(e);
       });
@@ -94,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final dateTime = format.parse(timeStr);
       return TimeOfDay.fromDateTime(dateTime);
     } catch (e) {
-      debugPrint('Error parsing time: $e');
       return TimeOfDay.now();
     }
   }
