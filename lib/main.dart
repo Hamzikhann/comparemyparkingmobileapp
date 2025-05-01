@@ -27,8 +27,10 @@ import 'package:parkingapp/pages/SplashScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 void main() async {
+  
+  initializeDefault();
   WidgetsFlutterBinding.ensureInitialized();
   // // Initialize Stripe
   Stripe.publishableKey =
@@ -99,4 +101,11 @@ class MyApp extends StatelessWidget {
       },
     );
   }
+  
 }
+Future<void> initializeDefault() async {
+    FirebaseApp app = await Firebase.initializeApp(
+     // options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Initialized default app $app');
+  }

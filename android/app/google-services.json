@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "207573484516",
+    "project_id": "fir-project-ac10e",
+    "storage_bucket": "fir-project-ac10e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207573484516:android:8d41fbb3746db8d0657df1",
+        "android_client_info": {
+          "package_name": "com.stn00.parkingapp22"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwhIEvyvbS0dl-Ple-6JXHUYmah4IBQ4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
