@@ -21,6 +21,21 @@
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs access to your location even when running in the background.</string>
 
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier will be used to deliver personalized ads to you.</string>
+
+    <key>NSPushNotificationsUsageDescription</key>
+    <string>This app uses notifications to keep you informed.</string>
+
 
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
