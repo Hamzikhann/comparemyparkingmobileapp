@@ -150,7 +150,11 @@ Future<void> setupNotifications() async {
 
   // Android 13+ runtime permission
   if (Platform.isAndroid) {
-    await FirebaseMessaging.instance.requestPermission();
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   // Get token
