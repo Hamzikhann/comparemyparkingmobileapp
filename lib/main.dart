@@ -1,8 +1,13 @@
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_stripe/flutter_stripe.dart'; // Add this import
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:parkingapp/pages/BookingDetailUser.dart';
 import 'package:parkingapp/pages/EditProfile.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
@@ -27,21 +32,36 @@ import 'package:parkingapp/pages/SplashScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
-import 'package:firebase_core/firebase_core.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel',
+  'High Importance Notifications',
+  description: 'This channel is used for important notifications.',
+  importance: Importance.high,
+);
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Handling background message: ${message.messageId}");
+}
+
 void main() async {
-  
-  initializeDefault();
   WidgetsFlutterBinding.ensureInitialized();
-  // // Initialize Stripe
+  await Firebase.initializeApp();
+
+  // Stripe setup
   Stripe.publishableKey =
-      'pk_test_51RE9h3QsW9cgGLSGZZo6d3ttIhwMgD9fHxU5QGzOe7xgW3RybHokUOQWpq8saaT9Gy23BCcn2m5yJepjYnPmEYzK00QpUXVCtv'; // Replace with your key
+      'pk_test_51RE9h3QsW9cgGLSGZZo6d3ttIhwMgD9fHxU5QGzOe7xgW3RybHokUOQWpq8saaT9Gy23BCcn2m5yJepjYnPmEYzK00QpUXVCtv';
   await Stripe.instance.applySettings();
 
-  // Lock orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
+  // Notification setup
+  await setupNotifications();
 
   runApp(
     MultiProvider(
@@ -50,7 +70,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AlertNotifier()),
       ],
       child: const MyApp(),
-      
     ),
   );
 }
@@ -101,11 +120,71 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-  
 }
-Future<void> initializeDefault() async {
-    FirebaseApp app = await Firebase.initializeApp(
-     // options: DefaultFirebaseOptions.currentPlatform,
+
+Future<void> setupNotifications() async {
+  // Initialize background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Android channel
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
+  await flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    ),
+  );
+
+  // iOS permission
+  if (Platform.isIOS) {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
     );
-    print('Initialized default app $app');
   }
+
+  // Android 13+ runtime permission
+  if (Platform.isAndroid) {
+    await FirebaseMessaging.instance.requestPermission();
+  }
+
+  // Get token
+  String? token = await FirebaseMessaging.instance.getToken();
+  print('FCM Token: $token');
+
+  // Foreground messages
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("Received foreground message: ${message.notification?.title}");
+
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    if (notification != null && android != null) {
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+      );
+    }
+  });
+
+  // When user taps notification
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('User tapped notification: ${message.messageId}');
+    // Navigate to a specific screen if needed
+  });
+}

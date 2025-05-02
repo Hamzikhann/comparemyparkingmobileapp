@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:parkingapp/data/Globals.dart';
@@ -25,12 +26,15 @@ class GeneralRepository {
 
   Future<UserModel> signin(String email, String password) async {
     Completer<UserModel> completer = Completer();
+    String? token = await FirebaseMessaging.instance.getToken();
+    print(token);
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signin,
       requestMethod: RequestMethod.post,
       requestData: {
         "email": email,
         "password": password,
+        "fcmToken": token,
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");
@@ -97,7 +101,7 @@ class GeneralRepository {
     return completer.future;
   }
 
-Future<String> resetPassword(String password, String confirmPassword) async {
+  Future<String> resetPassword(String password, String confirmPassword) async {
     Completer<String> completer = Completer();
     server.makeApiRequest(
       apiEndpoint: ApiFiles.resetPassword,
@@ -113,7 +117,7 @@ Future<String> resetPassword(String password, String confirmPassword) async {
         EasyLoading.dismiss();
 
         final message = res['message'] ?? 'Location posted successfully';
-      completer.complete(message);
+        completer.complete(message);
       },
       onError: (String errorMessage) {
         EasyLoading.dismiss();
@@ -129,6 +133,7 @@ Future<String> resetPassword(String password, String confirmPassword) async {
 
     return completer.future;
   }
+
   Future<UserModel> signup({
     required String title,
     required String firstName,
@@ -183,7 +188,8 @@ Future<String> resetPassword(String password, String confirmPassword) async {
 
     return completer.future;
   }
-Future<UserModel> signupv2({
+
+  Future<UserModel> signupv2({
     required String title,
     required String firstName,
     required String lastName,
@@ -224,63 +230,64 @@ Future<UserModel> signupv2({
         completer.complete(user);
       },
       onError: (String errorMessage) {
-  EasyLoading.dismiss();
-  Alertify.showAlert(
-    alertKey: 'signup',
-    message: errorMessage,
-    duration: 10,
-    type: AlertType.error,
-  );
-  completer.completeError(errorMessage);
-},
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'signup',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
     );
 
     return completer.future;
   }
 
-Future<UserUpdateResponse> updateDriver({
-  required String title,
-  required String firstName,
-  required String lastName,
-  required String email,
-  required String phoneNo,
-  required String userId,
-}) async {
-  Completer<UserUpdateResponse> completer = Completer();
+  Future<UserUpdateResponse> updateDriver({
+    required String title,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String phoneNo,
+    required String userId,
+  }) async {
+    Completer<UserUpdateResponse> completer = Completer();
 
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.updateDriver, // Make sure you have this endpoint defined
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "title": title,
-      "firstName": firstName,
-      "lastName": lastName,
-      "email": email,
-      "phoneNo": phoneNo,
-      "userId": userId,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Update driver...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final response = UserUpdateResponse.fromJson(res);
-      completer.complete(response);
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      Alertify.showAlert(
-        alertKey: 'signup',
-        message: errorMessage,
-        duration: 10,
-        type: AlertType.error,
-      );
-      completer.completeError(errorMessage);
-    },
-  );
+    server.makeApiRequest(
+      apiEndpoint:
+          ApiFiles.updateDriver, // Make sure you have this endpoint defined
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "title": title,
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": email,
+        "phoneNo": phoneNo,
+        "userId": userId,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Update driver...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final response = UserUpdateResponse.fromJson(res);
+        completer.complete(response);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'signup',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 
   Future<BookingResponse> getBookings() async {
     Completer<BookingResponse> completer = Completer();
@@ -334,33 +341,34 @@ Future<UserUpdateResponse> updateDriver({
 
     return completer.future;
   }
+
   Future<BookingAdminResponse> getBookingsForAdmin() async {
-  Completer<BookingAdminResponse> completer = Completer();
+    Completer<BookingAdminResponse> completer = Completer();
 
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.bookingsList,
-    requestMethod: RequestMethod.post,
-    onLoad: () {
-      EasyLoading.show(status: "Loading...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      try {
-        // The response already contains the 'message' and 'data' fields
-        BookingAdminResponse response = BookingAdminResponse.fromJson(res);
-        completer.complete(response);
-      } catch (e) {
-        completer.completeError("Failed to parse response: ${e.toString()}");
-      }
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      completer.completeError(errorMessage);
-    },
-  );
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.bookingsList,
+      requestMethod: RequestMethod.post,
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        try {
+          // The response already contains the 'message' and 'data' fields
+          BookingAdminResponse response = BookingAdminResponse.fromJson(res);
+          completer.complete(response);
+        } catch (e) {
+          completer.completeError("Failed to parse response: ${e.toString()}");
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 
   Future<PaymentResponse> getPaymentHistory() async {
     Completer<PaymentResponse> completer = Completer();
@@ -431,7 +439,6 @@ Future<UserUpdateResponse> updateDriver({
         },
         onSuccess: (Map<String, dynamic> response) {
           try {
-            
             // Validate response structure
             if (response['data'] == null) {
               throw Exception('Invalid API response structure');
@@ -448,13 +455,13 @@ Future<UserUpdateResponse> updateDriver({
             completer.complete(result);
           } catch (e) {
             EasyLoading.dismiss();
-            
+
             completer.completeError('Failed to process parking options: $e');
           }
         },
         onError: (String errorMessage) {
           EasyLoading.dismiss();
-          
+
           // Enhance error message for common cases
           final enhancedError = errorMessage.contains('timeout')
               ? 'Request timed out. Please check your connection'
@@ -467,7 +474,7 @@ Future<UserUpdateResponse> updateDriver({
       );
     } catch (e) {
       EasyLoading.dismiss();
-      
+
       completer.completeError(e.toString());
     }
 
@@ -586,7 +593,7 @@ Future<UserUpdateResponse> updateDriver({
             completer.complete(bookingResponse);
           } catch (e) {
             EasyLoading.dismiss();
-            
+
             completer.completeError('Error processing booking response: $e');
           }
         },
@@ -603,248 +610,251 @@ Future<UserUpdateResponse> updateDriver({
     return completer.future;
   }
 
-Future<CheckpointResponseModel> submitCheckpoint(
-    CheckpointRequestModel model, List<File>? pictures) async {
-  Completer<CheckpointResponseModel> completer = Completer();
+  Future<CheckpointResponseModel> submitCheckpoint(
+      CheckpointRequestModel model, List<File>? pictures) async {
+    Completer<CheckpointResponseModel> completer = Completer();
 
-  try {
-    EasyLoading.show(status: "Submitting checkpoint...");
+    try {
+      EasyLoading.show(status: "Submitting checkpoint...");
 
-    if (pictures != null && pictures.isNotEmpty) {
-      // Multipart request with images
-      server.makeMultipartRequest(
-        apiEndpoint: ApiFiles.createCheckpoint,
-        requestMethod: RequestMethod.post,
-        fields: {
-          "bookingId": model.bookingId,
-          "location": model.location,
-          "section": model.section,
-          "type": model.type,
-          
-        },
-        files: pictures.map((file) => MultipartFileInfo(
-          file: file,
-          fieldName: "pictures", // Some APIs expect array notation
-        )).toList(),
-        onSuccess: (Map<String, dynamic> response) {
-          EasyLoading.dismiss();
-          try {
-            final checkpointResponse = CheckpointResponseModel.fromJson(
-                response['response'] ?? response); // Try both options
-            completer.complete(checkpointResponse);
-          } catch (e) {
-            completer.completeError("Parsing error: $e");
-          }
-        },
-        onError: (String errorMessage) {
-          EasyLoading.dismiss();
-          completer.completeError("API Error: $errorMessage");
-        },
-      );
-    } else {
-      // Simple request without files
-      server.makeApiRequest(
-        apiEndpoint: ApiFiles.createCheckpoint,
-        requestMethod: RequestMethod.post,
-        requestData: {
-          "bookingId": model.bookingId,
-          "location": model.location,
-          "section": model.section,
-          "type": model.type,
-        },
-        onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
-        onSuccess: (Map<String, dynamic> response) {
-          EasyLoading.dismiss();
-          try {
-            final checkpointResponse = CheckpointResponseModel.fromJson(
-                response['response'] ?? response);
-            completer.complete(checkpointResponse);
-          } catch (e) {
-            completer.completeError("Parsing error: $e");
-          }
-        },
-        onError: (String errorMessage) {
-          EasyLoading.dismiss();
-          completer.completeError("API Error: $errorMessage");
-        },
-      );
-    }
-  } catch (e) {
-    EasyLoading.dismiss();
-    completer.completeError("Exception: $e");
-  }
-
-  return completer.future;
-}
-
-Future<Map<String, dynamic>> createPaymentIntent({
-  required String amount,
-  required String currency,
-}) async {
-  final url = Uri.parse('http://137.184.9.55:8000/api/stripe/create-payment-intent');
-
-  final token = Globals.user?.token ?? '';
-
-  // Convert amount to integer
-  final amountInt = int.tryParse(amount) ?? 0;
-  if (amountInt <= 0) {
-    throw Exception('Invalid amount: $amount');
-  }
-
-  final response = await http.post(
-    url,
-    body: jsonEncode({  // Use jsonEncode for proper JSON formatting
-      'amount': amountInt,  // Send as integer
-      'currency': currency.toLowerCase(),  // Ensure lowercase currency
-    }),
-    headers: {
-      'access-token': token,
-      'Content-Type': 'application/json',  // Add content-type header
-    },
-  );
-
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    throw Exception('Failed to create payment intent: ${response.statusCode} ${response.body}');
-  }
-}
-
-Future<String> postLocation(String bookingID, String latitude, String longitude) async {
-  Completer<String> completer = Completer();
-
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.postLocation,
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "bookingId": bookingID,
-      "longitude": longitude,
-      "latitude": latitude,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Loading...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final message = res['message'] ?? 'Location posted successfully';
-      completer.complete(message);
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      Alertify.showAlert(
-        alertKey: 'postLocation',
-        message: errorMessage,
-        duration: 10,
-        type: AlertType.error,
-      );
-      completer.completeError(errorMessage);
-    },
-  );
-
-  return completer.future;
-}
-
-
-Future<Map<String, String>> getLocationCoordinates(String bookingID) async {
-  Completer<Map<String, String>> completer = Completer();
-
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.getLocationDetails, // replace with actual endpoint
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "bookingId": bookingID,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Loading...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final data = res['data'];
-      final longitude = data['longitude'] ?? '';
-      final latitude = data['latitude'] ?? '';
-
-      completer.complete({
-        'longitude': longitude,
-        'latitude': latitude,
-      });
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      Alertify.showAlert(
-        alertKey: 'getLocation',
-        message: errorMessage,
-        duration: 10,
-        type: AlertType.error,
-      );
-      completer.completeError(errorMessage);
-    },
-  );
-
-  return completer.future;
-}
-
-Future<Map<String, dynamic>> getEmployeesWithBookings() async {
-  Completer<Map<String, dynamic>> completer = Completer();
-
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.getDrivers,
-    requestMethod: RequestMethod.post,
-    onLoad: () {
-      EasyLoading.show(status: "Loading employees...");
-    },
-    onSuccess: (Map<String, dynamic> response) {
-      EasyLoading.dismiss();
-      try {
-        // Validate response structure
-        if (response['data'] == null) {
-          throw Exception('Invalid API response structure');
-        }
-
-        completer.complete(response);
-      } catch (e) {
-        completer.completeError('Failed to process employees data: $e');
+      if (pictures != null && pictures.isNotEmpty) {
+        // Multipart request with images
+        server.makeMultipartRequest(
+          apiEndpoint: ApiFiles.createCheckpoint,
+          requestMethod: RequestMethod.post,
+          fields: {
+            "bookingId": model.bookingId,
+            "location": model.location,
+            "section": model.section,
+            "type": model.type,
+          },
+          files: pictures
+              .map((file) => MultipartFileInfo(
+                    file: file,
+                    fieldName: "pictures", // Some APIs expect array notation
+                  ))
+              .toList(),
+          onSuccess: (Map<String, dynamic> response) {
+            EasyLoading.dismiss();
+            try {
+              final checkpointResponse = CheckpointResponseModel.fromJson(
+                  response['response'] ?? response); // Try both options
+              completer.complete(checkpointResponse);
+            } catch (e) {
+              completer.completeError("Parsing error: $e");
+            }
+          },
+          onError: (String errorMessage) {
+            EasyLoading.dismiss();
+            completer.completeError("API Error: $errorMessage");
+          },
+        );
+      } else {
+        // Simple request without files
+        server.makeApiRequest(
+          apiEndpoint: ApiFiles.createCheckpoint,
+          requestMethod: RequestMethod.post,
+          requestData: {
+            "bookingId": model.bookingId,
+            "location": model.location,
+            "section": model.section,
+            "type": model.type,
+          },
+          onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
+          onSuccess: (Map<String, dynamic> response) {
+            EasyLoading.dismiss();
+            try {
+              final checkpointResponse = CheckpointResponseModel.fromJson(
+                  response['response'] ?? response);
+              completer.complete(checkpointResponse);
+            } catch (e) {
+              completer.completeError("Parsing error: $e");
+            }
+          },
+          onError: (String errorMessage) {
+            EasyLoading.dismiss();
+            completer.completeError("API Error: $errorMessage");
+          },
+        );
       }
-    },
-    onError: (String errorMessage) {
+    } catch (e) {
       EasyLoading.dismiss();
-      completer.completeError(errorMessage);
-    },
-  );
+      completer.completeError("Exception: $e");
+    }
 
-  return completer.future;
+    return completer.future;
+  }
+
+  Future<Map<String, dynamic>> createPaymentIntent({
+    required String amount,
+    required String currency,
+  }) async {
+    final url =
+        Uri.parse('http://137.184.9.55:8000/api/stripe/create-payment-intent');
+
+    final token = Globals.user?.token ?? '';
+
+    // Convert amount to integer
+    final amountInt = int.tryParse(amount) ?? 0;
+    if (amountInt <= 0) {
+      throw Exception('Invalid amount: $amount');
+    }
+
+    final response = await http.post(
+      url,
+      body: jsonEncode({
+        // Use jsonEncode for proper JSON formatting
+        'amount': amountInt, // Send as integer
+        'currency': currency.toLowerCase(), // Ensure lowercase currency
+      }),
+      headers: {
+        'access-token': token,
+        'Content-Type': 'application/json', // Add content-type header
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+          'Failed to create payment intent: ${response.statusCode} ${response.body}');
+    }
+  }
+
+  Future<String> postLocation(
+      String bookingID, String latitude, String longitude) async {
+    Completer<String> completer = Completer();
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.postLocation,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "bookingId": bookingID,
+        "longitude": longitude,
+        "latitude": latitude,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final message = res['message'] ?? 'Location posted successfully';
+        completer.complete(message);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'postLocation',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<Map<String, String>> getLocationCoordinates(String bookingID) async {
+    Completer<Map<String, String>> completer = Completer();
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.getLocationDetails, // replace with actual endpoint
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "bookingId": bookingID,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final data = res['data'];
+        final longitude = data['longitude'] ?? '';
+        final latitude = data['latitude'] ?? '';
+
+        completer.complete({
+          'longitude': longitude,
+          'latitude': latitude,
+        });
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'getLocation',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<Map<String, dynamic>> getEmployeesWithBookings() async {
+    Completer<Map<String, dynamic>> completer = Completer();
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.getDrivers,
+      requestMethod: RequestMethod.post,
+      onLoad: () {
+        EasyLoading.show(status: "Loading employees...");
+      },
+      onSuccess: (Map<String, dynamic> response) {
+        EasyLoading.dismiss();
+        try {
+          // Validate response structure
+          if (response['data'] == null) {
+            throw Exception('Invalid API response structure');
+          }
+
+          completer.complete(response);
+        } catch (e) {
+          completer.completeError('Failed to process employees data: $e');
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<String> assignDriver(String bookingID, String userId) async {
+    Completer<String> completer = Completer();
+
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.assignDriver,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "bookingId": bookingID,
+        "userId": userId,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final message = res['message'] ?? ' Driver Assign successfully';
+        completer.complete(message);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'postLocation',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
 }
-Future<String> assignDriver(String bookingID, String userId) async {
-  Completer<String> completer = Completer();
-
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.assignDriver,
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "bookingId": bookingID,
-      "userId": userId,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Loading...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final message = res['message'] ?? ' Driver Assign successfully';
-      completer.complete(message);
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      Alertify.showAlert(
-        alertKey: 'postLocation',
-        message: errorMessage,
-        duration: 10,
-        type: AlertType.error,
-      );
-      completer.completeError(errorMessage);
-    },
-  );
-
-  return completer.future;
-}
-}
-
-
