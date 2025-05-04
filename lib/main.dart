@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -8,12 +9,15 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/BookingDetailUser.dart';
 import 'package:parkingapp/pages/EditProfile.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
+import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/pages/PackagesScreen.dart';
 import 'package:parkingapp/pages/PrivacyPolicyScreen.dart';
 import 'package:parkingapp/pages/ReserveBookingScreen.dart';
@@ -35,6 +39,7 @@ import 'package:parkingapp/providers/ThemeChanger.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
   'high_importance_channel',
@@ -92,6 +97,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey, // ✅ Required for global navigation
           builder: EasyLoading.init(),
           theme: ThemeData.light(),
           home: const SplashScreen(),
@@ -138,7 +144,6 @@ Future<void> setupNotifications() async {
       iOS: DarwinInitializationSettings(),
     ),
   );
-
   // iOS permission
   if (Platform.isIOS) {
     await FirebaseMessaging.instance.requestPermission(
@@ -150,6 +155,8 @@ Future<void> setupNotifications() async {
 
   // Android 13+ runtime permission
   if (Platform.isAndroid) {
+
+    // Permissions
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
@@ -186,9 +193,33 @@ Future<void> setupNotifications() async {
     }
   });
 
-  // When user taps notification
+  // Tapped notification
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('User tapped notification: ${message.messageId}');
-    // Navigate to a specific screen if needed
+    navigateBasedOnRole(); // ✅ Use global navigatorKey
+  });
+}
+
+void navigateBasedOnRole() async {
+  await SharedStorage.loadUser();
+
+  Future.delayed(const Duration(seconds: 1), () {
+    final nav = navigatorKey.currentState!;
+    if (Globals.user != null) {
+      if (Globals.roleTitle == "Employee") {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
+      } else if (Globals.roleTitle == "Administrator") {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => Adminhome()));
+      } else {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+      }
+    } else {
+      if (Globals.roleTitle == "Employee") {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
+      } else if (Globals.roleTitle == "Administrator") {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => Adminhome()));
+      } else {
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => IntroScreen()));
+      }
+    }
   });
 }
