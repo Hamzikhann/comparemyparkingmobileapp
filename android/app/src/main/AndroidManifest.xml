@@ -18,7 +18,7 @@
         android:label="parkingapp"
         android:theme="@style/Theme.ParkingApp"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@drawable/logo">
         <activity
             android:name=".MainActivity"
             android:exported="true"
