@@ -16,6 +16,7 @@ import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
+import 'package:parkingapp/pages/NotificationsScreen.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/pages/PackagesScreen.dart';
@@ -121,6 +122,7 @@ class MyApp extends StatelessWidget {
             '/driverList': (context) => DriverListScreen(),
             '/driverEditAdd': (context) => AddEditDriverScreen(),
             '/paymentsScreen': (context) => PaymentScreenAdmin(),
+            '/notifications': (context) => NotificationsScreen(),
           },
         );
       },

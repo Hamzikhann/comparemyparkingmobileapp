@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
-import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _bookingsFuture = _repository.getBookings()
           .then((value) {
+            GlobalsBookingDetail.reservedParkings =  value.reservedParkings;
             return value;
           })
           .catchError((error) {
@@ -140,13 +141,23 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 14.sp,
                           ),
                         ),
-                        const CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 18,
-                          backgroundImage: AssetImage('assets/images/male.png'),
-                        ),
-                      ],
-                    ),
+                        Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, MyRoutes.notifications);
+                                },
+                                icon: const Icon(Icons.notifications, color: Colors.white),
+                              ),
+                              const CircleAvatar(
+                                backgroundColor: Colors.white,
+                                radius: 18,
+                                backgroundImage: AssetImage('assets/images/male.png'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     SizedBox(height: 20.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

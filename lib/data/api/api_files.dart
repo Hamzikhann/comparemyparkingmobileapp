@@ -14,5 +14,8 @@ class ApiFiles {
   static String getDrivers = "/api/users/list/employees";
   static String assignDriver = "/api/booking/assignment/create";
   static String updateDriver = "/api/users/update";
+  static String getNotifications = "/api/notification/list";
+  static String markNotificationsAsRead = "/api/notification/update";
+  static String clearAllNotifications = "/api/notification/delete";
   
 }

@@ -9,9 +9,10 @@ import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
-import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
 import 'package:parkingapp/data/models/CheckPointsModel.dart';
+import 'package:parkingapp/data/models/NotificationModel.dart';
 import 'package:parkingapp/data/models/OtpModel.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
@@ -857,4 +858,87 @@ class GeneralRepository {
 
     return completer.future;
   }
+  Future<NotificationResponse> getNotifications() async {
+  Completer<NotificationResponse> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.getNotifications,
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "userId": Globals.user?.id ?? "",
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Loading notifications...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      try {
+        final response = NotificationResponse.fromJson(res);
+        completer.complete(response);
+      } catch (e) {
+        completer.completeError("Failed to parse notifications: $e");
+      }
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
+
+Future<String> markNotificationsAsRead(List<String> notificationIds) async {
+  Completer<String> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.markNotificationsAsRead,
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "userId": Globals.user?.id ?? "",
+      "notificationIds": notificationIds,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Updating notifications...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      final message = res['message'] ?? 'Notifications marked as read';
+      completer.complete(message);
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
+
+Future<String> clearAllNotifications(List<String> notificationIds) async {
+  Completer<String> completer = Completer();
+
+  server.makeApiRequest(
+    apiEndpoint: ApiFiles.clearAllNotifications,
+    requestMethod: RequestMethod.post,
+    requestData: {
+      "userId": Globals.user?.id ?? "",
+      "notificationIds": notificationIds,
+    },
+    onLoad: () {
+      EasyLoading.show(status: "Clearing notifications...");
+    },
+    onSuccess: (Map<String, dynamic> res) {
+      EasyLoading.dismiss();
+      final message = res['message'] ?? 'All notifications cleared';
+      completer.complete(message);
+    },
+    onError: (String errorMessage) {
+      EasyLoading.dismiss();
+      completer.completeError(errorMessage);
+    },
+  );
+
+  return completer.future;
+}
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
-import 'package:parkingapp/data/models/BookingsListModeldart';
+import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/pages/ViewallScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';

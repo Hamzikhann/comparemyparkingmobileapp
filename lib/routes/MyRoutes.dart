@@ -16,4 +16,5 @@ class MyRoutes {
   static String privacyPolicy = '/privacyPolicy';
   static String termsAndCondition = '/termsAndConditions';
   static String adminHome = '/adminHome';
+  static String notifications = '/notifications';
 }
