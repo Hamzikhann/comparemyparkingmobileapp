@@ -77,6 +77,10 @@ class _ReserveBookingScreenState extends State<Driverhome> {
                   Navigator.of(context).pushNamedAndRemoveUntil(
                       MyRoutes.loginRoute, (route) => false);
                 },
+                onNotificationPressed: () {
+                  // Handle logout
+                  Navigator.pushNamed(context, MyRoutes.notificationsDriver);
+                },
               ),
               Expanded(
                 child: _isLoading
@@ -364,11 +368,11 @@ class _ReserveBookingScreenState extends State<Driverhome> {
           latitude == null ||
           latitude.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    content: Text("No location found."),
-    duration: Duration(seconds: 2),
-  ),
-);
+          SnackBar(
+            content: Text("No location found."),
+            duration: Duration(seconds: 2),
+          ),
+        );
         return;
       }
 

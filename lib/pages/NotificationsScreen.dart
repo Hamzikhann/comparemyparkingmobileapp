@@ -8,6 +8,7 @@ import 'package:parkingapp/pages/ViewallScreen.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -19,7 +20,6 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final GeneralRepository _repository = GeneralRepository();
   List<NotificationModel> _notifications = [];
-  bool _isLoading = true;
   String _errorMessage = '';
 
   @override
@@ -30,7 +30,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadNotifications() async {
     setState(() {
-      _isLoading = true;
       _errorMessage = '';
     });
 
@@ -38,61 +37,79 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final response = await _repository.getNotifications();
       setState(() {
         _notifications = response.notifications;
-        _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
-        _isLoading = false;
       });
     }
   }
 
-  // Update your _markAsReadAndNavigate function
-Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingIds) async {
-  try {
-    // Mark notification as read
-    await _repository.markNotificationsAsRead([notificationId]);
-    
-    // Update local state
-    setState(() {
-      final index = _notifications.indexWhere((n) => n.id == notificationId);
-      if (index != -1) {
-        _notifications[index] = _notifications[index].copyWith(isRead: true);
-      }
-    });
+  Future<void> _clearAllNotifications() async {
+    if (_notifications.isEmpty) return;
 
-    // Combine all bookings from different categories
-    final allBookings = [
-      ...GlobalsBookingDetail.reservedParkings,
-    ];
+    try {
+      EasyLoading.show(status: "Clearing notifications...");
+      final notificationIds = _notifications.map((n) => n.id).toList();
+      final message = await _repository.clearAllNotifications(notificationIds);
 
-    // Filter bookings where either:
-    // 1. The parking ID matches any bookingId
-    // 2. Any registration in the parking has a matching bookingId
-    final relevantBookings = allBookings.where((parking) {
-      return bookingIds.contains(parking.id) || 
-             parking.registrations.any((reg) => bookingIds.contains(reg.bookingId));
-    }).toList();
+      setState(() {
+        _notifications.clear();
+      });
 
-    if (relevantBookings.isNotEmpty) {
-      Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ViewAllScreen(title: "reserved", parkings: relevantBookings),
-      ),
-    );
-    } else {
+      EasyLoading.dismiss();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No related bookings found')),
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to clear notifications: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
   }
-}
+
+  Future<void> _markAsReadAndNavigate(
+      String notificationId, List<String> bookingIds) async {
+    try {
+      await _repository.markNotificationsAsRead([notificationId]);
+
+      setState(() {
+        final index = _notifications.indexWhere((n) => n.id == notificationId);
+        if (index != -1) {
+          _notifications[index] = _notifications[index].copyWith(isRead: true);
+        }
+      });
+
+      final allBookings = [
+        ...GlobalsBookingDetail.reservedParkings,
+      ];
+
+      final relevantBookings = allBookings.where((parking) {
+        return bookingIds.contains(parking.id) ||
+            parking.registrations
+                .any((reg) => bookingIds.contains(reg.bookingId));
+      }).toList();
+
+      if (relevantBookings.isNotEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                ViewAllScreen(title: "Reserved", parkings: relevantBookings),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No related bookings found')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +123,26 @@ Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingI
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
             ),
+            if (_notifications.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _clearAllNotifications,
+                      child: Text(
+                        'Clear All',
+                        style: TextStyle(
+                          color: colors.primary,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: _buildBody(),
             ),
@@ -116,10 +153,6 @@ Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingI
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (_errorMessage.isNotEmpty) {
       return Center(
         child: Column(
@@ -177,9 +210,11 @@ Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingI
   }
 
   Widget _buildNotificationCard(NotificationModel notification) {
-    final dateTime = DateTime.tryParse(notification.createdAt) ?? DateTime.now();
+    final dateTime =
+        DateTime.tryParse(notification.createdAt) ?? DateTime.now();
     final formattedDate = DateFormat('MMM d, yyyy - hh:mm a').format(dateTime);
-    final bookingIds = notification.user?.bookings.map((b) => b.id).toList() ?? [];
+    final bookingIds =
+        notification.user?.bookings.map((b) => b.id).toList() ?? [];
 
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -204,7 +239,8 @@ Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingI
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
-                        color: notification.isRead ? Colors.black : colors.primary,
+                        color:
+                            notification.isRead ? Colors.black : colors.primary,
                       ),
                     ),
                   ),
@@ -246,4 +282,3 @@ Future<void> _markAsReadAndNavigate(String notificationId, List<String> bookingI
     );
   }
 }
-

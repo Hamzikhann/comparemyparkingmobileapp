@@ -332,6 +332,7 @@ class GeneralRepository {
             res['data']; // Access the 'data' field from the response
         BookingDriverResponse response =
             BookingDriverResponse.fromJson(bookingsData);
+        Globals.reservedParkings = response.assignedAssignments;
         completer.complete(response);
       },
       onError: (String errorMessage) {
@@ -858,87 +859,88 @@ class GeneralRepository {
 
     return completer.future;
   }
+
   Future<NotificationResponse> getNotifications() async {
-  Completer<NotificationResponse> completer = Completer();
+    Completer<NotificationResponse> completer = Completer();
 
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.getNotifications,
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "userId": Globals.user?.id ?? "",
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Loading notifications...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      try {
-        final response = NotificationResponse.fromJson(res);
-        completer.complete(response);
-      } catch (e) {
-        completer.completeError("Failed to parse notifications: $e");
-      }
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      completer.completeError(errorMessage);
-    },
-  );
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.getNotifications,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "userId": Globals.user?.id ?? "",
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading notifications...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        try {
+          final response = NotificationResponse.fromJson(res);
+          completer.complete(response);
+        } catch (e) {
+          completer.completeError("Failed to parse notifications: $e");
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 
-Future<String> markNotificationsAsRead(List<String> notificationIds) async {
-  Completer<String> completer = Completer();
+  Future<String> markNotificationsAsRead(List<String> notificationIds) async {
+    Completer<String> completer = Completer();
 
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.markNotificationsAsRead,
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "userId": Globals.user?.id ?? "",
-      "notificationIds": notificationIds,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Updating notifications...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final message = res['message'] ?? 'Notifications marked as read';
-      completer.complete(message);
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      completer.completeError(errorMessage);
-    },
-  );
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.markNotificationsAsRead,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "userId": Globals.user?.id ?? "",
+        "notificationIds": notificationIds,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Updating notifications...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final message = res['message'] ?? 'Notifications marked as read';
+        completer.complete(message);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 
-Future<String> clearAllNotifications(List<String> notificationIds) async {
-  Completer<String> completer = Completer();
+  Future<String> clearAllNotifications(List<String> notificationIds) async {
+    Completer<String> completer = Completer();
 
-  server.makeApiRequest(
-    apiEndpoint: ApiFiles.clearAllNotifications,
-    requestMethod: RequestMethod.post,
-    requestData: {
-      "userId": Globals.user?.id ?? "",
-      "notificationIds": notificationIds,
-    },
-    onLoad: () {
-      EasyLoading.show(status: "Clearing notifications...");
-    },
-    onSuccess: (Map<String, dynamic> res) {
-      EasyLoading.dismiss();
-      final message = res['message'] ?? 'All notifications cleared';
-      completer.complete(message);
-    },
-    onError: (String errorMessage) {
-      EasyLoading.dismiss();
-      completer.completeError(errorMessage);
-    },
-  );
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.clearAllNotifications,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "userId": Globals.user?.id ?? "",
+        "notificationIds": notificationIds,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Clearing notifications...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        final message = res['message'] ?? 'All notifications cleared';
+        completer.complete(message);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 }

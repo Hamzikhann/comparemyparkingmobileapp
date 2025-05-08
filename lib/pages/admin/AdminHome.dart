@@ -23,7 +23,7 @@ class Adminhome extends StatefulWidget {
   State<Adminhome> createState() => _ReserveBookingScreenState();
 }
 
-class _ReserveBookingScreenState  extends State<Adminhome>{
+class _ReserveBookingScreenState extends State<Adminhome> {
   late Future<BookingAdminResponse> _bookingsFuture;
   final GeneralRepository _repository = GeneralRepository();
   bool _isLoading = true;
@@ -34,6 +34,7 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
     super.initState();
     _loadData();
   }
+
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -43,7 +44,7 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
     try {
       _bookingsFuture = _repository.getBookingsForAdmin();
       await _bookingsFuture;
-       await fetchDrivers();
+      await fetchDrivers();
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to load data: ${e.toString()}";
@@ -53,14 +54,14 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
         _isLoading = false;
       });
     }
-    
   }
+
   Future<void> fetchDrivers() async {
     try {
       final response = await GeneralRepository().getEmployeesWithBookings();
       final employeesData = response['data'] as List;
-        Globals.drivers = employeesData.map((json) => Driver.fromJson(json)).toList();
-     
+      Globals.drivers =
+          employeesData.map((json) => Driver.fromJson(json)).toList();
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load drivers: ${e.toString()}';
@@ -89,7 +90,8 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
                 onPaymentPressed: () {
                   Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => PaymentScreenAdmin()));
+                      MaterialPageRoute(
+                          builder: (context) => PaymentScreenAdmin()));
                 },
                 onBackPressed: () {},
                 onLogoutPressed: () {
@@ -139,12 +141,13 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
                                 );
                               } else if (snapshot.hasData) {
                                 final pending = snapshot.data!.pendingParkings;
-                                for (var booking in snapshot.data!.reservedParkings) {
+                                for (var booking
+                                    in snapshot.data!.reservedParkings) {
                                   if (booking.bookingAssignments.isEmpty) {
                                     pending.add(booking);
                                   }
                                 }
-                              
+
                                 final reserved =
                                     snapshot.data!.reservedParkings;
                                 final completed =
@@ -184,7 +187,8 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
                                       // Accept Booking
                                       BookingCard(
                                         title: "Assigned Booking",
-                                        available: reserved.length - pending.length,
+                                        available:
+                                            reserved.length - pending.length,
                                         onTap: () {
                                           // navigate to Accept Booking details
                                           _viewAll("Accept Booking", reserved);
@@ -256,9 +260,19 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
                                         reserved,
                                         Icons.schedule,
                                         reserved.isNotEmpty &&
-                                                reserved.first.bookingAssignments.isNotEmpty &&
-                                                reserved.first.bookingAssignments.first.employee?.firstName != null
-                                            ? reserved.first.bookingAssignments.first.employee!.firstName
+                                                reserved
+                                                    .first
+                                                    .bookingAssignments
+                                                    .isNotEmpty &&
+                                                reserved
+                                                        .first
+                                                        .bookingAssignments
+                                                        .first
+                                                        .employee
+                                                        ?.firstName !=
+                                                    null
+                                            ? reserved.first.bookingAssignments
+                                                .first.employee!.firstName
                                             : 'Assigned',
                                       ),
                                       buildSection(
@@ -266,12 +280,21 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
                                         completed,
                                         Icons.check_circle,
                                         completed.isNotEmpty &&
-                                                completed.first.bookingAssignments.isNotEmpty &&
-                                                completed.first.bookingAssignments.first.employee?.firstName != null
-                                            ? completed.first.bookingAssignments.first.employee!.firstName
+                                                completed
+                                                    .first
+                                                    .bookingAssignments
+                                                    .isNotEmpty &&
+                                                completed
+                                                        .first
+                                                        .bookingAssignments
+                                                        .first
+                                                        .employee
+                                                        ?.firstName !=
+                                                    null
+                                            ? completed.first.bookingAssignments
+                                                .first.employee!.firstName
                                             : 'Assigned',
                                       ),
-
                                     ],
                                   ),
                                 );
@@ -431,163 +454,169 @@ class _ReserveBookingScreenState  extends State<Adminhome>{
   }
 
   void _openAssignDriverBottomSheet(Parking parkings) {
-  showModalBottomSheet(
-    context: context,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-    ),
-    isScrollControlled: true,
-    builder: (context) {
-      String? selectedDriverId;
-      bool isLoading = false; // Changed to store driver ID instead of name
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        String? selectedDriverId;
+        bool isLoading = false; // Changed to store driver ID instead of name
 
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 5.h,
-                  width: 50.w,
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(5),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 5.h,
+                    width: 50.w,
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  "Assign Driver",
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
+                  SizedBox(height: 16.h),
+                  Text(
+                    "Assign Driver",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                SizedBox(height: 20.h),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: "Select Driver",
+                  SizedBox(height: 20.h),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "Select Driver",
+                    ),
+                    value: selectedDriverId,
+                    items: Globals.drivers
+                        .map((driver) => DropdownMenuItem(
+                              value: driver.id,
+                              child: Text(driver
+                                  .name), // Using driver.name from your Driver model
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDriverId = value;
+                      });
+                    },
                   ),
-                  value: selectedDriverId,
-                  items: Globals.drivers.map((driver) => DropdownMenuItem(
-                    value: driver.id,
-                    child: Text(driver.name), // Using driver.name from your Driver model
-                  )).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedDriverId = value;
-                    });
-                  },
-                ),
-                SizedBox(height: 12.h),
+                  SizedBox(height: 12.h),
 
-                // New Driver Text
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => DriverListScreen()),
-                    ).then((_) {
-                      // Refresh drivers list after returning from AddEdit screen
-                      if (mounted) {
-                        setState(() {});
-                      }
-                    });
-                  },
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "+ Add New Driver",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
+                  // New Driver Text
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => DriverListScreen()),
+                      ).then((_) {
+                        // Refresh drivers list after returning from AddEdit screen
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      });
+                    },
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "+ Add New Driver",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: colors.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                SizedBox(height: 24.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade300,
-                          foregroundColor: Colors.black,
+                  SizedBox(height: 24.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade300,
+                            foregroundColor: Colors.black,
+                          ),
+                          onPressed:
+                              isLoading ? null : () => Navigator.pop(context),
+                          child: Text("Cancel"),
                         ),
-                        onPressed: isLoading ? null : () => Navigator.pop(context),
-                        child: Text("Cancel"),
                       ),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isLoading ? Colors.grey : colors.primary,
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () async {
-                                if (selectedDriverId != null) {
-                                  setState(() => isLoading = true);
-                                  try {
-                                    // Call the API to assign driver
-                                    await assignDriver(
-                                      parkings.registrations.first.bookingId,
-                                      selectedDriverId!,
-                                    );
-                                  } catch (e) {
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isLoading ? Colors.grey : colors.primary,
+                          ),
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  if (selectedDriverId != null) {
+                                    setState(() => isLoading = true);
+                                    try {
+                                      // Call the API to assign driver
+                                      await assignDriver(
+                                        parkings.registrations.first.bookingId,
+                                        selectedDriverId!,
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              "Failed to assign driver: ${e.toString()}"),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    } finally {
+                                      if (mounted) {
+                                        setState(() => isLoading = false);
+                                      }
+                                    }
+                                  } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text("Failed to assign driver: ${e.toString()}"),
+                                        content: Text("Please select a driver"),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
-                                  } finally {
-                                    if (mounted) {
-                                      setState(() => isLoading = false);
-                                    }
                                   }
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Please select a driver"),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                        child: isLoading
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                "Apply",
-                                style: TextStyle(color: Colors.white),
-                              ),
+                                },
+                          child: isLoading
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : Text(
+                                  "Apply",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-Future<void> assignDriver(String bookingID, String userID) async {
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> assignDriver(String bookingID, String userID) async {
     GeneralRepository().assignDriver(bookingID, userID).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                "Driver Assign Successfull!")),
-                
+        SnackBar(content: Text("Driver Assign Successfull!")),
       );
       Navigator.pop(context);
       _loadData();

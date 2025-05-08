@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -31,6 +30,7 @@ import 'package:parkingapp/pages/admin/DriverListScreen.dart';
 import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
 import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
+import 'package:parkingapp/pages/driver/NotificationsScreenDriver.dart';
 import 'package:provider/provider.dart';
 import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -123,6 +123,7 @@ class MyApp extends StatelessWidget {
             '/driverEditAdd': (context) => AddEditDriverScreen(),
             '/paymentsScreen': (context) => PaymentScreenAdmin(),
             '/notifications': (context) => NotificationsScreen(),
+            '/notificationsDriver': (context) => NotificationsScreenDriver(),
           },
         );
       },
@@ -157,7 +158,6 @@ Future<void> setupNotifications() async {
 
   // Android 13+ runtime permission
   if (Platform.isAndroid) {
-
     // Permissions
     await FirebaseMessaging.instance.requestPermission(
       alert: true,

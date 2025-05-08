@@ -6,6 +6,8 @@ class TopBar extends StatelessWidget {
   final VoidCallback onBackPressed;
   final bool showBackButton;
   final VoidCallback onLogoutPressed;
+  final VoidCallback?
+      onNotificationPressed; // New callback for notification icon
 
   const TopBar({
     super.key,
@@ -13,6 +15,7 @@ class TopBar extends StatelessWidget {
     required this.onLogoutPressed,
     required this.onBackPressed,
     this.showBackButton = true,
+    this.onNotificationPressed, // Optional parameter
   });
 
   @override
@@ -34,36 +37,53 @@ class TopBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Title text (left-aligned)
-              if (showBackButton)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
+              // Back button and title
+              Row(
+                children: [
+                  if (showBackButton)
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                      onPressed: onBackPressed,
+                    ),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18.sp,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Notification and logout buttons
+              Row(
+                children: [
+                  // Notification icon
+                  if (onNotificationPressed != null)
+                    IconButton(
+                      icon: Icon(
+                        Icons.notifications,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                      onPressed: onNotificationPressed,
+                    ),
+
+                  // Logout button
+                  IconButton(
                     icon: Icon(
-                      Icons.arrow_back,
+                      Icons.logout,
                       color: Colors.white,
                       size: 24.sp,
                     ),
-                    onPressed: onBackPressed,
+                    onPressed: onLogoutPressed,
                   ),
-                ),
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18.sp,
-                ),
-              ),
-
-              // Logout button (right-aligned)
-              IconButton(
-                icon: Icon(
-                  Icons.logout,
-                  color: Colors.white,
-                  size: 24.sp,
-                ),
-                onPressed: onLogoutPressed,
+                ],
               ),
             ],
           ),

@@ -51,7 +51,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   future: _futurePayments,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center();
                     } else if (snapshot.hasError) {
                       return Center(
                         child: Column(

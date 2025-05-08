@@ -71,41 +71,36 @@ class _DriverListScreenState extends State<DriverListScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: SafeArea(  // Wrap with SafeArea
-      child: Column(
-        children: [
-          TopBar(
-            title: "Drivers",
-            onBackPressed: () => Navigator.pop(context),
-            onLogoutPressed: () {
-              Globals.user = null;
-              SharedStorage.removeFromSharedPreferences();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                MyRoutes.loginRoute, 
-                (route) => false
-              );
-            },
-          ),
-          Expanded(
-            child: _buildBody(),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        // Wrap with SafeArea
+        child: Column(
+          children: [
+            TopBar(
+              title: "Drivers",
+              onBackPressed: () => Navigator.pop(context),
+              onLogoutPressed: () {
+                Globals.user = null;
+                SharedStorage.removeFromSharedPreferences();
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    MyRoutes.loginRoute, (route) => false);
+              },
+            ),
+            Expanded(
+              child: _buildBody(),
+            ),
+          ],
+        ),
       ),
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: addDriver,
-      child: Icon(Icons.add),
-    ),
-  );
-}
+      floatingActionButton: FloatingActionButton(
+        onPressed: addDriver,
+        child: Icon(Icons.add),
+      ),
+    );
+  }
 
   Widget _buildBody() {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     if (errorMessage != null) {
       return Center(child: Text(errorMessage!));
     }
@@ -152,40 +147,42 @@ Widget build(BuildContext context) {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Assigned Bookings:', 
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Assigned Bookings:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       SizedBox(height: 8),
                       if (driver.bookingAssignments.isEmpty)
                         Text('No bookings assigned'),
                       ...driver.bookingAssignments.map((assignment) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Icon(Icons.directions_car, size: 16),
-                            SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'Booking ID: ${assignment.bookingId}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12, // slightly increased for readability
-                                  color: colors.blueDark,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.directions_car, size: 16),
+                                SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Booking ID: ${assignment.bookingId}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize:
+                                          12, // slightly increased for readability
+                                      color: colors.blueDark,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
+                                SizedBox(width: 16),
+                                Chip(
+                                  label: Text(
+                                    assignment.status,
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                  backgroundColor:
+                                      _getStatusColor(assignment.status),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 16),
-                            Chip(
-                              label: Text(
-                                assignment.status,
-                                style: TextStyle(fontSize: 10),
-                              ),
-                              backgroundColor: _getStatusColor(assignment.status),
-                            ),
-                          ],
-                        ),
-                      )),
+                          )),
                     ],
                   ),
                 ),

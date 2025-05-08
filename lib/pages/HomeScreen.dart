@@ -41,14 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadBookings() {
     try {
       setState(() {
-        _bookingsFuture = _repository.getBookings()
-          .then((value) {
-            GlobalsBookingDetail.reservedParkings =  value.reservedParkings;
-            return value;
-          })
-          .catchError((error) {
-            throw error;
-          });
+        _bookingsFuture = _repository.getBookings().then((value) {
+          GlobalsBookingDetail.reservedParkings = value.reservedParkings;
+          return value;
+        }).catchError((error) {
+          throw error;
+        });
       });
     } catch (e) {
       setState(() {
@@ -62,23 +60,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _parseAndStoreDates() {
-    if (selectedDateRange != null && checkInTime != null && checkOutTime != null) {
+    if (selectedDateRange != null &&
+        checkInTime != null &&
+        checkOutTime != null) {
       try {
         final dateParts = selectedDateRange!.split(' - ');
         final startDateStr = dateParts[0];
         final endDateStr = dateParts.length > 1 ? dateParts[1] : dateParts[0];
-        
+
         parsedStartDate = DateFormat('MMM d').parse(startDateStr);
         parsedEndDate = DateFormat('MMM d').parse(endDateStr);
         parsedStartTime = _parseTimeString(checkInTime!);
         parsedEndTime = _parseTimeString(checkOutTime!);
-        
+
         final now = DateTime.now();
-        parsedStartDate = DateTime(now.year, parsedStartDate!.month, parsedStartDate!.day);
-        parsedEndDate = DateTime(now.year, parsedEndDate!.month, parsedEndDate!.day);
-        
+        parsedStartDate =
+            DateTime(now.year, parsedStartDate!.month, parsedStartDate!.day);
+        parsedEndDate =
+            DateTime(now.year, parsedEndDate!.month, parsedEndDate!.day);
+
         if (parsedEndDate!.isBefore(parsedStartDate!)) {
-          parsedEndDate = DateTime(now.year + 1, parsedEndDate!.month, parsedEndDate!.day);
+          parsedEndDate =
+              DateTime(now.year + 1, parsedEndDate!.month, parsedEndDate!.day);
         }
       } catch (e) {
         debugPrint('Error parsing dates: $e');
@@ -142,22 +145,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, MyRoutes.notifications);
-                                },
-                                icon: const Icon(Icons.notifications, color: Colors.white),
-                              ),
-                              const CircleAvatar(
-                                backgroundColor: Colors.white,
-                                radius: 18,
-                                backgroundImage: AssetImage('assets/images/male.png'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, MyRoutes.notifications);
+                              },
+                              icon: const Icon(Icons.notifications,
+                                  color: Colors.white),
+                            ),
+                            const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              radius: 18,
+                              backgroundImage:
+                                  AssetImage('assets/images/male.png'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 20.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -175,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
@@ -239,36 +244,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     CustomButton(
                       text: "Reserve",
                       onPressed: () {
-                        if (selectedAirport == null || 
-                            selectedDateRange == null || 
-                            checkInTime == null || 
+                        if (selectedAirport == null ||
+                            selectedDateRange == null ||
+                            checkInTime == null ||
                             checkOutTime == null) {
-                              Globals.startDate = "";
-                            Globals.endDate = "";
-                            Globals.startTime = "";
-                            Globals.endTime = "";
+                          Globals.startDate = "";
+                          Globals.endDate = "";
+                          Globals.startTime = "";
+                          Globals.endTime = "";
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select all fields')),
+                            const SnackBar(
+                                content: Text('Please select all fields')),
                           );
                         } else {
                           _parseAndStoreDates();
-                          
-                          if (parsedStartDate == null || parsedEndDate == null || 
-                              parsedStartTime == null || parsedEndTime == null) {
+
+                          if (parsedStartDate == null ||
+                              parsedEndDate == null ||
+                              parsedStartTime == null ||
+                              parsedEndTime == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Invalid date/time format')),
+                              const SnackBar(
+                                  content: Text('Invalid date/time format')),
                             );
                             return;
-                          }
-                          else{
-                            Globals.startDate = _formatDateForApi(parsedStartDate!);
+                          } else {
+                            Globals.startDate =
+                                _formatDateForApi(parsedStartDate!);
                             Globals.endDate = _formatDateForApi(parsedEndDate!);
-                            Globals.startTime = _formatTimeForApi(parsedStartTime!);
+                            Globals.startTime =
+                                _formatTimeForApi(parsedStartTime!);
                             Globals.endTime = _formatTimeForApi(parsedEndTime!);
                           }
-                          
+
                           Navigator.pushNamed(
-                            context, 
+                            context,
                             MyRoutes.packagesScreen,
                           );
                         }
@@ -279,13 +289,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                             fontSize: 16.sp, fontWeight: FontWeight.bold)),
                     SizedBox(height: 12.h),
-
                     FutureBuilder<BookingResponse>(
                       future: _bookingsFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return _buildLoadingState();
-                        }
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {}
                         if (snapshot.hasError) {
                           return _buildErrorState(snapshot.error.toString());
                         }
@@ -298,9 +306,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           return SessionCard(
                             title: "${first.airport} Airport",
                             status: first.status,
-                            subTitle: first.registrations.isNotEmpty 
-                              ? first.registrations.first.inboundTerminal 
-                              : 'No flight number',
+                            subTitle: first.registrations.isNotEmpty
+                                ? first.registrations.first.inboundTerminal
+                                : 'No flight number',
                             date: first.startDate,
                             time: first.startTime,
                             price: "100",
@@ -310,10 +318,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             onTap: () {
                               Globals.detailType = "reserved";
                               GlobalsBookingDetail.bookingdetailuser = first;
-                                    Navigator.pushNamed(
-                                      context,
-                                      MyRoutes.bookingDetailUser,
-                                    );
+                              Navigator.pushNamed(
+                                context,
+                                MyRoutes.bookingDetailUser,
+                              );
                             },
                           );
                         }
@@ -326,15 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: CircularProgressIndicator(),
       ),
     );
   }

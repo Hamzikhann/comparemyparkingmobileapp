@@ -19,7 +19,7 @@ class Globals {
   static String otp = "";
   static String passwordReset = "";
   static String confirmPassword = "";
-
+  static List<Parking> reservedParkings = [];
   //**********User**********
   static UserModel? user;
   static IPmodel? ip;
