@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api_files.dart';
@@ -21,6 +24,7 @@ import 'package:parkingapp/data/models/UserUpdateModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
 
 class GeneralRepository {
   APIService server = APIService();
@@ -613,79 +617,185 @@ class GeneralRepository {
   }
 
   Future<CheckpointResponseModel> submitCheckpoint(
-      CheckpointRequestModel model, List<File>? pictures) async {
-    Completer<CheckpointResponseModel> completer = Completer();
+  BuildContext context,
+  CheckpointRequestModel model,
+  List<File>? pictures,
+) async {
+  Completer<CheckpointResponseModel> completer = Completer();
 
-    try {
-      EasyLoading.show(status: "Submitting checkpoint...");
+  try {
+    EasyLoading.show(status: "Submitting checkpoint...");
 
-      if (pictures != null && pictures.isNotEmpty) {
-        // Multipart request with images
-        server.makeMultipartRequest(
-          apiEndpoint: ApiFiles.createCheckpoint,
-          requestMethod: RequestMethod.post,
-          fields: {
-            "bookingId": model.bookingId,
-            "location": model.location,
-            "section": model.section,
-            "type": model.type,
-          },
-          files: pictures
-              .map((file) => MultipartFileInfo(
-                    file: file,
-                    fieldName: "pictures", // Some APIs expect array notation
-                  ))
-              .toList(),
-          onSuccess: (Map<String, dynamic> response) {
-            EasyLoading.dismiss();
-            try {
-              final checkpointResponse = CheckpointResponseModel.fromJson(
-                  response['response'] ?? response); // Try both options
-              completer.complete(checkpointResponse);
-            } catch (e) {
-              completer.completeError("Parsing error: $e");
-            }
-          },
-          onError: (String errorMessage) {
-            EasyLoading.dismiss();
-            completer.completeError("API Error: $errorMessage");
-          },
-        );
-      } else {
-        // Simple request without files
-        server.makeApiRequest(
-          apiEndpoint: ApiFiles.createCheckpoint,
-          requestMethod: RequestMethod.post,
-          requestData: {
-            "bookingId": model.bookingId,
-            "location": model.location,
-            "section": model.section,
-            "type": model.type,
-          },
-          onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
-          onSuccess: (Map<String, dynamic> response) {
-            EasyLoading.dismiss();
-            try {
-              final checkpointResponse = CheckpointResponseModel.fromJson(
-                  response['response'] ?? response);
-              completer.complete(checkpointResponse);
-            } catch (e) {
-              completer.completeError("Parsing error: $e");
-            }
-          },
-          onError: (String errorMessage) {
-            EasyLoading.dismiss();
-            completer.completeError("API Error: $errorMessage");
-          },
-        );
+    List<File> compressedPictures = [];
+
+    if (pictures != null && pictures.isNotEmpty) {
+      for (var file in pictures) {
+        final targetPath = '${file.path}_compressed.jpg';
+
+        final compressedFile = await FlutterImageCompress.compressAndGetFile(
+            file.absolute.path,
+            targetPath,
+            quality: 70,
+          );
+
+          if (compressedFile != null) {
+            compressedPictures.add(File(compressedFile.path)); // ✅ convert XFile to File
+          } else {
+            compressedPictures.add(file); // fallback to original
+          }
       }
-    } catch (e) {
-      EasyLoading.dismiss();
-      completer.completeError("Exception: $e");
-    }
 
-    return completer.future;
+      // Multipart request with images
+      server.makeMultipartRequest(
+        apiEndpoint: ApiFiles.createCheckpoint,
+        requestMethod: RequestMethod.post,
+        fields: {
+          "bookingId": model.bookingId,
+          "location": model.location,
+          "section": model.section,
+          "type": model.type,
+        },
+        files: compressedPictures
+            .map((file) => MultipartFileInfo(
+                  file: file,
+                  fieldName: "pictures",
+                ))
+            .toList(),
+        onSuccess: (Map<String, dynamic> response) {
+          EasyLoading.dismiss();
+          try {
+            final checkpointResponse = CheckpointResponseModel.fromJson(
+                response['response'] ?? response);
+
+            // Show success dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                contentPadding: const EdgeInsets.all(24),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/success.svg',
+                      height: 80,
+                      width: 80,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Success!',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Your Booking has been successfully submitted.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, MyRoutes.driverhome, (_) => false);
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            completer.complete(checkpointResponse);
+          } catch (e) {
+            completer.completeError("Parsing error: $e");
+          }
+        },
+        onError: (String errorMessage) {
+          EasyLoading.dismiss();
+          completer.completeError("API Error: $errorMessage");
+        },
+      );
+    } else {
+      // Simple request without files
+      server.makeApiRequest(
+        apiEndpoint: ApiFiles.createCheckpoint,
+        requestMethod: RequestMethod.post,
+        requestData: {
+          "bookingId": model.bookingId,
+          "location": model.location,
+          "section": model.section,
+          "type": model.type,
+        },
+        onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
+        onSuccess: (Map<String, dynamic> response) {
+          EasyLoading.dismiss();
+          try {
+            final checkpointResponse = CheckpointResponseModel.fromJson(
+                response['response'] ?? response);
+
+            // Show success dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                contentPadding: const EdgeInsets.all(24),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/success.svg',
+                      height: 80,
+                      width: 80,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Success!',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Your Booking has been successfully submitted.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, MyRoutes.driverhome, (_) => false);
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            completer.complete(checkpointResponse);
+          } catch (e) {
+            completer.completeError("Parsing error: $e");
+          }
+        },
+        onError: (String errorMessage) {
+          EasyLoading.dismiss();
+          completer.completeError("API Error: $errorMessage");
+        },
+      );
+    }
+  } catch (e) {
+    EasyLoading.dismiss();
+    completer.completeError("Exception: $e");
   }
+
+  return completer.future;
+}
+
 
   Future<Map<String, dynamic>> createPaymentIntent({
     required String amount,

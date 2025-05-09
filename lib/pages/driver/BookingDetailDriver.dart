@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
@@ -334,47 +333,12 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
 
     try {
       GeneralRepository().submitCheckpoint(
+        context,
         checkpointRequest,
         images,
       );
       
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            contentPadding: const EdgeInsets.all(24),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/images/success.svg',
-                  height: 80,
-                  width: 80,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Success!',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Your Booking has been successfully submitted.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, MyRoutes.driverhome, (_) => false);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          ),
-        );
+        
     } catch (e) {
       debugPrint("❌ Checkpoint Submission Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
