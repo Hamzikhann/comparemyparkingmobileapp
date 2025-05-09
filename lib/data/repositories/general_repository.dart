@@ -718,75 +718,13 @@ class GeneralRepository {
           completer.completeError("API Error: $errorMessage");
         },
       );
-    } else {
-      // Simple request without files
-      server.makeApiRequest(
-        apiEndpoint: ApiFiles.createCheckpoint,
-        requestMethod: RequestMethod.post,
-        requestData: {
-          "bookingId": model.bookingId,
-          "location": model.location,
-          "section": model.section,
-          "type": model.type,
-        },
-        onLoad: () => EasyLoading.show(status: "Submitting checkpoint..."),
-        onSuccess: (Map<String, dynamic> response) {
-          EasyLoading.dismiss();
-          try {
-            final checkpointResponse = CheckpointResponseModel.fromJson(
-                response['response'] ?? response);
-
-            // Show success dialog
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                contentPadding: const EdgeInsets.all(24),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/images/success.svg',
-                      height: 80,
-                      width: 80,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Success!',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Your Booking has been successfully submitted.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, MyRoutes.driverhome, (_) => false);
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-
-            completer.complete(checkpointResponse);
-          } catch (e) {
-            completer.completeError("Parsing error: $e");
-          }
-        },
-        onError: (String errorMessage) {
-          EasyLoading.dismiss();
-          completer.completeError("API Error: $errorMessage");
-        },
-      );
+    } else{
+      ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Please add at least one picture.'),
+      duration: Duration(seconds: 2),
+    ),
+  );
     }
   } catch (e) {
     EasyLoading.dismiss();

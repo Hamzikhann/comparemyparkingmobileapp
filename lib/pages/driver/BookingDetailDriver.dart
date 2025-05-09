@@ -282,7 +282,7 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                           ),
                           ElevatedButton(
                             onPressed: () {
-                            type = "pickup";
+                            type = "dropoff";
 
                             // Convert endDate to DateTime (update format if needed)
                             final endDateString = Globals.bookingDriverResponse?.endDate;
