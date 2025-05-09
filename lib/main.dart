@@ -60,7 +60,7 @@ void main() async {
 
   // Stripe setup
   Stripe.publishableKey =
-      'pk_test_51RE9h3QsW9cgGLSGZZo6d3ttIhwMgD9fHxU5QGzOe7xgW3RybHokUOQWpq8saaT9Gy23BCcn2m5yJepjYnPmEYzK00QpUXVCtv';
+      'pk_test_51RLvA6Cf9Ki8zrbfK94mQKdF9DVccrFYFPZjzAnmEOdwFmvxEWm1uVkpcVz7ExRVNaOUezocz8GXHlJ6MJWa2w0X0000ALb6Sj';
   await Stripe.instance.applySettings();
 
   await SystemChrome.setPreferredOrientations(

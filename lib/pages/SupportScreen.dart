@@ -10,8 +10,6 @@ class SupportScreen extends StatefulWidget {
 class _SupportScreenState extends State<SupportScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> topics = ['General', 'Account', 'Payment', 'Security'];
-  int selectedTopicIndex = 0;
 
   final List<Map<String, String>> faqList = [
     {
@@ -99,30 +97,6 @@ class _SupportScreenState extends State<SupportScreen>
   Widget buildFAQTab() {
     return Column(
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Row(
-            children: List.generate(topics.length, (index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: ChoiceChip(
-                  label: Text(topics[index]),
-                  selected: selectedTopicIndex == index,
-                  onSelected: (val) {
-                    setState(() => selectedTopicIndex = index);
-                  },
-                  selectedColor: Colors.black,
-                  labelStyle: TextStyle(
-                    color: selectedTopicIndex == index
-                        ? Colors.white
-                        : Colors.black,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
