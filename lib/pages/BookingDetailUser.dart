@@ -227,11 +227,11 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           runSpacing: 10,
                           children: checkPoints
                               .map((url) => GestureDetector(
-                                  onTap: () => _showImageDialog("http://137.184.9.55:8000/${url.imageUrl}"),
+                                  onTap: () => _showImageDialog("https://stanstedairportparking247.com/${url.imageUrl}"),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: Image.network(
-                                      "http://137.184.9.55:8000/${url.imageUrl}",
+                                      "https://stanstedairportparking247.com/${url.imageUrl}",
                                       width: 100,
                                       height: 100,
                                       fit: BoxFit.cover,

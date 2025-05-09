@@ -692,7 +692,7 @@ class GeneralRepository {
     required String currency,
   }) async {
     final url =
-        Uri.parse('http://137.184.9.55:8000/api/stripe/create-payment-intent');
+        Uri.parse('https://stanstedairportparking247.com/api/stripe/create-payment-intent');
 
     final token = Globals.user?.token ?? '';
 

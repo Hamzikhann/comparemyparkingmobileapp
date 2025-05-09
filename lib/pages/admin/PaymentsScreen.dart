@@ -30,7 +30,7 @@ class _PaymentScreenAdminState extends State<PaymentScreenAdmin> {
     });
 
     final String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final url = Uri.parse('http://137.184.9.55:8000/api/payment/v2/list');
+    final url = Uri.parse('https://stanstedairportparking247.com/api/payment/v2/list');
 
     try {
       final response = await http.post(
