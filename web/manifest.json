@@ -1,6 +1,6 @@
 {
-    "name": "parkingapp",
-    "short_name": "parkingapp",
+    "name": "Stansted Parking",
+    "short_name": "Stansted Parking",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
