@@ -23,7 +23,7 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
   }
 
   Future<void> _launchWhatsApp() async {
-    final phoneNumber = "+923114554242";
+    final phoneNumber = GlobalsBookingDetail.bookingdetailuser?.bookingAssignments.first.employee!.phoneNo;
     final message = Uri.encodeComponent("Hello, I need help with my booking.");
     final url = Uri.parse(
         "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
@@ -37,8 +37,25 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
     }
   }
 
+  void _showImageDialog(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: Container(
+          padding: EdgeInsets.all(8),
+          child: InteractiveViewer(
+            child: Image.network(imageUrl),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+     final checkPoints = (GlobalsBookingDetail.bookingdetailuser?.bookingCheckPoints.isNotEmpty ?? false)
+        ? GlobalsBookingDetail.bookingdetailuser!.bookingCheckPoints.first.bookingCheckPointsImages
+        : [];
     return WillPopScope(
       onWillPop: () async {
         _onBackPressed(context);
@@ -199,9 +216,35 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                       ),
                       SizedBox(height: 24.h),
 
-                      /// Conditionally show WhatsApp Support and Button if detailType is "reserve"
+                      /// ✅ Checkpoint Images
+                      if (checkPoints.isNotEmpty) ...[
+                        Text("Booking Checkpoints:",
+                            style: TextStyle(
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 12.h),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: checkPoints
+                              .map((url) => GestureDetector(
+                                  onTap: () => _showImageDialog("http://137.184.9.55:8000/${url.imageUrl}"),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      "http://137.184.9.55:8000/${url.imageUrl}",
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ))
+                              .toList(),
+                        ),
+                        SizedBox(height: 24.h),
+                      ],
+
+                      /// ✅ WhatsApp + Location Button for Reserved bookings
                       if (Globals.detailType == "reserved") ...[
-                        /// WhatsApp Support Section
                         GestureDetector(
                           onTap: _launchWhatsApp,
                           child: Row(
@@ -218,8 +261,6 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-
-                        /// Reached Terminal Button
                         Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 20.w, vertical: 16.h),
@@ -270,7 +311,14 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                                       await Geolocator.getCurrentPosition(
                                           desiredAccuracy:
                                               LocationAccuracy.high);
-                                  postLocation(GlobalsBookingDetail.bookingdetailuser!.registrations.first.bookingId,position.latitude.toString(),position.longitude.toString());
+                                  postLocation(
+                                      GlobalsBookingDetail
+                                          .bookingdetailuser!
+                                          .registrations
+                                          .first
+                                          .bookingId,
+                                      position.latitude.toString(),
+                                      position.longitude.toString());
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -287,7 +335,7 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                                 ),
                               ),
                               child: Text(
-                                "Reached Terminal",
+                                "Share Location",
                                 style: TextStyle(
                                     fontSize: 16.sp, color: Colors.white),
                               ),
@@ -305,12 +353,14 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
       ),
     );
   }
-   Future<void> postLocation(String bookingID, String latitude, String longitude) async {
-    GeneralRepository().postLocation(bookingID, latitude,longitude).then((value) {
+
+  Future<void> postLocation(
+      String bookingID, String latitude, String longitude) async {
+    GeneralRepository().postLocation(bookingID, latitude, longitude).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                "Location shared the driver will reached to the location soon")),
+                "Location shared. The driver will reach the location soon.")),
       );
     });
   }

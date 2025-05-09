@@ -44,6 +44,8 @@ class Parking {
   final String packageId;
   final List<Registration> registrations;
   final List<Vehicle> vehicles;
+  final List<BookingAssignment> bookingAssignments;
+  final List<BookingCheckPoint> bookingCheckPoints;
 
   Parking({
     required this.id,
@@ -62,30 +64,40 @@ class Parking {
     required this.packageId,
     required this.registrations,
     required this.vehicles,
+    required this.bookingAssignments,
+    required this.bookingCheckPoints,
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
     return Parking(
-      id: json['id'] as String? ?? '',
-      startDate: json['startDate'] as String? ?? '',
-      endDate: json['endDate'] as String? ?? '',
-      startTime: json['startTime'] as String? ?? '',
-      endTime: json['endTime'] as String? ?? '',
-      airport: json['airport'] as String? ?? '',
-      promoCode: json['promoCode'] as String?,
-      status: json['status'] as String? ?? '',
+      id: json['id'] ?? '',
+      startDate: json['startDate'] ?? '',
+      endDate: json['endDate'] ?? '',
+      startTime: json['startTime'] ?? '',
+      endTime: json['endTime'] ?? '',
+      airport: json['airport'] ?? '',
+      promoCode: json['promoCode'],
+      status: json['status'] ?? '',
       isActive: json['isActive']?.toString(),
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
-      userId: json['userId'] as String? ?? '',
-      guestUserId: json['guestUserId'] as String?,
-      packageId: json['packageId'] as String? ?? '',
+      userId: json['userId'] ?? '',
+      guestUserId: json['guestUserId'],
+      packageId: json['packageId'] ?? '',
       registrations: (json['registrations'] as List?)
-              ?.map((data) => Registration.fromJson(data))
+              ?.map((e) => Registration.fromJson(e))
               .toList() ??
           [],
       vehicles: (json['vehicles'] as List?)
-              ?.map((data) => Vehicle.fromJson(data))
+              ?.map((e) => Vehicle.fromJson(e))
+              .toList() ??
+          [],
+      bookingAssignments: (json['bookingAssignments'] as List?)
+              ?.map((e) => BookingAssignment.fromJson(e))
+              .toList() ??
+          [],
+      bookingCheckPoints: (json['bookingCheckPoints'] as List?)
+              ?.map((e) => BookingCheckPoint.fromJson(e))
               .toList() ??
           [],
     );
@@ -129,21 +141,21 @@ class Registration {
 
   factory Registration.fromJson(Map<String, dynamic> json) {
     return Registration(
-      id: json['id'] as String? ?? '',
-      outboundTerminal: json['outboundTerminal'] as String? ?? '',
-      outboundFlightNo: json['outboundFlightNo'] as String? ?? '',
-      inboundTerminal: json['inboundTerminal'] as String? ?? '',
-      inboundFlightNo: json['inboundFlightNo'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      firstName: json['firstName'] as String? ?? '',
-      lastName: json['lastName'] as String? ?? '',
-      phoneNo: json['phoneNo'] as String? ?? '',
-      status: json['status'] as String?,
-      isActive: json['isActive']?.toString(),
-      createdAt: json['createdAt']?.toString(),
-      updatedAt: json['updatedAt']?.toString(),
-      bookingId: json['bookingId'] as String? ?? '',
+      id: json['id'] ?? '',
+      outboundTerminal: json['outboundTerminal'] ?? '',
+      outboundFlightNo: json['outboundFlightNo'] ?? '',
+      inboundTerminal: json['inboundTerminal'] ?? '',
+      inboundFlightNo: json['inboundFlightNo'] ?? '',
+      title: json['title'] ?? '',
+      email: json['email'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      phoneNo: json['phoneNo'] ?? '',
+      status: json['status'],
+      isActive: json['isActive'],
+      createdAt: json['createdAt'],
+      updatedAt: json['updatedAt'],
+      bookingId: json['bookingId'] ?? '',
     );
   }
 }
@@ -155,9 +167,6 @@ class Vehicle {
   final String vehicleModel;
   final String vehicleColour;
   final String numberofPassengers;
-  final String? isActive;
-  final String? createdAt;
-  final String? updatedAt;
   final String bookingId;
 
   Vehicle({
@@ -167,24 +176,148 @@ class Vehicle {
     required this.vehicleModel,
     required this.vehicleColour,
     required this.numberofPassengers,
-    this.isActive,
-    this.createdAt,
-    this.updatedAt,
     required this.bookingId,
   });
 
   factory Vehicle.fromJson(Map<String, dynamic> json) {
     return Vehicle(
-      id: json['id'] as String? ?? '',
-      vehicleRegistration: json['vehicleRegistration'] as String? ?? '',
-      vehicleManufacturer: json['vehicleManufacturer'] as String? ?? '',
-      vehicleModel: json['vehicleModel'] as String? ?? '',
-      vehicleColour: json['vehicleColour'] as String? ?? '',
-      numberofPassengers: json['numberofPassengers'] as String? ?? '',
-      isActive: json['isActive']?.toString(),
-      createdAt: json['createdAt']?.toString(),
-      updatedAt: json['updatedAt']?.toString(),
-      bookingId: json['bookingId'] as String? ?? '',
+      id: json['id'] ?? '',
+      vehicleRegistration: json['vehicleRegistration'] ?? '',
+      vehicleManufacturer: json['vehicleManufacturer'] ?? '',
+      vehicleModel: json['vehicleModel'] ?? '',
+      vehicleColour: json['vehicleColour'] ?? '',
+      numberofPassengers: json['numberofPassengers'] ?? '',
+      bookingId: json['bookingId'] ?? '',
+    );
+  }
+}
+
+class BookingAssignment {
+  final String id;
+  final String status;
+  final String bookingId;
+  final String employeeId;
+  final Employee? employee;
+
+  BookingAssignment({
+    required this.id,
+    required this.status,
+    required this.bookingId,
+    required this.employeeId,
+    this.employee,
+  });
+
+  factory BookingAssignment.fromJson(Map<String, dynamic> json) {
+    return BookingAssignment(
+      id: json['id'] ?? '',
+      status: json['status'] ?? '',
+      bookingId: json['bookingId'] ?? '',
+      employeeId: json['employeeId'] ?? '',
+      employee: json['employee'] != null
+          ? Employee.fromJson(json['employee'])
+          : null,
+    );
+  }
+}
+
+class Employee {
+  final String id;
+  final String title;
+  final String firstName;
+  final String lastName;
+  final String phoneNo;
+  final String email;
+  final String? imageURL;
+  final String? fcmToken;
+  final String? isActive;
+  final String? roleId;
+
+  Employee({
+    required this.id,
+    required this.title,
+    required this.firstName,
+    required this.lastName,
+    required this.phoneNo,
+    required this.email,
+    this.imageURL,
+    this.fcmToken,
+    this.isActive,
+    this.roleId,
+  });
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      phoneNo: json['phoneNo'] ?? '',
+      email: json['email'] ?? '',
+      imageURL: json['imageURL'],
+      fcmToken: json['fcmToken'],
+      isActive: json['isActive'],
+      roleId: json['roleId'],
+    );
+  }
+}
+
+class BookingCheckPoint {
+  final String id;
+  final String type;
+  final String location;
+  final String section;
+  final String? remarks;
+  final String bookingId;
+  final String? vehicleId;
+  final String employeeId;
+  final List<BookingCheckPointImage> bookingCheckPointsImages;
+
+  BookingCheckPoint({
+    required this.id,
+    required this.type,
+    required this.location,
+    required this.section,
+    this.remarks,
+    required this.bookingId,
+    this.vehicleId,
+    required this.employeeId,
+    required this.bookingCheckPointsImages,
+  });
+
+  factory BookingCheckPoint.fromJson(Map<String, dynamic> json) {
+    return BookingCheckPoint(
+      id: json['id'] ?? '',
+      type: json['type'] ?? '',
+      location: json['location'] ?? '',
+      section: json['section'] ?? '',
+      remarks: json['remarks'],
+      bookingId: json['bookingId'] ?? '',
+      vehicleId: json['vehicleId'],
+      employeeId: json['employeeId'] ?? '',
+      bookingCheckPointsImages: (json['bookingCheckPointsImages'] as List?)
+              ?.map((e) => BookingCheckPointImage.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class BookingCheckPointImage {
+  final String id;
+  final String imageUrl;
+  final String bookingCheckPointId;
+
+  BookingCheckPointImage({
+    required this.id,
+    required this.imageUrl,
+    required this.bookingCheckPointId,
+  });
+
+  factory BookingCheckPointImage.fromJson(Map<String, dynamic> json) {
+    return BookingCheckPointImage(
+      id: json['id'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      bookingCheckPointId: json['bookingCheckPointId'] ?? '',
     );
   }
 }
