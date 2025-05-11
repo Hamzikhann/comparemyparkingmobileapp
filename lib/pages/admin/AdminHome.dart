@@ -141,17 +141,16 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                 );
                               } else if (snapshot.hasData) {
                                 final pending = snapshot.data!.pendingParkings;
-                                for (var booking
-                                    in snapshot.data!.reservedParkings) {
+                                final reserved = snapshot.data!.reservedParkings;
+                                final completed = snapshot.data!.completedParkings;
+
+                                // Move bookings with empty assignments from reserved to pending
+                                for (var booking in List.from(reserved)) {
                                   if (booking.bookingAssignments.isEmpty) {
                                     pending.add(booking);
+                                    reserved.remove(booking); // Remove from reserved
                                   }
                                 }
-
-                                final reserved =
-                                    snapshot.data!.reservedParkings;
-                                final completed =
-                                    snapshot.data!.completedParkings;
 
                                 return SingleChildScrollView(
                                   padding: EdgeInsets.symmetric(
