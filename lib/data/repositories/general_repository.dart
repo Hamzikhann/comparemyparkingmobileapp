@@ -149,6 +149,7 @@ class GeneralRepository {
     required String confirmPassword,
   }) async {
     Completer<UserModel> completer = Completer();
+    String? token = await FirebaseMessaging.instance.getToken();
 
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signup, // Make sure you have this endpoint defined
@@ -161,6 +162,7 @@ class GeneralRepository {
         "phoneNo": phoneNo,
         "password": password,
         "confirmPassword": confirmPassword,
+        "fcmToken": token,
       },
       onLoad: () {
         EasyLoading.show(status: "Creating account...");
