@@ -91,6 +91,10 @@ class SharedStorage {
     final jsonString = json.encode(bookingInfo.toJson());
     await prefs.setString(bookingInfoKey, jsonString);
   }
+  static Future<void> removeBookingInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.remove(bookingInfoKey);
+  }
 
   static Future<BookingInfoModel?> loadBookingInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

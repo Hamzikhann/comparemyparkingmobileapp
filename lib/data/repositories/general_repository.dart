@@ -655,6 +655,7 @@ class GeneralRepository {
           "section": model.section,
           "type": model.type,
         },
+        
         files: compressedPictures
             .map((file) => MultipartFileInfo(
                   file: file,

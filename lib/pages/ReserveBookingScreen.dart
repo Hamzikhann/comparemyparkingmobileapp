@@ -452,6 +452,9 @@ Future<void> _loadSavedBookingInfo() async {
                                 if (saveInfo == true) {
                                   await SharedStorage.saveBookingInfo(bookingInfo);
                                 }
+                                else{
+                                  await SharedStorage.removeBookingInfo();
+                                }
 
                                 // Proceed to next screen
                                 Globals.booking_info_model = bookingInfo;
