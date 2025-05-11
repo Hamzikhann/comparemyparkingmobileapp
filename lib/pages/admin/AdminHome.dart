@@ -187,7 +187,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                       BookingCard(
                                         title: "Assigned Booking",
                                         available:
-                                            reserved.length - pending.length,
+                                            reserved.length,
                                         onTap: () {
                                           // navigate to Accept Booking details
                                           _viewAll("Accept Booking", reserved);
