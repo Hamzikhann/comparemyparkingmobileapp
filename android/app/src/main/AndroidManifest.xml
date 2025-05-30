@@ -15,7 +15,7 @@
     
 
     <application
-        android:label="Stansted Parking"
+        android:label="Parking Pilot"
         android:theme="@style/Theme.ParkingApp"
         android:name="${applicationName}"
         android:icon="@drawable/logo">

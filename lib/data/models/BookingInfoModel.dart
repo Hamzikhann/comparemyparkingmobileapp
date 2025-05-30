@@ -14,6 +14,7 @@ class BookingInfoModel {
   final String carModel;
   final String carColor;
   final String noOfPassengers;
+  final String type;
 
   BookingInfoModel({
     required this.outBoundTerminal,
@@ -30,6 +31,7 @@ class BookingInfoModel {
     required this.carModel,
     required this.carColor,
     required this.noOfPassengers,
+    required this.type,
   });
 
   Map<String, dynamic> toJson() => {
@@ -47,6 +49,7 @@ class BookingInfoModel {
         'carModel': carModel,
         'carColor': carColor,
         'noOfPassengers': noOfPassengers,
+        'type': type,
       };
 
   factory BookingInfoModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +68,7 @@ class BookingInfoModel {
       carModel: json['carModel'],
       carColor: json['carColor'],
       noOfPassengers: json['noOfPassengers'],
+      type: json['type'],
     );
   }
 }

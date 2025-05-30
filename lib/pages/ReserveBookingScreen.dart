@@ -19,6 +19,8 @@ class ReserveBookingScreen extends StatefulWidget {
 
 class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final _formKey = GlobalKey<FormState>();
+  final currentYear = DateTime.now().year;
+  String transmissionType = 'Auto'; // Default to Auto
 
   // Flight Details
   final TextEditingController departureFlightController =
@@ -33,10 +35,11 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   String selectedTitle = "Mr";
+  
   // Vehicle Details
   final TextEditingController vehicleRegNoController = TextEditingController();
   final TextEditingController carMakerController = TextEditingController();
-  final TextEditingController carModelController = TextEditingController();
+  final TextEditingController carYearController = TextEditingController();
   final TextEditingController numPassengersController = TextEditingController();
   final TextEditingController carColorController = TextEditingController();
 
@@ -63,50 +66,74 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
     return null;
   }
 
-@override
-void initState() {
-  super.initState();
-  _loadSavedBookingInfo();
-}
-
-Future<void> _loadSavedBookingInfo() async {
-  final savedInfo = await SharedStorage.loadBookingInfo();
-  if (savedInfo != null && mounted) {
-    setState(() {
-      // Only fill if the field is empty
-      if (outBoundController.text.isEmpty) outBoundController.text = savedInfo.outBoundTerminal;
-      if (inBoundController.text.isEmpty) inBoundController.text = savedInfo.inBoundTerminal;
-      if (departureFlightController.text.isEmpty) departureFlightController.text = savedInfo.departureFlight;
-      if (returnFlightController.text.isEmpty) returnFlightController.text = savedInfo.returnFlight;
-      
-      // For title, we might want to always use the saved one if available
-      selectedTitle = savedInfo.title;
-      
-      // Only fill name if it's still the default value
-      if (firstNameController.text == Globals.user?.firstName || firstNameController.text.isEmpty) {
-        firstNameController.text = savedInfo.firstName;
-      }
-      if (lastNameController.text == Globals.user?.lastName || lastNameController.text.isEmpty) {
-        lastNameController.text = savedInfo.lastName;
-      }
-      
-      if (phoneController.text.isEmpty) phoneController.text = savedInfo.phone;
-      
-      // Only fill email if it's still the default value
-      if (emailController.text == Globals.user?.email || emailController.text.isEmpty) {
-        emailController.text = savedInfo.email;
-      }
-      
-      // Vehicle details
-      if (vehicleRegNoController.text.isEmpty) vehicleRegNoController.text = savedInfo.vehicleRegNo;
-      if (carMakerController.text.isEmpty) carMakerController.text = savedInfo.carMaker;
-      if (carModelController.text.isEmpty) carModelController.text = savedInfo.carModel;
-      if (carColorController.text.isEmpty) carColorController.text = savedInfo.carColor;
-      if (numPassengersController.text.isEmpty) numPassengersController.text = savedInfo.noOfPassengers;
-    });
+  String? validateYear(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Year is required';
+    }
+    
+    final year = int.tryParse(value);
+    if (year == null) {
+      return 'Enter a valid year';
+    }
+    
+    if (year > currentYear) {
+      return 'Year cannot be greater than $currentYear';
+    }
+    
+    // You might also want to set a minimum reasonable year (like 1900)
+    if (year < 1900) {
+      return 'Enter a valid year';
+    }
+    
+    return null;
   }
-}
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedBookingInfo();
+  }
+
+  Future<void> _loadSavedBookingInfo() async {
+    final savedInfo = await SharedStorage.loadBookingInfo();
+    if (savedInfo != null && mounted) {
+      setState(() {
+        // Only fill if the field is empty
+        if (outBoundController.text.isEmpty) outBoundController.text = savedInfo.outBoundTerminal;
+        if (inBoundController.text.isEmpty) inBoundController.text = savedInfo.inBoundTerminal;
+        if (departureFlightController.text.isEmpty) departureFlightController.text = savedInfo.departureFlight;
+        if (returnFlightController.text.isEmpty) returnFlightController.text = savedInfo.returnFlight;
+        
+        // For title, we might want to always use the saved one if available
+        selectedTitle = savedInfo.title;
+        
+        // Only fill name if it's still the default value
+        if (firstNameController.text == Globals.user?.firstName || firstNameController.text.isEmpty) {
+          firstNameController.text = savedInfo.firstName;
+        }
+        if (lastNameController.text == Globals.user?.lastName || lastNameController.text.isEmpty) {
+          lastNameController.text = savedInfo.lastName;
+        }
+        
+        if (phoneController.text.isEmpty) phoneController.text = savedInfo.phone;
+        
+        // Only fill email if it's still the default value
+        if (emailController.text == Globals.user?.email || emailController.text.isEmpty) {
+          emailController.text = savedInfo.email;
+        }
+        
+        // Vehicle details
+        if (vehicleRegNoController.text.isEmpty) vehicleRegNoController.text = savedInfo.vehicleRegNo;
+        if (carMakerController.text.isEmpty) carMakerController.text = savedInfo.carMaker;
+        if (carYearController.text.isEmpty) carYearController.text = savedInfo.carModel;
+        if (carColorController.text.isEmpty) carColorController.text = savedInfo.carColor;
+        if (numPassengersController.text.isEmpty) numPassengersController.text = savedInfo.noOfPassengers;
+        
+        // Transmission type
+        transmissionType = savedInfo.type;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +160,8 @@ Future<void> _loadSavedBookingInfo() async {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ... (keep all the existing flight and user details sections the same)
+                        // Flight Details section remains unchanged
                         Text("Flight Details",
                             style: TextStyle(
                                 fontSize: 16.sp,
@@ -215,7 +244,7 @@ Future<void> _loadSavedBookingInfo() async {
                           height: 45.h,
                           items: const ["Mr", "Mrs", "Others"],
                           isSearchable: false,
-                          selectedItem: selectedTitle, // Add this line to set the initial selected item
+                          selectedItem: selectedTitle,
                           onSelectItem: (item) {
                             setState(() {
                               selectedTitle = item!;
@@ -310,7 +339,7 @@ Future<void> _loadSavedBookingInfo() async {
                             ),
                             SizedBox(width: 10.w),
                             Expanded(
-                              child: Text("Car Model",
+                              child: Text("Car Year",
                                   style: TextStyle(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.bold,
@@ -332,10 +361,52 @@ Future<void> _loadSavedBookingInfo() async {
                             SizedBox(width: 10.w),
                             Expanded(
                               child: CustomTextField(
-                                hintText: "",
-                                controller: carModelController,
-                                validator: (val) =>
-                                    validateRequired(val, "Car Model"),
+                                hintText: "e.g. 2020",
+                                controller: carYearController,
+                                keyboardType: TextInputType.number,
+                                validator: validateYear,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        // Transmission Type Radio Buttons
+                        Text("Transmission Type",
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ListTile(
+                                title: Text('Auto'),
+                                leading: Radio<String>(
+                                  value: 'Auto',
+                                  groupValue: transmissionType,
+                                  onChanged: (String? value) {
+                                    setState(() {
+                                      transmissionType = value!;
+                                    });
+                                  },
+                                  activeColor: colors.primary,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: ListTile(
+                                title: Text('Manual'),
+                                leading: Radio<String>(
+                                  value: 'Manual',
+                                  groupValue: transmissionType,
+                                  onChanged: (String? value) {
+                                    setState(() {
+                                      transmissionType = value!;
+                                    });
+                                  },
+                                  activeColor: colors.primary,
+                                ),
                               ),
                             ),
                           ],
@@ -354,7 +425,7 @@ Future<void> _loadSavedBookingInfo() async {
                               validateRequired(val, "car color"),
                         ),
                         SizedBox(height: 16.h),
-                        Text("No of  Passengers",
+                        Text("No of Passengers",
                             style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.bold,
@@ -424,9 +495,10 @@ Future<void> _loadSavedBookingInfo() async {
                                   email: emailController.text,
                                   vehicleRegNo: vehicleRegNoController.text,
                                   carMaker: carMakerController.text,
-                                  carModel: carModelController.text,
+                                  carModel: carYearController.text,
                                   carColor: carColorController.text,
                                   noOfPassengers: numPassengersController.text,
+                                  type: transmissionType,
                                 );
 
                                 // Show dialog to ask if user wants to save info

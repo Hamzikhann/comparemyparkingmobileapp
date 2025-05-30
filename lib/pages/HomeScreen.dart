@@ -21,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedAirport;
-  final List<String> airportOptions = ['STN'];
+  final List<String> airportOptions = ['STN','LTN'];
   String? selectedDateRange;
   String? checkInTime;
   String? checkOutTime;

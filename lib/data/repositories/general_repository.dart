@@ -509,6 +509,7 @@ class GeneralRepository {
     required String vehicleModel,
     required String vehicleColor,
     required String numberOfPassengers,
+    required String type,
     required String userId,
     required String name,
     required String price,
@@ -540,6 +541,7 @@ class GeneralRepository {
           vehicleModel.isEmpty ||
           vehicleColor.isEmpty ||
           numberOfPassengers.isEmpty ||
+          type.isEmpty ||
           userId.isEmpty ||
           name.isEmpty ||
           price.isEmpty ||

@@ -1,6 +1,6 @@
 {
-    "name": "Stansted Parking",
-    "short_name": "Stansted Parking",
+    "name": "Parking Pilot",
+    "short_name": "Parking Pilot",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
