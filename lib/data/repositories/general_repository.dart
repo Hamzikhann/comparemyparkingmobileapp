@@ -31,15 +31,15 @@ class GeneralRepository {
 
   Future<UserModel> signin(String email, String password) async {
     Completer<UserModel> completer = Completer();
-    String? token = await FirebaseMessaging.instance.getToken();
-    print(token);
+    //String? token = await FirebaseMessaging.instance.getToken();
+    //print(token);
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signin,
       requestMethod: RequestMethod.post,
       requestData: {
         "email": email,
         "password": password,
-        "fcmToken": token,
+        "fcmToken": "",
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");
@@ -149,7 +149,7 @@ class GeneralRepository {
     required String confirmPassword,
   }) async {
     Completer<UserModel> completer = Completer();
-    String? token = await FirebaseMessaging.instance.getToken();
+   // String? token = await FirebaseMessaging.instance.getToken();
 
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signup, // Make sure you have this endpoint defined
@@ -162,7 +162,7 @@ class GeneralRepository {
         "phoneNo": phoneNo,
         "password": password,
         "confirmPassword": confirmPassword,
-        "fcmToken": token,
+        "fcmToken": "",
       },
       onLoad: () {
         EasyLoading.show(status: "Creating account...");

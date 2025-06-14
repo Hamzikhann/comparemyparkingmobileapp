@@ -132,47 +132,69 @@ class MyApp extends StatelessWidget {
 }
 
 Future<void> setupNotifications() async {
-  // Initialize background handler
+  final FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Handle background messages
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Android channel
+  // Create Android notification channel
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
+  // Initialize plugin for displaying notifications
   await flutterLocalNotificationsPlugin.initialize(
     const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(),
     ),
   );
-  // iOS permission
+
+  // Request notification permissions
   if (Platform.isIOS) {
-    await FirebaseMessaging.instance.requestPermission(
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print("✅ iOS: Notification permission granted");
+
+      // Wait for APNs token (required on iOS before getting FCM token)
+      String? apnsToken;
+      int attempts = 0;
+
+      while (apnsToken == null && attempts < 10) {
+        apnsToken = await messaging.getAPNSToken();
+        if (apnsToken == null) {
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+        attempts++;
+      }
+
+      print("📲 APNs Token: $apnsToken");
+    } else {
+      print("❌ iOS: Notification permission denied");
+      return;
+    }
+  } else if (Platform.isAndroid) {
+    // For Android 13+ permissions
+    await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
   }
 
-  // Android 13+ runtime permission
-  if (Platform.isAndroid) {
-    // Permissions
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-  }
+  // ✅ Safe to get FCM token now
+  //String? fcmToken = await messaging.getToken();
+ // print('🎯 FCM Token: $fcmToken');
 
-  // Get token
-  String? token = await FirebaseMessaging.instance.getToken();
-  print('FCM Token: $token');
-
-  // Foreground messages
+  // Handle foreground notifications
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("Received foreground message: ${message.notification?.title}");
+    print("📩 Foreground message: ${message.notification?.title}");
 
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
@@ -195,11 +217,13 @@ Future<void> setupNotifications() async {
     }
   });
 
-  // Tapped notification
+  // Handle tapped notifications
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    navigateBasedOnRole(); // ✅ Use global navigatorKey
+    print("📬 Notification opened");
+    navigateBasedOnRole();
   });
 }
+
 
 void navigateBasedOnRole() async {
   await SharedStorage.loadUser();
