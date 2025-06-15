@@ -243,7 +243,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
           SizedBox(height: 16.0),
           if (isAvailable) ...[
             Text(
-              'Price: £ ${option.price}',
+              'Price: ${option.price}',
               style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: Colors.black),
             ),
             SizedBox(height: 8.0),
