@@ -31,6 +31,7 @@ import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
 import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:parkingapp/pages/driver/NotificationsScreenDriver.dart';
+import 'package:parkingapp/pages/resetOtp/OtpScreen2.dart';
 import 'package:provider/provider.dart';
 import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -60,7 +61,7 @@ void main() async {
 
   // Stripe setup
   Stripe.publishableKey =
-      'pk_test_51RLvA6Cf9Ki8zrbfK94mQKdF9DVccrFYFPZjzAnmEOdwFmvxEWm1uVkpcVz7ExRVNaOUezocz8GXHlJ6MJWa2w0X0000ALb6Sj';
+      'pk_test_51RE9gjJdHKgLpFqJtJp36OmTujMu4dPYEQzmcQyIEPgjJTEyaHuIt1yY6GUGtQJkWa2RVCEgdgltfn7YjwE2athD00oiFutv0Z';
   await Stripe.instance.applySettings();
 
   await SystemChrome.setPreferredOrientations(
@@ -107,6 +108,7 @@ class MyApp extends StatelessWidget {
             '/signUp': (context) => SignupScreen(),
             '/forgot': (context) => Forgotpassword(),
             '/otp': (context) => OtpScreen(),
+            '/otpSignup': (context) => OtpScreen2(),
             '/reserveBooking': (context) => ReserveBookingScreen(),
             '/packagesScreen': (context) => PackagesScreen(),
             '/main': (context) => MainScreen(),

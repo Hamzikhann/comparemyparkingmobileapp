@@ -4,6 +4,7 @@ class MyRoutes {
   static String signUpRoute = '/signUp';
   static String forgot = '/forgot';
   static String otp = '/otp';
+  static String otpsignup = '/otpSignup';
   static String reserveBooking = '/reserveBooking';
   static String packagesScreen = '/packagesScreen';
   static String mainPage = '/main';

@@ -3,6 +3,7 @@ import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
+import 'package:parkingapp/data/models/SignupModel.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 
@@ -27,6 +28,7 @@ class Globals {
   static ParkingOption? option;
   static BookingInfoModel? booking_info_model;
   static Parking? bookingDriverResponse;
+  static UserSignup? userSignup;
   static Parking? bookingdetailuser;
   static List<Driver> drivers = [];
 

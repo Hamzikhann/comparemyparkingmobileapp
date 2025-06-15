@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -17,6 +16,7 @@ import 'package:parkingapp/data/models/CheckPointRequestModel.dart';
 import 'package:parkingapp/data/models/CheckPointsModel.dart';
 import 'package:parkingapp/data/models/NotificationModel.dart';
 import 'package:parkingapp/data/models/OtpModel.dart';
+import 'package:parkingapp/data/models/OtpModelSignup.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
@@ -89,6 +89,39 @@ class GeneralRepository {
 
         final userData = res['data'];
         Otpmodel user = Otpmodel.fromJson(userData);
+        completer.complete(user);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'reset',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+  Future<OtpmodelSignup> verifyEmail(String email) async {
+    Completer<OtpmodelSignup> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.verifyEmail,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "email": email,
+        "phoneNo":"",
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+
+        final userData = res['data'];
+        OtpmodelSignup user = OtpmodelSignup.fromJson(userData);
         completer.complete(user);
       },
       onError: (String errorMessage) {
@@ -743,6 +776,8 @@ class GeneralRepository {
   Future<Map<String, dynamic>> createPaymentIntent({
     required String amount,
     required String currency,
+    required String startDate,
+    required String endDate,
   }) async {
     final url =
         Uri.parse('https://stanstedairportparking247.com/api/stripe/create-payment-intent');
@@ -760,7 +795,9 @@ class GeneralRepository {
       body: jsonEncode({
         // Use jsonEncode for proper JSON formatting
         'amount': amountInt, // Send as integer
-        'currency': currency.toLowerCase(), // Ensure lowercase currency
+        'currency': currency.toLowerCase(),
+        "startDate":startDate,
+        "endDate":endDate // Ensure lowercase currency
       }),
       headers: {
         'access-token': token,

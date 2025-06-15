@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import '../routes/MyRoutes.dart';
@@ -88,10 +87,11 @@ class _OtpScreenState extends State<OtpScreen> {
                     constraints: BoxConstraints(),
                   ),
                   Spacer(),
-                  SvgPicture.asset(
-                    'assets/images/logo.svg',
+                  Image.asset(
+                    'assets/images/logo.png',
                     height: 80.h,
                     width: 200.w,
+                    fit: BoxFit.contain,
                   ),
                   Spacer(),
                 ],

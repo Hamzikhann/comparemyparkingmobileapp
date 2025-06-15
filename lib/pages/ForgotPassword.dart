@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
@@ -52,10 +51,11 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
                     Spacer(), // Pushes the logo to center
 
                     // Logo from SVG asset
-                    SvgPicture.asset(
-                      'assets/images/logo.svg',
+                    Image.asset(
+                      'assets/images/logo.png',
                       height: 80.h,
                       width: 200.w,
+                      fit: BoxFit.contain,
                     ),
 
                     Spacer(), // Maintains balance in the row

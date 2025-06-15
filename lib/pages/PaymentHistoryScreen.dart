@@ -213,7 +213,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       Text(
                         payment.referenceNo,
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 6,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

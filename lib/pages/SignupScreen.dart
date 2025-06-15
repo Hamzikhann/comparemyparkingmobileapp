@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/data/models/SignupModel.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/utils/colors.dart';
@@ -76,10 +74,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     // Logo
                     Center(
-                      child: SvgPicture.asset(
-                        'assets/images/logo.svg',
+                      child: Image.asset(
+                        'assets/images/logo.png',
                         height: 80.h,
                         width: 200.w,
+                        fit: BoxFit.contain,
                       ),
                     ),
 
@@ -207,7 +206,16 @@ class _SignupScreenState extends State<SignupScreen> {
                       text: "Signup",
                       onPressed: () {
                         if (_formKey.currentState!.validate() && selectedTitle != null) {
-                          registerUser(selectedTitle!,firstNameController.text,lastNameController.text,emailController.text,phoneController.text,passwordController.text,confirmPasswordController.text);
+                          Globals.userSignup = UserSignup(
+                            title: selectedTitle!,
+                            firstName: firstNameController.text.trim(),
+                            lastName: lastNameController.text.trim(),
+                            email: emailController.text.trim(),
+                            phone: phoneController.text.trim(),
+                            password: passwordController.text.trim(),
+                          ) as UserSignup?;
+                          Navigator.pushReplacementNamed(
+                                context, MyRoutes.otpsignup);
                         } else if (selectedTitle == null) {
                           Alertify.showAlert(
                             alertKey: 'signup',
@@ -256,35 +264,5 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   // In your signup screen or provider
-  Future<void> registerUser(String title,
-     String firstName,
-     String lastName,
-     String email,
-     String phoneNo,
-     String password,
-     String confirmPassword) async {
-    GeneralRepository().signup(
-      title: title,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phoneNo: phoneNo,
-      password: password,
-      confirmPassword: confirmPassword,
-    ).then((value) {
-      Alertify.showAlert(
-        duration: 1,
-        alertKey: 'signup',
-        message: 'Signup successfully!',
-        type: AlertType.success,
-        onClose: () {
-          Globals.user = value;
-          SharedStorage.saveUser(value);
-          emailController.clear();
-          passwordController.clear();
-          Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
-        },
-      );
-    });
-  }
+  
 }

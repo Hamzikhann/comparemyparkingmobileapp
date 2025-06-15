@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
@@ -60,12 +59,12 @@ class _LoginPageState extends State<LoginScreen> {
                   children: [
                     SizedBox(height: 60.h),
                     Center(
-                      child: SvgPicture.asset(
-                        'assets/images/logo.svg',
+                      child: Image.asset(
+                        'assets/images/logo.png',
                         height: 80.h,
                         width: 200.w,
-                      ),
-                    ),
+                        fit: BoxFit.contain,
+                      ),),
                     SizedBox(height: 150.h),
                     CustomTextField(
                       hintText: "Email",

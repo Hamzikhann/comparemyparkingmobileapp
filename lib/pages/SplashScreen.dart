@@ -96,9 +96,11 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 /// Logo
-                SvgPicture.asset(
-                  'assets/images/logo.svg',
-                  height: 100.h,
+                Image.asset(
+                  'assets/images/logo.png',
+                  height: 80.h,
+                  width: 200.w,
+                  fit: BoxFit.contain,
                 ),
 
                 SizedBox(height: 15.h),

@@ -251,7 +251,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   6), // 🔽 Reduce radius here
                             ),
                           ),
-                          child: Text('Proceed to Pay £${Globals.option?.price}',
+                          child: Text('Proceed to Pay ${Globals.option?.price}',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.white)),
                         ),
@@ -293,9 +293,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
   Future<void> startStripePayment() async {
   try {
+    final rawAmount = (Globals.option?.price ?? "0")
+        .replaceAll(RegExp(r'[^\d.]'), '');
+
+    final amountInPence = (double.tryParse(rawAmount)! * 100).toInt().toString();
+
     final response = await GeneralRepository().createPaymentIntent(
-      amount: Globals.option?.price ?? "0",
+      amount: amountInPence,
       currency: "gbp",
+      startDate: Globals.startDate,
+      endDate: Globals.endDate
     );
 
     final clientSecret = response['paymentIntent']?['client_secret'] ??
@@ -322,7 +329,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     await _handlePayment(paymentId);
-    
+
   } on StripeException catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
