@@ -9,6 +9,7 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/driver/TopBar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Bookingdetaildriver extends StatefulWidget {
   const Bookingdetaildriver({Key? key}) : super(key: key);
@@ -250,6 +251,22 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                         ],
                       ),
                       SizedBox(height: 24.h),
+                      GestureDetector(
+                          onTap: _launchWhatsApp,
+                          child: Row(
+                            children: [
+                              Icon(Icons.support,
+                                  color: Colors.green, size: 28.sp),
+                              SizedBox(width: 10.w),
+                              Text(
+                                "Contact User? Chat with user on WhatsApp",
+                                style: TextStyle(
+                                    fontSize: 14.sp, color: Colors.blue),
+                              )
+                            ],
+                          ),
+                        ),
+                      SizedBox(height: 24.h),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -343,6 +360,20 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
       debugPrint("❌ Checkpoint Submission Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Checkpoint submission failed: $e')),
+      );
+    }
+  }
+  Future<void> _launchWhatsApp() async {
+    final phoneNumber = Globals.bookingDriverResponse!.registrations.first.phoneNo;
+    final message = Uri.encodeComponent("Hello, I need help with your booking.");
+    final url = Uri.parse(
+        "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open WhatsApp")),
       );
     }
   }

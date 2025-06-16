@@ -91,7 +91,7 @@ class SessionCard extends StatelessWidget {
               Text(
                 price,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 10.sp,
                   fontWeight: FontWeight.bold,
                   color: colors.primary,
                 ),

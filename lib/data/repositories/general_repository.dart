@@ -252,6 +252,7 @@ class GeneralRepository {
         "password": password,
         "confirmPassword": confirmPassword,
         "roleId": 'RmFBM1Z3UCtvNEJYNXZ2bXcxT00yUT09',
+        "fcmToken": "",
       },
       onLoad: () {
         EasyLoading.show(status: "Add driver...");
@@ -270,6 +271,7 @@ class GeneralRepository {
         completer.complete(user);
       },
       onError: (String errorMessage) {
+        print(errorMessage);
         EasyLoading.dismiss();
         Alertify.showAlert(
           alertKey: 'signup',
@@ -797,7 +799,11 @@ class GeneralRepository {
         'amount': amountInt, // Send as integer
         'currency': currency.toLowerCase(),
         "startDate":startDate,
-        "endDate":endDate // Ensure lowercase currency
+        "startTime":Globals.startTime,
+        "endDate":endDate,
+        "endTime":Globals.endTime,
+        "userId":Globals.user!.id,
+        "airport" :Globals.selectedAirport // Ensure lowercase currency
       }),
       headers: {
         'access-token': token,

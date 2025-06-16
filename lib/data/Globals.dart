@@ -12,6 +12,7 @@ class Globals {
   static String startDate = "";
   static String endDate = "";
   static String startTime = "";
+  static String selectedAirport = "";
   static String endTime = "";
   static String selectedDateRange = "";
   static String detailType = "";

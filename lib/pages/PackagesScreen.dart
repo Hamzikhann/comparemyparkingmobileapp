@@ -33,7 +33,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
       return await _repository.searchParking(
         startDate: Globals.startDate,
         endDate: Globals.endDate,
-        airport: "STN",
+        airport: Globals.selectedAirport,
         startTime: Globals.startTime,
         endTime: Globals.endTime,
       );

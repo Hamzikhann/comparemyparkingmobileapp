@@ -185,7 +185,7 @@ class _PaymentScreenAdminState extends State<PaymentScreenAdmin> {
         Text(
           value,
           style: TextStyle(
-            fontSize: highlight ? 16 : 10,
+            fontSize: highlight ? 16 : 6,
             fontWeight: FontWeight.bold,
             color: highlight ? Colors.green : Colors.black,
           ),

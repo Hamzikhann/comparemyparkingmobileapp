@@ -69,7 +69,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         "startTime": Globals.startTime,
         "endDate": Globals.endDate,
         "endTime": Globals.endTime,
-        "airport": "STN",
+        "airport": Globals.selectedAirport,
         "outboundTerminal": Globals.booking_info_model?.outBoundTerminal,
         "outboundFlightNo": "00000",
         "inboundTerminal": Globals.booking_info_model?.inBoundTerminal,
@@ -293,11 +293,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
   Future<void> startStripePayment() async {
   try {
+    debugPrint('Starting Stripe payment process...');
+    
     final rawAmount = (Globals.option?.price ?? "0")
         .replaceAll(RegExp(r'[^\d.]'), '');
-
     final amountInPence = (double.tryParse(rawAmount)! * 100).toInt().toString();
 
+    debugPrint('Creating payment intent for amount: $amountInPence pence');
+    
     final response = await GeneralRepository().createPaymentIntent(
       amount: amountInPence,
       currency: "gbp",
@@ -305,6 +308,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       endDate: Globals.endDate
     );
 
+    debugPrint('Payment intent response: $response');
+    
     final clientSecret = response['paymentIntent']?['client_secret'] ??
                         response['clientSecret'];
 
@@ -312,34 +317,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
       throw Exception('Missing client secret in response');
     }
 
+    debugPrint('Initializing payment sheet with client secret');
+    
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'Your Parking App',
+        merchantDisplayName: 'Parking Pilot',
         style: ThemeMode.light,
+        applePay: PaymentSheetApplePay(
+          merchantCountryCode: 'GB',
+        ),
       ),
     );
 
-    await Stripe.instance.presentPaymentSheet();
+    debugPrint('Presenting payment sheet');
+    final result = await Stripe.instance.presentPaymentSheet();
+    debugPrint('Payment sheet result: $result');
 
     final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
-
-    if (paymentId == null) {
-      throw Exception('Missing payment ID in response');
-    }
+    debugPrint('Payment completed with ID: $paymentId');
 
     await _handlePayment(paymentId);
 
   } on StripeException catch (e) {
+    debugPrint('StripeException: ${e.error.localizedMessage}');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
     );
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('Payment failed: $e\n$stack');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment failed: ${e.toString()}")),
     );
   }
 }
-
 
 }

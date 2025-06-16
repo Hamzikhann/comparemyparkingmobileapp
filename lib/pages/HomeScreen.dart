@@ -275,6 +275,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             Globals.startTime =
                                 _formatTimeForApi(parsedStartTime!);
                             Globals.endTime = _formatTimeForApi(parsedEndTime!);
+                             Globals.selectedAirport = selectedAirport!;
+
                           }
 
                           Navigator.pushNamed(
