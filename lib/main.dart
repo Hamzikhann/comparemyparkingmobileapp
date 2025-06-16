@@ -63,7 +63,7 @@ void main() async {
   Stripe.publishableKey =
       'pk_test_51RE9gjJdHKgLpFqJtJp36OmTujMu4dPYEQzmcQyIEPgjJTEyaHuIt1yY6GUGtQJkWa2RVCEgdgltfn7YjwE2athD00oiFutv0Z';
   await Stripe.instance.applySettings();
-  Stripe.merchantIdentifier = 'merchant.com.stn00.parkingapp22';
+  Stripe.merchantIdentifier = 'merchant.com.stn00.parkingapp222';
   Stripe.urlScheme = 'flutterstripe';
 
   await SystemChrome.setPreferredOrientations(
