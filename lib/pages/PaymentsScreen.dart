@@ -1,3 +1,5 @@
+// ignore_for_file: unused_catch_stack
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -293,7 +295,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
   Future<void> startStripePayment() async {
   try {
-    debugPrint('Starting Stripe payment process...');
     
     final rawAmount = (Globals.option?.price ?? "0")
         .replaceAll(RegExp(r'[^\d.]'), '');
@@ -308,7 +309,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       endDate: Globals.endDate
     );
 
-    debugPrint('Payment intent response: $response');
     
     final clientSecret = response['paymentIntent']?['client_secret'] ??
                         response['clientSecret'];
@@ -317,30 +317,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
       throw Exception('Missing client secret in response');
     }
 
-    debugPrint('Initializing payment sheet with client secret');
     
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'Parking Pilot',
-        allowsDelayedPaymentMethods: true,
+        style: ThemeMode.system,
+        applePay: null,
+        googlePay: null,
+        allowsDelayedPaymentMethods: false,
       ),
     );
 
     await Stripe.instance.presentPaymentSheet();
 
     final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
-    debugPrint('Payment completed with ID: $paymentId');
 
     await _handlePayment(paymentId);
 
   } on StripeException catch (e) {
-    debugPrint('StripeException: ${e.error.localizedMessage}');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
     );
   } catch (e, stack) {
-    debugPrint('Payment failed: $e\n$stack');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment failed: ${e.toString()}")),
     );
