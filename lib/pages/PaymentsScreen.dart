@@ -319,22 +319,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     debugPrint('Initializing payment sheet with client secret');
     
-    // Initialize payment sheet
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'Parking Pilot',
-        allowsDelayedPaymentMethods: false,
-        returnURL: 'parkingpilot://stripe-redirect',
-        appearance: PaymentSheetAppearance(
-          colors: PaymentSheetAppearanceColors(
-            primary: Colors.blue, // Set your brand color
-          ),
-        ),
+        allowsDelayedPaymentMethods: true,
       ),
     );
 
-    debugPrint('Presenting payment sheet');
     await Stripe.instance.presentPaymentSheet();
 
     final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
@@ -353,7 +345,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       SnackBar(content: Text("Payment failed: ${e.toString()}")),
     );
   }
-  
 }
 
 }
