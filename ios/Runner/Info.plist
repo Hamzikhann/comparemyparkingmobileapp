@@ -84,9 +84,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
 	<key>com.apple.developer.applepay</key>
 	<array>
 		<string>merchant.com.your.app</string>
