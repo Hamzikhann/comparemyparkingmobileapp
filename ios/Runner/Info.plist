@@ -2,41 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need access to your photo library to let you pick images.</string>
-
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need access to save files or photos you select.</string>
-
-    <key>NSCameraUsageDescription</key>
-    <string>We need access to your camera for capturing photos.</string>
-
-    
-
-    <key>NSDocumentsFolderUsageDescription</key>
-    <string>We need access to documents for file uploads.</string>
-
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app needs access to your location for booking purposes.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>This app needs access to your location even when running in the background.</string>
-
-    <key>FirebaseAppDelegateProxyEnabled</key>
-    <false/>
-
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>fetch</string>
-        <string>remote-notification</string>
-    </array>
-
-    <key>NSUserTrackingUsageDescription</key>
-    <string>This identifier will be used to deliver personalized ads to you.</string>
-
-    <key>NSPushNotificationsUsageDescription</key>
-    <string>This app uses notifications to keep you informed.</string>
-
-
+    <!-- Basic App Info -->
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
@@ -57,7 +25,92 @@
     <string>????</string>
     <key>CFBundleVersion</key>
     <string>$(FLUTTER_BUILD_NUMBER)</string>
-    <key>LSRequiresIPhoneOS</key>
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+
+    <!-- Stripe Payment Configuration -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>stripe</string>
+        <string>stripe-auth</string>
+        <string>parkingpilot</string>
+    </array>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>parkingpilot</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Network Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>stripe.com</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
+            <key>hooks.stripe.com</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
+        </dict>
+    </dict>
+
+    <!-- Permissions -->
+    <key>NSAppleMusicUsageDescription</key>
+    <string>We use Apple Pay for seamless payments</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Required for scanning payment cards</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Required for location-based services</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Required for booking parking locations</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Required for uploading payment receipts</string>
+    <key>NSPushNotificationsUsageDescription</key>
+    <string>Required for payment status updates</string>
+
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <!-- Apple Pay -->
+    <key>com.apple.developer.applepay</key>
+    <array>
+        <string>merchant.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    </array>
+
+    <!-- UI Configuration -->
+    <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
@@ -65,19 +118,36 @@
     <string>Main</string>
     <key>UISupportedInterfaceOrientations</key>
     <array>
-        <string>UIInterfaceOrientationPortrait</string> <!-- iPhone: Portrait only -->
+        <string>UIInterfaceOrientationPortrait</string>
     </array>
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
-        <string>UIInterfaceOrientationPortrait</string> <!-- iPad: Portrait only -->
+        <string>UIInterfaceOrientationPortrait</string>
     </array>
-    <key>com.apple.developer.applepay</key>
-    <array>
-    <string>merchant.com.your.app</string>
-    </array>
-    <key>CADisableMinimumFrameDurationOnPhone</key>
-    <true/>
-    <key>UIApplicationSupportsIndirectInputEvents</key>
-    <true/>
+
+    <!-- Firebase (if used) -->
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+
+    <!-- Scene Delegation Support -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>UIWindowSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>Default Configuration</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+                    <key>UISceneStoryboardFile</key>
+                    <string>Main</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
 </dict>
 </plist>

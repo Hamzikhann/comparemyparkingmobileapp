@@ -319,20 +319,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     debugPrint('Initializing payment sheet with client secret');
     
+    // Initialize payment sheet
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'Parking Pilot',
-        style: ThemeMode.light,
-        applePay: PaymentSheetApplePay(
-          merchantCountryCode: 'GB',
+        allowsDelayedPaymentMethods: false,
+        returnURL: 'parkingpilot://stripe-redirect',
+        appearance: PaymentSheetAppearance(
+          colors: PaymentSheetAppearanceColors(
+            primary: Colors.blue, // Set your brand color
+          ),
         ),
       ),
     );
 
     debugPrint('Presenting payment sheet');
-    final result = await Stripe.instance.presentPaymentSheet();
-    debugPrint('Payment sheet result: $result');
+    await Stripe.instance.presentPaymentSheet();
 
     final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
     debugPrint('Payment completed with ID: $paymentId');
@@ -350,6 +353,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       SnackBar(content: Text("Payment failed: ${e.toString()}")),
     );
   }
+  
 }
 
 }
