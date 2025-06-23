@@ -18,7 +18,7 @@
         android:label="Parking Pilot"
         android:theme="@style/Theme.ParkingApp"
         android:name="${applicationName}"
-        android:icon="@drawable/logo">
+        android:icon="@drawable/logoApp">
         <activity
             android:name=".MainActivity"
             android:exported="true"
