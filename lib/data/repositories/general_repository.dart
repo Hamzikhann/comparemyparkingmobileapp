@@ -105,6 +105,7 @@ class GeneralRepository {
 
     return completer.future;
   }
+  
   Future<OtpmodelSignup> verifyEmail(String email) async {
     Completer<OtpmodelSignup> completer = Completer();
     server.makeApiRequest(
@@ -113,6 +114,39 @@ class GeneralRepository {
       requestData: {
         "email": email,
         "phoneNo":"",
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Loading...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+
+        final userData = res['data'];
+        OtpmodelSignup user = OtpmodelSignup.fromJson(userData);
+        completer.complete(user);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'reset',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+
+    return completer.future;
+  }
+  Future<OtpmodelSignup> verifyPhone(String phone) async {
+    Completer<OtpmodelSignup> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.verifyEmail,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "email": "",
+        "phoneNo":phone,
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");

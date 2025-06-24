@@ -17,31 +17,47 @@ class OtpScreen2 extends StatefulWidget {
 }
 
 class _OtpScreen2State extends State<OtpScreen2> {
-  final List<TextEditingController> otpControllers = List.generate(
+  // Controllers for email OTP (6 digits)
+  final List<TextEditingController> emailOtpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  
+  // Controllers for phone OTP (6 digits)
+  final List<TextEditingController> phoneOtpControllers = List.generate(
     6,
     (index) => TextEditingController(),
   );
 
   Timer? _timer;
   int _remainingSeconds = 120;
+  bool _emailVerified = false;
+  bool _phoneVerified = false;
+  String? _emailOtp;
+  String? _phoneOtp;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
+    // Send both verification requests when screen loads
+    _sendEmailVerification();
+    _sendPhoneVerification();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    for (var controller in otpControllers) {
+    for (var controller in emailOtpControllers) {
+      controller.dispose();
+    }
+    for (var controller in phoneOtpControllers) {
       controller.dispose();
     }
     super.dispose();
   }
 
   void _startTimer() {
-    forgotPassword(Globals.userSignup!.email);
     setState(() {
       _remainingSeconds = 120;
     });
@@ -63,18 +79,92 @@ class _OtpScreen2State extends State<OtpScreen2> {
     return "$minutes:$secs";
   }
 
-  Future<void> forgotPassword(String email) async {
-    GeneralRepository().verifyEmail(Globals.userSignup!.email).then((value) {
+  Future<void> _sendEmailVerification() async {
+    try {
+      final response = await GeneralRepository().verifyEmail(Globals.userSignup!.email);
+      setState(() {
+        _emailOtp = response.otp;
+      });
       Alertify.showAlert(
         duration: 1,
         alertKey: 'reset',
-        message: 'OTP Screen',
+        message: 'Email OTP sent successfully',
         type: AlertType.success,
-        onClose: () {
-          Globals.otp = value.otp;
-        },
       );
-    });
+    } catch (e) {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'error',
+        message: 'Failed to send email OTP: ${e.toString()}',
+        type: AlertType.error,
+      );
+    }
+  }
+
+  Future<void> _sendPhoneVerification() async {
+    try {
+      final response = await GeneralRepository().verifyPhone(Globals.userSignup!.phone);
+      setState(() {
+        _phoneOtp = response.otp;
+      });
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'reset',
+        message: 'Phone OTP sent successfully',
+        type: AlertType.success,
+      );
+    } catch (e) {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'error',
+        message: 'Failed to send phone OTP: ${e.toString()}',
+        type: AlertType.error,
+      );
+    }
+  }
+
+  void _verifyEmailOtp() {
+    final enteredOtp = emailOtpControllers.map((c) => c.text).join();
+    if (enteredOtp.length == 6 && enteredOtp == _emailOtp) {
+      setState(() {
+        _emailVerified = true;
+      });
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'success',
+        message: 'Email verified successfully',
+        type: AlertType.success,
+      );
+    } else {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'error',
+        message: 'Invalid email OTP',
+        type: AlertType.error,
+      );
+    }
+  }
+
+  void _verifyPhoneOtp() {
+    final enteredOtp = phoneOtpControllers.map((c) => c.text).join();
+    if (enteredOtp.length == 6 && enteredOtp == _phoneOtp) {
+      setState(() {
+        _phoneVerified = true;
+      });
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'success',
+        message: 'Phone verified successfully',
+        type: AlertType.success,
+      );
+    } else {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'error',
+        message: 'Invalid phone OTP',
+        type: AlertType.error,
+      );
+    }
   }
 
   @override
@@ -114,54 +204,67 @@ class _OtpScreen2State extends State<OtpScreen2> {
                   ],
                 ),
                 SizedBox(height: 60.h),
+                
+                // Email Verification Section
                 Text(
-                  'Enter verification code',
+                  'Email Verification',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontFamily: 'Archivo',
                     color: colors.primary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 40.h),
-
-                // OTP input fields
+                SizedBox(height: 20.h),
+                Text(
+                  'Enter verification code sent to ${Globals.userSignup!.email}',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                
+                // Email OTP input fields
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(
                     6,
                     (index) => SizedBox(
-                      width: 50.w,
+                      width: 40.w,
                       height: 50.h,
                       child: TextField(
-                        controller: otpControllers[index],
+                        controller: emailOtpControllers[index],
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         maxLength: 1,
+                        enabled: !_emailVerified,
                         style: TextStyle(fontSize: 16.sp, fontFamily: 'Archivo'),
                         decoration: InputDecoration(
                           counterText: '',
                           contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.r),
-                            borderSide: BorderSide(color: colors.primary),
+                            borderSide: BorderSide(color: _emailVerified ? Colors.green : colors.primary),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.r),
-                            borderSide: BorderSide(color: colors.primary),
+                            borderSide: BorderSide(color: _emailVerified ? Colors.green : colors.primary),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.r),
-                            borderSide: BorderSide(color: colors.primary),
+                            borderSide: BorderSide(color: _emailVerified ? Colors.green : colors.primary),
                           ),
                         ),
                         onChanged: (value) {
                           if (value.isNotEmpty && !RegExp(r'^[0-9]$').hasMatch(value)) {
-                            otpControllers[index].clear();
+                            emailOtpControllers[index].clear();
                             return;
                           }
                           if (value.length == 6) {
                             for (int i = 0; i < 6; i++) {
-                              otpControllers[i].text = value[i];
+                              emailOtpControllers[i].text = value[i];
                               if (i == 5) FocusScope.of(context).unfocus();
                             }
                             return;
@@ -175,91 +278,178 @@ class _OtpScreen2State extends State<OtpScreen2> {
                     ),
                   ),
                 ),
-                SizedBox(height: 40.h),
+                SizedBox(height: 10.h),
+                if (!_emailVerified)
+                  ElevatedButton(
+                    onPressed: _verifyEmailOtp,
+                    child: Text('Verify Email',style: TextStyle(color: colors.grayNavLight),),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                    ),
+                  ),
+                SizedBox(height: 30.h),
+                
+                // Phone Verification Section
+                Text(
+                  'Phone Verification',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontFamily: 'Archivo',
+                    color: colors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Text(
+                  'Enter verification code sent to ${Globals.userSignup!.phone}',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                
+                // Phone OTP input fields
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    6,
+                    (index) => SizedBox(
+                      width: 40.w,
+                      height: 50.h,
+                      child: TextField(
+                        controller: phoneOtpControllers[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        enabled: !_phoneVerified,
+                        style: TextStyle(fontSize: 16.sp, fontFamily: 'Archivo'),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide(color: _phoneVerified ? Colors.green : colors.primary),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide(color: _phoneVerified ? Colors.green : colors.primary),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide(color: _phoneVerified ? Colors.green : colors.primary),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && !RegExp(r'^[0-9]$').hasMatch(value)) {
+                            phoneOtpControllers[index].clear();
+                            return;
+                          }
+                          if (value.length == 6) {
+                            for (int i = 0; i < 6; i++) {
+                              phoneOtpControllers[i].text = value[i];
+                              if (i == 5) FocusScope.of(context).unfocus();
+                            }
+                            return;
+                          } else if (value.length == 1 && index < 5) {
+                            FocusScope.of(context).nextFocus();
+                          } else if (value.isEmpty && index > 0) {
+                            FocusScope.of(context).previousFocus();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                if (!_phoneVerified)
+                  ElevatedButton(
+                    onPressed: _verifyPhoneOtp,
+                    child: Text('Verify Phone',style: TextStyle(color: colors.grayNavLight)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                    ),
+                  ),
+                SizedBox(height: 20.h),
 
                 // Resend code
                 if (_remainingSeconds == 0)
-                  GestureDetector(
-                    onTap: () {
-                      forgotPassword(Globals.userSignup!.email);
-                      _startTimer();
-                    },
-                    child: Text(
-                      "Resend",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontFamily: 'Archivo',
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  Column(
+                    children: [
+                      if (!_emailVerified)
+                        GestureDetector(
+                          onTap: () {
+                            _sendEmailVerification();
+                            _startTimer();
+                          },
+                          child: Text(
+                            "Resend Email OTP",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Archivo',
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      if (!_phoneVerified)
+                        GestureDetector(
+                          onTap: () {
+                            _sendPhoneVerification();
+                            _startTimer();
+                          },
+                          child: Text(
+                            "Resend Phone OTP",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Archivo',
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
                   )
                 else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Didn't receive code? ",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontFamily: 'Archivo',
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Text(
-                        "Resend",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontFamily: 'Archivo',
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    "Resend OTP available in ${_formatTime(_remainingSeconds)}",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Archivo',
+                      color: Colors.grey,
+                    ),
                   ),
-
-                SizedBox(height: 20.h),
-
-                // Timer
-                Text(
-                  _formatTime(_remainingSeconds),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontFamily: 'Archivo',
-                    color: colors.primary,
-                  ),
-                ),
 
                 SizedBox(height: 40.h),
                 const CustomAlert(alertKey: 'reset'),
                 const CustomAlert(alertKey: 'signup'),
+                const CustomAlert(alertKey: 'success'),
+                const CustomAlert(alertKey: 'error'),
+                
                 // Next Button
                 Padding(
                   padding: EdgeInsets.only(bottom: 20.h),
                   child: PrimaryButton(
-                    text: "Proceed",
-                    onPressed: () {
-                      String otp = otpControllers.map((c) => c.text).join();
-                      if (otp.trim().length == 6 && otp.trim() == Globals.otp.trim()) {
-                        registerUser(
-                          Globals.userSignup!.title,
-                          Globals.userSignup!.firstName,
-                          Globals.userSignup!.lastName,
-                          Globals.userSignup!.email,
-                          Globals.userSignup!.phone,
-                          Globals.userSignup!.password,
-                          Globals.userSignup!.password,
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Invalid OTP. Please try again.'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                        text: "Proceed",
+                        onPressed: () {
+                          if(_emailVerified && _phoneVerified){
+                              registerUser(
+                                Globals.userSignup!.title,
+                                Globals.userSignup!.firstName,
+                                Globals.userSignup!.lastName,
+                                Globals.userSignup!.email,
+                                Globals.userSignup!.phone,
+                                Globals.userSignup!.password,
+                                Globals.userSignup!.password,
+                              );
+                          }
+                          else{
+
+                          }
+                          
+                        },
+                      ),
                 ),
               ],
             ),
@@ -278,15 +468,17 @@ class _OtpScreen2State extends State<OtpScreen2> {
     String password,
     String confirmPassword,
   ) async {
-    GeneralRepository().signup(
-      title: title,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phoneNo: phoneNo,
-      password: password,
-      confirmPassword: confirmPassword,
-    ).then((value) {
+    try {
+      final value = await GeneralRepository().signup(
+        title: title,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phoneNo: phoneNo,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
+      
       Alertify.showAlert(
         duration: 1,
         alertKey: 'signup',
@@ -298,6 +490,13 @@ class _OtpScreen2State extends State<OtpScreen2> {
           Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
         },
       );
-    });
+    } catch (e) {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'error',
+        message: 'Signup failed: ${e.toString()}',
+        type: AlertType.error,
+      );
+    }
   }
 }

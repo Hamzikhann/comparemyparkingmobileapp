@@ -18,6 +18,7 @@ class Globals {
   static String detailType = "";
   static String roleTitle = "";
   static String emailReset = "";
+  static String phonereset = "";
   static String otp = "";
   static String passwordReset = "";
   static String confirmPassword = "";

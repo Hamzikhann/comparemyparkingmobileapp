@@ -268,6 +268,16 @@ class _PackagesScreenState extends State<PackagesScreen> {
                 ),
               ),
             ),
+          ]
+          else ...[
+            Text(
+              'Already Booked',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
           ],
         ],
       ),

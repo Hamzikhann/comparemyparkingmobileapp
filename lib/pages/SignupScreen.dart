@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/SignupModel.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
@@ -25,9 +27,12 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+
+  // Variables for phone number handling
+  PhoneNumber? phoneNumber;
+  String completePhoneNumber = '';
 
   // Method to show the exit confirmation dialog
   Future<bool> _showExitConfirmationDialog() async {
@@ -61,7 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: WillPopScope(
-          onWillPop: _showExitConfirmationDialog, // Detect back button press
+          onWillPop: _showExitConfirmationDialog,
           child: SingleChildScrollView(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -146,20 +151,36 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     SizedBox(height: 10.h),
 
-                    // Phone Number
-                    CustomTextField(
-                      hintText: "Phone number",
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        if (value.length < 10) {
-                          return 'Phone number must be at least 10 digits';
-                        }
-                        return null;
-                      },
+                    // Phone Number with Country Code
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 0.w),
+                      child: IntlPhoneField(
+                        decoration: InputDecoration(
+                          labelText: 'Phone Number',
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 15.h,
+                            horizontal: 10.w,
+                          ),
+                        ),
+                        initialCountryCode: 'US', // Default country
+                        onChanged: (PhoneNumber number) {
+                          phoneNumber = number;
+                          completePhoneNumber = number.completeNumber;
+                        },
+                        validator: (value) {
+                          if (value == null || value.number.isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          if (value.number.length < 6) {
+                            return 'Please enter a valid phone number';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
 
                     SizedBox(height: 10.h),
@@ -206,12 +227,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       text: "Signup",
                       onPressed: () {
                         if (_formKey.currentState!.validate() && selectedTitle != null) {
+                          if (phoneNumber == null) {
+                            Alertify.showAlert(
+                              alertKey: 'signup',
+                              message: 'Please enter a valid phone number',
+                              type: AlertType.error,
+                            );
+                            return;
+                          }
+                          
                           Globals.userSignup = UserSignup(
                             title: selectedTitle!,
                             firstName: firstNameController.text.trim(),
                             lastName: lastNameController.text.trim(),
                             email: emailController.text.trim(),
-                            phone: phoneController.text.trim(),
+                            phone: completePhoneNumber,
                             password: passwordController.text.trim(),
                           ) as UserSignup?;
                           Navigator.pushReplacementNamed(
@@ -262,7 +292,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-
-  // In your signup screen or provider
-  
 }
