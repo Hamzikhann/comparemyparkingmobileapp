@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:207573484516:android:c7cd015ee27bf2d9657df1",
+        "mobilesdk_app_id": "1:207573484516:android:e00465519d3cd9e1657df1",
         "android_client_info": {
-          "package_name": "com.stn00.parkingapp2"
+          "package_name": "ccom.stn00.parkingapp2"
         }
       },
       "oauth_client": [],
