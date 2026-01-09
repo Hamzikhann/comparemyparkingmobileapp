@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "207573484516",
-    "project_id": "fir-project-ac10e",
-    "storage_bucket": "fir-project-ac10e.firebasestorage.app"
+    "project_number": "622665792809",
+    "project_id": "stanstedroadparking",
+    "storage_bucket": "stanstedroadparking.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:207573484516:android:e00465519d3cd9e1657df1",
+        "mobilesdk_app_id": "1:622665792809:android:f5c2e01cc050bd8ce6cb38",
         "android_client_info": {
-          "package_name": "ccom.stn00.parkingapp2"
+          "package_name": "com.stn00.parkingapp22"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDwhIEvyvbS0dl-Ple-6JXHUYmah4IBQ4U"
+          "current_key": "AIzaSyAjPWrwFJocBqRPsfpQVkQXiYFl4YBCNUQ"
         }
       ],
       "services": {
