@@ -6,7 +6,7 @@ class API {
   final String env = 'dev';
   final bool logger = false;
   API() {
-    _dio.options.baseUrl = "https://stanstedairportparking247.com";
+    _dio.options.baseUrl = "https://comparemyairportparking.com";
     if (logger) _dio.interceptors.add(PrettyDioLogger());
   }
 

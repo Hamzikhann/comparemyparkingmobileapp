@@ -3,7 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/phone_number.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/models/SignupModel.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
@@ -22,10 +23,14 @@ class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   String? selectedTitle;
   bool _agreedToTerms = false;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   // Variables for phone number handling
   PhoneNumber? phoneNumber;
@@ -229,6 +234,75 @@ class _SignupScreenState extends State<SignupScreen> {
                     },
                   ),
 
+                  SizedBox(height: 12.h),
+
+                  // Password
+                  CustomTextField(
+                    labelText: 'Password',
+                    hintText: "••••••••",
+                    controller: passwordController,
+                    obscureText: !_isPasswordVisible,
+                    useLightBackground: true,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Color(0xFF414141),
+                        size: 22.sp,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      if (value.length < 8) {
+                        return 'Password must be at least 8 characters';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Confirm Password
+                  CustomTextField(
+                    labelText: 'Confirm Password',
+                    hintText: "••••••••",
+                    controller: confirmPasswordController,
+                    obscureText: !_isConfirmPasswordVisible,
+                    useLightBackground: true,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Color(0xFF414141),
+                        size: 22.sp,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordVisible =
+                              !_isConfirmPasswordVisible;
+                        });
+                      },
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                  ),
+
                   SizedBox(height: 30.h),
 
                   // Terms and Conditions Checkbox
@@ -330,17 +404,16 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ? nameParts.sublist(1).join(' ')
                                 : '';
 
-                            Globals.userSignup = UserSignup(
-                              title: selectedTitle!,
-                              firstName: firstName,
-                              lastName: lastName,
-                              email: emailController.text.trim(),
-                              phone: completePhoneNumber,
-                              password:
-                                  "defaultPassword123", // Since password field is removed
-                            ) as UserSignup?;
-                            Navigator.pushReplacementNamed(
-                                context, MyRoutes.otpsignup);
+                            // Call register API directly
+                            registerUser(
+                              selectedTitle!,
+                              firstName,
+                              lastName,
+                              emailController.text.trim(),
+                              completePhoneNumber,
+                              passwordController.text.trim(),
+                              confirmPasswordController.text.trim(),
+                            );
                           } else if (selectedTitle == null) {
                             Alertify.showAlert(
                               alertKey: 'signup',
@@ -373,5 +446,46 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> registerUser(
+    String title,
+    String firstName,
+    String lastName,
+    String email,
+    String phoneNo,
+    String password,
+    String confirmPassword,
+  ) async {
+    try {
+      final value = await GeneralRepository().signup(
+        title: title,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phoneNo: phoneNo,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
+
+      Alertify.showAlert(
+        duration: 1,
+        alertKey: 'signup',
+        message: 'Signup successfully!',
+        type: AlertType.success,
+        onClose: () {
+          Globals.user = value;
+          SharedStorage.saveUser(value);
+          Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
+        },
+      );
+    } catch (e) {
+      Alertify.showAlert(
+        duration: 2,
+        alertKey: 'signup',
+        message: 'Signup failed: ${e.toString()}',
+        type: AlertType.error,
+      );
+    }
   }
 }
