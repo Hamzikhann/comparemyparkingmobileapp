@@ -105,7 +105,7 @@ class GeneralRepository {
 
     return completer.future;
   }
-  
+
   Future<OtpmodelSignup> verifyEmail(String email) async {
     Completer<OtpmodelSignup> completer = Completer();
     server.makeApiRequest(
@@ -113,7 +113,7 @@ class GeneralRepository {
       requestMethod: RequestMethod.post,
       requestData: {
         "email": email,
-        "phoneNo":"",
+        "phoneNo": "",
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");
@@ -139,6 +139,7 @@ class GeneralRepository {
 
     return completer.future;
   }
+
   Future<OtpmodelSignup> verifyPhone(String phone) async {
     Completer<OtpmodelSignup> completer = Completer();
     server.makeApiRequest(
@@ -146,7 +147,7 @@ class GeneralRepository {
       requestMethod: RequestMethod.post,
       requestData: {
         "email": "",
-        "phoneNo":phone,
+        "phoneNo": phone,
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");
@@ -216,7 +217,7 @@ class GeneralRepository {
     required String confirmPassword,
   }) async {
     Completer<UserModel> completer = Completer();
-   // String? token = await FirebaseMessaging.instance.getToken();
+    // String? token = await FirebaseMessaging.instance.getToken();
 
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signup, // Make sure you have this endpoint defined
@@ -690,124 +691,123 @@ class GeneralRepository {
   }
 
   Future<CheckpointResponseModel> submitCheckpoint(
-  BuildContext context,
-  CheckpointRequestModel model,
-  List<File>? pictures,
-) async {
-  Completer<CheckpointResponseModel> completer = Completer();
+    BuildContext context,
+    CheckpointRequestModel model,
+    List<File>? pictures,
+  ) async {
+    Completer<CheckpointResponseModel> completer = Completer();
 
-  try {
-    EasyLoading.show(status: "Submitting checkpoint...");
+    try {
+      EasyLoading.show(status: "Submitting checkpoint...");
 
-    List<File> compressedPictures = [];
+      List<File> compressedPictures = [];
 
-    if (pictures != null && pictures.isNotEmpty) {
-      for (var file in pictures) {
-        final targetPath = '${file.path}_compressed.jpg';
+      if (pictures != null && pictures.isNotEmpty) {
+        for (var file in pictures) {
+          final targetPath = '${file.path}_compressed.jpg';
 
-        final compressedFile = await FlutterImageCompress.compressAndGetFile(
+          final compressedFile = await FlutterImageCompress.compressAndGetFile(
             file.absolute.path,
             targetPath,
             quality: 70,
           );
 
           if (compressedFile != null) {
-            compressedPictures.add(File(compressedFile.path)); // ✅ convert XFile to File
+            compressedPictures
+                .add(File(compressedFile.path)); // ✅ convert XFile to File
           } else {
             compressedPictures.add(file); // fallback to original
           }
-      }
+        }
 
-      // Multipart request with images
-      server.makeMultipartRequest(
-        apiEndpoint: ApiFiles.createCheckpoint,
-        requestMethod: RequestMethod.post,
-        fields: {
-          "bookingId": model.bookingId,
-          "location": model.location,
-          "section": model.section,
-          "type": model.type,
-        },
-        
-        files: compressedPictures
-            .map((file) => MultipartFileInfo(
-                  file: file,
-                  fieldName: "pictures",
-                ))
-            .toList(),
-        onSuccess: (Map<String, dynamic> response) {
-          EasyLoading.dismiss();
-          try {
-            final checkpointResponse = CheckpointResponseModel.fromJson(
-                response['response'] ?? response);
+        // Multipart request with images
+        server.makeMultipartRequest(
+          apiEndpoint: ApiFiles.createCheckpoint,
+          requestMethod: RequestMethod.post,
+          fields: {
+            "bookingId": model.bookingId,
+            "location": model.location,
+            "section": model.section,
+            "type": model.type,
+          },
+          files: compressedPictures
+              .map((file) => MultipartFileInfo(
+                    file: file,
+                    fieldName: "pictures",
+                  ))
+              .toList(),
+          onSuccess: (Map<String, dynamic> response) {
+            EasyLoading.dismiss();
+            try {
+              final checkpointResponse = CheckpointResponseModel.fromJson(
+                  response['response'] ?? response);
 
-            // Show success dialog
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                contentPadding: const EdgeInsets.all(24),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/images/success.svg',
-                      height: 80,
-                      width: 80,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Success!',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Your Booking has been successfully submitted.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pushNamedAndRemoveUntil(
-                            context, MyRoutes.driverhome, (_) => false);
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
+              // Show success dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  contentPadding: const EdgeInsets.all(24),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/images/success.svg',
+                        height: 80,
+                        width: 80,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Success!',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Your Booking has been successfully submitted.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamedAndRemoveUntil(
+                              context, MyRoutes.driverhome, (_) => false);
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
+              );
 
-            completer.complete(checkpointResponse);
-          } catch (e) {
-            completer.completeError("Parsing error: $e");
-          }
-        },
-        onError: (String errorMessage) {
-          EasyLoading.dismiss();
-          completer.completeError("API Error: $errorMessage");
-        },
-      );
-    } else{
-      ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Please add at least one picture.'),
-      duration: Duration(seconds: 2),
-    ),
-  );
+              completer.complete(checkpointResponse);
+            } catch (e) {
+              completer.completeError("Parsing error: $e");
+            }
+          },
+          onError: (String errorMessage) {
+            EasyLoading.dismiss();
+            completer.completeError("API Error: $errorMessage");
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please add at least one picture.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      completer.completeError("Exception: $e");
     }
-  } catch (e) {
-    EasyLoading.dismiss();
-    completer.completeError("Exception: $e");
+
+    return completer.future;
   }
-
-  return completer.future;
-}
-
 
   Future<Map<String, dynamic>> createPaymentIntent({
     required String amount,
@@ -815,8 +815,8 @@ class GeneralRepository {
     required String startDate,
     required String endDate,
   }) async {
-    final url =
-        Uri.parse('https://stanstedairportparking247.com/api/stripe/create-payment-intent');
+    final url = Uri.parse(
+        'https://stanstedairportparking247.com/api/stripe/create-payment-intent');
 
     final token = Globals.user?.token ?? '';
 
@@ -832,12 +832,12 @@ class GeneralRepository {
         // Use jsonEncode for proper JSON formatting
         'amount': amountInt, // Send as integer
         'currency': currency.toLowerCase(),
-        "startDate":startDate,
-        "startTime":Globals.startTime,
-        "endDate":endDate,
-        "endTime":Globals.endTime,
-        "userId":Globals.user!.id,
-        "airport" :Globals.selectedAirport // Ensure lowercase currency
+        "startDate": startDate,
+        "startTime": Globals.startTime,
+        "endDate": endDate,
+        "endTime": Globals.endTime,
+        "userId": Globals.user!.id,
+        "airport": Globals.selectedAirport // Ensure lowercase currency
       }),
       headers: {
         'access-token': token,

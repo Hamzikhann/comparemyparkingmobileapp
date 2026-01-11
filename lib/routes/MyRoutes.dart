@@ -19,4 +19,5 @@ class MyRoutes {
   static String adminHome = '/adminHome';
   static String notifications = '/notifications';
   static String notificationsDriver = '/notificationsDriver';
+  static String packageDetail = '/packageDetail';
 }

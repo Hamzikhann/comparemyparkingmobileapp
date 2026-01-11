@@ -33,6 +33,7 @@ class Globals {
   static UserSignup? userSignup;
   static Parking? bookingdetailuser;
   static List<Driver> drivers = [];
+  static List<ParkingOption> searchResults = [];
 
   //**********clear**********
   static void clearVariables() {

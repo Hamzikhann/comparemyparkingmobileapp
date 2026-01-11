@@ -1,7 +1,8 @@
 // Create a new file: lib/data/models/search_result_model.dart
 class SearchResultResponse {
   final String message;
-  final List<ParkingOption> data; // Changed from SearchResultData to List<ParkingOption>
+  final List<ParkingOption>
+      data; // Changed from SearchResultData to List<ParkingOption>
 
   SearchResultResponse({
     required this.message,
@@ -9,11 +10,12 @@ class SearchResultResponse {
   });
 
   factory SearchResultResponse.fromJson(Map<String, dynamic> json) {
-    var list = json['data'] as List;
-    List<ParkingOption> resultsList = list.map((i) => ParkingOption.fromJson(i)).toList();
-    
+    var list = json['data'] as List? ?? [];
+    List<ParkingOption> resultsList =
+        list.map((i) => ParkingOption.fromJson(i)).toList();
+
     return SearchResultResponse(
-      message: json['message'],
+      message: json['message'] ?? '',
       data: resultsList,
     );
   }
@@ -28,6 +30,12 @@ class ParkingOption {
   final String? terminalInfo;
   final List<String> bulletPoints;
   final bool hasParkMark;
+  final String? image;
+  final String? type;
+  final double rating;
+  final String ratingText;
+  final int reviews;
+  final String? specialLabel;
 
   ParkingOption({
     required this.name,
@@ -36,16 +44,32 @@ class ParkingOption {
     this.terminalInfo,
     required this.bulletPoints,
     required this.hasParkMark,
+    this.image,
+    this.type,
+    this.rating = 0.0,
+    this.ratingText = '',
+    this.reviews = 0,
+    this.specialLabel,
   });
 
   factory ParkingOption.fromJson(Map<String, dynamic> json) {
     return ParkingOption(
-      name: json['name'] ?? '',
-      price: json['price'] ?? '',
-      description: json['description'],
-      terminalInfo: json['terminalInfo'],
-      bulletPoints: List<String>.from(json['bulletPoints']),
-      hasParkMark: json['hasParkMark'],
+      name: json['name']?.toString() ?? '',
+      price: json['price']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      terminalInfo: json['terminalInfo']?.toString(),
+      bulletPoints: (json['features'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      hasParkMark: json['hasParkMark'] as bool? ?? false,
+      image: json['image']?.toString(),
+      type: json['type']?.toString(),
+      rating:
+          (json['rating'] is num) ? (json['rating'] as num).toDouble() : 0.0,
+      ratingText: json['ratingText']?.toString() ?? '',
+      reviews: (json['reviewCount'] is int) ? json['reviewCount'] as int : 0,
+      specialLabel: json['specialLabel']?.toString(),
     );
   }
 }

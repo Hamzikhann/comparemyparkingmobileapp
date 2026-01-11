@@ -17,7 +17,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedAirport;
-  final List<String> airportOptions = ['STN', 'LTN'];
+  final List<String> airportOptions = [
+    'Stansted',
+    'Bristol',
+    'Luton',
+    'Birmingham',
+    'Manchester',
+    'Gatwick',
+    'Heathrow',
+    'Liverpool',
+    'Southend'
+  ];
   String? selectedDateRange;
   String? checkInTime;
   String? checkOutTime;

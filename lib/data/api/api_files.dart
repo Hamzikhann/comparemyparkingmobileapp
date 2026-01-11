@@ -4,10 +4,11 @@ class ApiFiles {
   static String signup = "/api/auth/signup";
   static String bookingsList = "/api/booking/list";
   static String paymentHistoryList = "/api/payment/list";
-  static String searchParking = "/api/search";
+  static String searchParking = "/api/search/v3";
+  static String searchParking2 = "/api/search/v4";
   static String bookParking = "/api/booking/create";
   static String forgotPassword = "/api/auth/forgot/password";
-   static String verifyEmail = "/api/auth/verify";
+  static String verifyEmail = "/api/auth/verify";
   static String createCheckpoint = "/api/booking/checkpoints/create";
   static String postLocation = "/api/booking/create/location";
   static String getLocationDetails = "/api/booking/detail/location";
@@ -18,5 +19,4 @@ class ApiFiles {
   static String getNotifications = "/api/notification/list";
   static String markNotificationsAsRead = "/api/notification/update";
   static String clearAllNotifications = "/api/notification/delete";
-  
 }
