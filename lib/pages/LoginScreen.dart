@@ -9,7 +9,6 @@ import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
-import '../widgets/PrimaryButton.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +20,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginPageState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Add this
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -50,100 +50,157 @@ class _LoginPageState extends State<LoginScreen> {
         backgroundColor: Colors.white,
         body: SafeArea(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 60.h),
-                    Center(
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 80.h,
-                        width: 200.w,
-                        fit: BoxFit.contain,
-                      ),),
-                    SizedBox(height: 150.h),
-                    CustomTextField(
-                      hintText: "Email",
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Please enter email";
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 40.h),
-                    CustomTextField(
-                      hintText: "Password",
-                      controller: passwordController,
-                      obscureText: true,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Please enter password";
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 40.h),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, MyRoutes.forgot);
-                        },
-                        child: Text(
-                          "Forgot Password?",
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 20.h),
+                // Car image at the top - aligned to right with no padding
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Image.asset(
+                    'assets/images/car.png',
+                    height: 200.h,
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
+                SizedBox(height: 30.h),
+                // Rest of the content with padding
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Login heading
+                        Text(
+                          'Login to\nyour account',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 28.sp,
                             fontFamily: 'Archivo',
-                            color: colors.primary,
+                            color: Color(0xFF1A1A2E),
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 60.h),
-                    const CustomAlert(alertKey: 'login'),
-                    PrimaryButton(
-                      text: "Login",
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          signin(emailController.text.trim(),
-                              passwordController.text.trim());
-                        }
-                      },
-                    ),
-                    SizedBox(height: 50.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("or ",
-                            style: TextStyle(
-                                fontSize: 14.sp, fontFamily: 'Archivo')),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacementNamed(
-                                context, MyRoutes.signUpRoute);
+                        SizedBox(height: 40.h),
+                        // Email field
+                        CustomTextField(
+                          labelText: 'Email',
+                          hintText: "example@gamil.com",
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          useLightBackground: true,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Please enter email";
+                            }
+                            return null;
                           },
-                          child: Text(
-                            "Signup",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: colors.primary,
-                              fontFamily: 'Archivo',
-                              fontWeight: FontWeight.bold,
+                        ),
+                        SizedBox(height: 24.h),
+                        // Password field
+                        CustomTextField(
+                          labelText: 'Password',
+                          hintText: "••••••••••",
+                          controller: passwordController,
+                          obscureText: !_isPasswordVisible,
+                          useLightBackground: true,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Color(0xFF414141),
+                              size: 22.sp,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Please enter password";
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 80.h),
+                        // Sign up link
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "I don't have account ",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontFamily: 'Archivo',
+                                  color: Color(0xFF1A1A2E),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                      context, MyRoutes.signUpRoute);
+                                },
+                                child: Text(
+                                  "Sign Up",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: colors.secondarynew,
+                                    fontFamily: 'Archivo',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        // Alert notification
+                        const CustomAlert(alertKey: 'login'),
+                        // Login button
+                        Container(
+                          width: double.infinity,
+                          height: 50.h,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF4B725D),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                if (_formKey.currentState!.validate()) {
+                                  signin(emailController.text.trim(),
+                                      passwordController.text.trim());
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8.r),
+                              child: Center(
+                                child: Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontFamily: 'Archivo',
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                        SizedBox(height: 40.h),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -165,11 +222,9 @@ class _LoginPageState extends State<LoginScreen> {
           passwordController.clear();
           if (Globals.user?.roleTitle == "Employee") {
             Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
-          }
-          else if(Globals.user?.roleTitle == "Administrator"){
-           Navigator.pushReplacementNamed(context, MyRoutes.adminHome);
-          }
-           else {
+          } else if (Globals.user?.roleTitle == "Administrator") {
+            Navigator.pushReplacementNamed(context, MyRoutes.adminHome);
+          } else {
             Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
           }
         },

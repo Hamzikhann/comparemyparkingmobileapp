@@ -6,12 +6,10 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/SignupModel.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
-import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
 import '../routes/MyRoutes.dart';
 import '../widgets/CustomTextField.dart';
-import '../widgets/PrimaryButton.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -23,150 +21,177 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   String? selectedTitle;
+  bool _agreedToTerms = false;
 
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
 
   // Variables for phone number handling
   PhoneNumber? phoneNumber;
   String completePhoneNumber = '';
 
   // Method to show the exit confirmation dialog
-  Future<bool> _showExitConfirmationDialog() async {
-    return (await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Exit'),
-            content: const Text('Are you sure you want to exit without completing the signup?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(false); // Stay on the current screen
-                },
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(true); // Exit the screen
-                },
-                child: const Text('Exit'),
-              ),
-            ],
-          ),
-        )) ??
-        false;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: WillPopScope(
-          onWillPop: _showExitConfirmationDialog,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 60.h),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20.h),
 
-                    // Logo
-                    Center(
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        height: 80.h,
-                        width: 200.w,
-                        fit: BoxFit.contain,
+                  // Back Button
+                  GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(context);
+                    },
+                    child: Icon(
+                      Icons.arrow_back,
+                      size: 24.sp,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+
+                  SizedBox(height: 30.h),
+
+                  // Welcome Heading
+                  Text(
+                    'Welcome to\nCompare my\nparking',
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontFamily: 'Archivo',
+                      color: Color(0xFF1A1A2E),
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // Subtitle
+                  Text(
+                    'Please complete your profile to create\nParkir.in account',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Archivo',
+                      color: Color(0xFF6B6B6B),
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // Title Dropdown
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Title',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontFamily: 'Archivo',
+                          color: Color(0xFF414141),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
+                      SizedBox(height: 8.h),
+                      CustomDropdown(
+                        hint: "Mr",
+                        items: const ["Mr", "Mrs", "Do not want to Specify"],
+                        isSearchable: false,
+                        useLightBackground: true,
+                        onSelectItem: (item) {
+                          setState(() {
+                            selectedTitle = item;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
 
-                    SizedBox(height: 20.h),
+                  SizedBox(height: 12.h),
 
-                    // Title Dropdown
-                    CustomDropdown(
-                      hint: "Title",
-                      items: const ["Mr", "Mrs", "Do not want to Specify"],
-                      isSearchable: false,
-                      onSelectItem: (item) {
-                        setState(() {
-                          selectedTitle = item;
-                        });
-                      },
-                    ),
+                  // Full Name
+                  CustomTextField(
+                    labelText: 'Full Name',
+                    hintText: "Ali Malik",
+                    controller: fullNameController,
+                    keyboardType: TextInputType.name,
+                    useLightBackground: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your full name';
+                      }
+                      return null;
+                    },
+                  ),
 
-                    SizedBox(height: 10.h),
+                  SizedBox(height: 12.h),
 
-                    // First Name
-                    CustomTextField(
-                      hintText: "First Name",
-                      controller: firstNameController,
-                      keyboardType: TextInputType.name,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // Last Name
-                    CustomTextField(
-                      hintText: "Last Name",
-                      controller: lastNameController,
-                      keyboardType: TextInputType.name,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your last name';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // Email
-                    CustomTextField(
-                      hintText: "Email",
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // Phone Number with Country Code
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 0.w),
-                      child: IntlPhoneField(
+                  // Phone Number
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Phone Number',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontFamily: 'Archivo',
+                          color: Color(0xFF414141),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      IntlPhoneField(
                         decoration: InputDecoration(
-                          labelText: 'Phone Number',
+                          hintText: '+6289876543210',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF9E9E9E),
+                            fontFamily: 'Archivo',
+                            fontSize: 14.sp,
+                          ),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide(color: Colors.red.shade300),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            borderSide: BorderSide(color: Colors.red),
                           ),
                           contentPadding: EdgeInsets.symmetric(
-                            vertical: 15.h,
-                            horizontal: 10.w,
+                            vertical: 16.h,
+                            horizontal: 16.w,
                           ),
                         ),
-                        initialCountryCode: 'US', // Default country
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontFamily: 'Archivo',
+                          color: Color(0xFF414141),
+                        ),
+                        initialCountryCode: 'US',
                         onChanged: (PhoneNumber number) {
                           phoneNumber = number;
                           completePhoneNumber = number.completeNumber;
@@ -181,110 +206,167 @@ class _SignupScreenState extends State<SignupScreen> {
                           return null;
                         },
                       ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Email
+                  CustomTextField(
+                    labelText: 'Email',
+                    hintText: "email@email.com",
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    useLightBackground: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 30.h),
+
+                  // Terms and Conditions Checkbox
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20.h,
+                        width: 20.w,
+                        child: Checkbox(
+                          value: _agreedToTerms,
+                          onChanged: (value) {
+                            setState(() {
+                              _agreedToTerms = value ?? false;
+                            });
+                          },
+                          activeColor: Color(0xFF4B725D),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _agreedToTerms = !_agreedToTerms;
+                            });
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontFamily: 'Archivo',
+                                color: Color(0xFF1A1A2E),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              children: [
+                                TextSpan(text: 'I agree to '),
+                                TextSpan(
+                                  text: 'Terms and condition',
+                                  style: TextStyle(
+                                    color: Color(0xFF4B725D),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // Alert notification
+                  const CustomAlert(alertKey: 'signup'),
+
+                  // Sign Up Button
+                  Container(
+                    width: double.infinity,
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF4B725D),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
-
-                    SizedBox(height: 10.h),
-
-                    // Password
-                    CustomTextField(
-                      hintText: "Password",
-                      controller: passwordController,
-                      obscureText: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        }
-                        if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // Confirm Password
-                    CustomTextField(
-                      hintText: "Confirm Password",
-                      controller: confirmPasswordController,
-                      obscureText: true,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 20.h),
-                    const CustomAlert(alertKey: 'signup'),
-
-                    // Sign Up Button
-                    PrimaryButton(
-                      text: "Signup",
-                      onPressed: () {
-                        if (_formKey.currentState!.validate() && selectedTitle != null) {
-                          if (phoneNumber == null) {
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (!_agreedToTerms) {
                             Alertify.showAlert(
                               alertKey: 'signup',
-                              message: 'Please enter a valid phone number',
+                              message: 'Please agree to Terms and Conditions',
                               type: AlertType.error,
                             );
                             return;
                           }
-                          
-                          Globals.userSignup = UserSignup(
-                            title: selectedTitle!,
-                            firstName: firstNameController.text.trim(),
-                            lastName: lastNameController.text.trim(),
-                            email: emailController.text.trim(),
-                            phone: completePhoneNumber,
-                            password: passwordController.text.trim(),
-                          ) as UserSignup?;
-                          Navigator.pushReplacementNamed(
-                                context, MyRoutes.otpsignup);
-                        } else if (selectedTitle == null) {
-                          Alertify.showAlert(
-                            alertKey: 'signup',
-                            message: 'Please select a title',
-                            type: AlertType.error,
-                          );
-                        }
-                      },
-                    ),
 
-                    SizedBox(height: 50.h),
+                          if (_formKey.currentState!.validate() &&
+                              selectedTitle != null) {
+                            if (phoneNumber == null) {
+                              Alertify.showAlert(
+                                alertKey: 'signup',
+                                message: 'Please enter a valid phone number',
+                                type: AlertType.error,
+                              );
+                              return;
+                            }
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Already have an account?  ",
-                          style:
-                              TextStyle(fontSize: 14.sp, fontFamily: 'Archivo'),
-                        ),
-                        GestureDetector(
-                          onTap: () {
+                            // Split full name into first and last name
+                            List<String> nameParts =
+                                fullNameController.text.trim().split(' ');
+                            String firstName =
+                                nameParts.isNotEmpty ? nameParts[0] : '';
+                            String lastName = nameParts.length > 1
+                                ? nameParts.sublist(1).join(' ')
+                                : '';
+
+                            Globals.userSignup = UserSignup(
+                              title: selectedTitle!,
+                              firstName: firstName,
+                              lastName: lastName,
+                              email: emailController.text.trim(),
+                              phone: completePhoneNumber,
+                              password:
+                                  "defaultPassword123", // Since password field is removed
+                            ) as UserSignup?;
                             Navigator.pushReplacementNamed(
-                                context, MyRoutes.loginRoute);
-                          },
+                                context, MyRoutes.otpsignup);
+                          } else if (selectedTitle == null) {
+                            Alertify.showAlert(
+                              alertKey: 'signup',
+                              message: 'Please select a title',
+                              type: AlertType.error,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Center(
                           child: Text(
-                            "Login",
+                            'Sign Up',
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              color: colors.primary,
+                              fontSize: 16.sp,
                               fontFamily: 'Archivo',
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  SizedBox(height: 40.h),
+                ],
               ),
             ),
           ),
