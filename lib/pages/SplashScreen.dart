@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async'; // Import Future.delayed
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
@@ -8,6 +7,7 @@ import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/admin/AdminHome.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
+import 'package:parkingapp/utils/colors.dart';
 // Import the MainScreen
 
 class SplashScreen extends StatefulWidget {
@@ -29,19 +29,19 @@ class _SplashScreenState extends State<SplashScreen> {
     await SharedStorage.loadUser();
 
     // Navigate to the appropriate screen after a delay
-    Future.delayed(Duration(seconds: 5), () {
+    Future.delayed(Duration(seconds: 3), () {
       if (Globals.user != null) {
         if (Globals.roleTitle == "Employee") {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => Driverhome()),
           );
-        } else if(Globals.roleTitle == "Administrator"){
-           Navigator.pushReplacement(
+        } else if (Globals.roleTitle == "Administrator") {
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => Adminhome()),
           );
-        }else {
+        } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => MainScreen()),
@@ -53,14 +53,12 @@ class _SplashScreenState extends State<SplashScreen> {
             context,
             MaterialPageRoute(builder: (context) => Driverhome()),
           );
-        } 
-        else if(Globals.roleTitle == "Administrator"){
-           Navigator.pushReplacement(
+        } else if (Globals.roleTitle == "Administrator") {
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => Adminhome()),
           );
-        }
-        else {
+        } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => IntroScreen()),
@@ -76,53 +74,70 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          /// Background Image (Anchored to Bottom)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SvgPicture.asset(
-              'assets/images/background.svg', // Ensure correct path
-              width: double.infinity,
-              height: 250.h,
-              fit: BoxFit.cover,
+          /// Logo in center
+          Align(
+            alignment: Alignment.center,
+            child: Image.asset(
+              'assets/images/logo.png',
+              height: 120.h,
+              width: 250.w,
+              fit: BoxFit.contain,
             ),
           ),
 
-          /// Center content (Logo + Text)
+          /// Texts at bottom
           Align(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                /// Logo
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: 80.h,
-                  width: 200.w,
-                  fit: BoxFit.contain,
-                ),
-
-                SizedBox(height: 15.h),
-
-                /// Text (Smaller, positioned below logo)
-                Text(
-                  'Your no.1 parking assistant',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily:
-                        'Archivo', // Ensure Archivo font is in assets/fonts
-                    fontSize: 16.sp, // Adjusted text size
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 40.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Secure Parking',
+                    style: TextStyle(
+                      fontFamily: 'Archivo',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: colors.secondarynew,
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Easy Booking',
+                    style: TextStyle(
+                      fontFamily: 'Archivo',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: colors.secondarynew,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Shuttle Included',
+                    style: TextStyle(
+                      fontFamily: 'Archivo',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: colors.secondarynew,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Free Cancellation',
+                    style: TextStyle(
+                      fontFamily: 'Archivo',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: colors.secondarynew,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
-  
 }

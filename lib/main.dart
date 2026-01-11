@@ -64,7 +64,6 @@ void main() async {
       'pk_live_51RW4T2GrYrmFa4AwNLWGiNdEP3wHHW5F095Jj6ygcdGQvkYtdDEZsCuUkt3fQXmF1PGWFTUAcOk1CtXO2eatrVvv00YLI6tuLG';
   await Stripe.instance.applySettings();
 
-
   await SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
 
@@ -193,7 +192,7 @@ Future<void> setupNotifications() async {
 
   // ✅ Safe to get FCM token now
   //String? fcmToken = await messaging.getToken();
- // print('🎯 FCM Token: $fcmToken');
+  // print('🎯 FCM Token: $fcmToken');
 
   // Handle foreground notifications
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -221,12 +220,11 @@ Future<void> setupNotifications() async {
   });
 
   // Handle tapped notifications
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print("📬 Notification opened");
-    navigateBasedOnRole();
-  });
+  // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  //   print("📬 Notification opened");
+  //   navigateBasedOnRole();
+  // });
 }
-
 
 void navigateBasedOnRole() async {
   await SharedStorage.loadUser();

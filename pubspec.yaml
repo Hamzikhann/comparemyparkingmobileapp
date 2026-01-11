@@ -55,4 +55,4 @@ flutter:
   fonts:
     - family: Archivo
       fonts:
-        - asset: assets/fonts/archivo.ttf
+        - asset: assets/fonts/poppins.ttf
