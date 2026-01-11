@@ -3,11 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/models/CardsModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
@@ -20,165 +17,176 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String selectedCardType = 'Visa';
-  bool saveCard = false;
-  List<CardsModel> savedCards = [];
-
-  final List<Map<String, String>> cardTypes = [
-    {'type': 'MasterCard', 'image': 'assets/images/master.png'},
-  ];
-
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController cardHolderNameController =
-      TextEditingController();
-  final TextEditingController cardNumbercontroller = TextEditingController();
-  final TextEditingController expiryDateController = TextEditingController();
-  final TextEditingController cvvController = TextEditingController();
+  // We can track selected method if we implement multiple real gateways.
+  // For now, only Card (Stripe) is functional based on existing code.
 
   @override
   void initState() {
     super.initState();
-    _loadSavedCards();
   }
-
-  Future<void> _loadSavedCards() async {
-    final cards = await SharedStorage.loadSavedCards();
-    setState(() {
-      savedCards = cards;
-    });
-  }
-
-    
 
   Future<void> _handlePayment(String referenceNo) async {
-    if (_formKey.currentState!.validate()) {
-      // Save card information if required
-      if (saveCard) {
-        final card = CardsModel(
-          cardHolderName: cardHolderNameController.text,
-          cardNumber: cardNumbercontroller.text,
-          expiryDate: expiryDateController.text,
-          cvv: cvvController.text,
-          cardType: selectedCardType,
-        );
-        await SharedStorage.saveCard(card);
-        await _loadSavedCards();
-      }
+    // Prepare the booking data
+    final bookingData = {
+      "startDate": Globals.startDate,
+      "startTime": Globals.startTime,
+      "endDate": Globals.endDate,
+      "endTime": Globals.endTime,
+      "airport": Globals.selectedAirport,
+      "outboundTerminal": Globals.booking_info_model?.outBoundTerminal,
+      "outboundFlightNo": "00000",
+      "inboundTerminal": Globals.booking_info_model?.inBoundTerminal,
+      "inboundFlightNo": "00000",
+      "title": Globals.booking_info_model?.title,
+      "firstName": Globals.booking_info_model?.firstName,
+      "lastName": Globals.booking_info_model?.lastName,
+      "email": Globals.booking_info_model?.email,
+      "phoneNo": Globals.booking_info_model?.phone,
+      "vehicleRegistrationNo": Globals.booking_info_model?.vehicleRegNo,
+      "vehicleManufacturer": Globals.booking_info_model?.carMaker,
+      "vehicleModel": Globals.booking_info_model?.carModel,
+      "vehicleColor": Globals.booking_info_model?.carColor,
+      "numberOfPassengers": Globals.booking_info_model?.noOfPassengers,
+      "type": Globals.booking_info_model?.type,
+      "userId": Globals.user?.id,
+      "name": Globals.option?.name ?? '',
+      "price": Globals.option?.price ?? '',
+      "description": Globals.option?.description ?? '',
+      "bulletPoints": Globals.option?.bulletPoints ?? [],
+      "totalPrice": Globals.option?.price ?? '',
+      "referenceNo": referenceNo,
+    };
 
-      // Prepare the booking data
-      final bookingData = {
-        "startDate": Globals.startDate,
-        "startTime": Globals.startTime,
-        "endDate": Globals.endDate,
-        "endTime": Globals.endTime,
-        "airport": Globals.selectedAirport,
-        "outboundTerminal": Globals.booking_info_model?.outBoundTerminal,
-        "outboundFlightNo": "00000",
-        "inboundTerminal": Globals.booking_info_model?.inBoundTerminal,
-        "inboundFlightNo": "00000",
-        "title": Globals.booking_info_model?.title,
-        "firstName": Globals.booking_info_model?.firstName,
-        "lastName": Globals.booking_info_model?.lastName,
-        "email": Globals.booking_info_model?.email,
-        "phoneNo": Globals.booking_info_model?.phone,
-        "vehicleRegistrationNo": Globals.booking_info_model?.vehicleRegNo,
-        "vehicleManufacturer": Globals.booking_info_model?.carMaker,
-        "vehicleModel": Globals.booking_info_model?.carModel,
-        "vehicleColor": Globals.booking_info_model?.carColor,
-        "numberOfPassengers": Globals.booking_info_model?.noOfPassengers,
-        "type": Globals.booking_info_model?.type,
-        "userId": Globals.user?.id,
-        "name": Globals.option?.name ?? '',
-        "price": Globals.option?.price ?? '',
-        "description": Globals.option?.description ?? '',
-        "bulletPoints": Globals.option?.bulletPoints ?? [],
-        "totalPrice": Globals.option?.price ?? '',
-        "referenceNo": referenceNo,
-      };
+    try {
+      final resultMessage = await GeneralRepository().bookParking(
+        startDate: bookingData['startDate'] as String,
+        startTime: bookingData['startTime'] as String,
+        endDate: bookingData['endDate'] as String,
+        endTime: bookingData['endTime'] as String,
+        airport: bookingData['airport'] as String,
+        outboundTerminal: bookingData['outboundTerminal'] as String,
+        outboundFlightNo: bookingData['outboundFlightNo'] as String,
+        inboundTerminal: bookingData['inboundTerminal'] as String,
+        inboundFlightNo: bookingData['inboundFlightNo'] as String,
+        title: bookingData['title'] as String,
+        firstName: bookingData['firstName'] as String,
+        lastName: bookingData['lastName'] as String,
+        email: bookingData['email'] as String,
+        phoneNo: bookingData['phoneNo'] as String,
+        vehicleRegistrationNo: bookingData['vehicleRegistrationNo'] as String,
+        vehicleManufacturer: bookingData['vehicleManufacturer'] as String,
+        vehicleModel: bookingData['vehicleModel'] as String,
+        vehicleColor: bookingData['vehicleColor'] as String,
+        numberOfPassengers: bookingData['numberOfPassengers'] as String,
+        type: bookingData['type'] as String,
+        userId: bookingData['userId'] as String,
+        name: bookingData['name'] as String,
+        price: bookingData['price'] as String,
+        description: bookingData['description'] as String,
+        bulletPoints: (bookingData['bulletPoints'] is List)
+            ? List<String>.from(bookingData['bulletPoints'] as List)
+            : [],
+        totalPrice: bookingData['totalPrice'] as String,
+        referenceNo: bookingData['referenceNo'] as String,
+      );
 
-      try {
-        final resultMessage = await GeneralRepository().bookParking(
-          startDate: bookingData['startDate'] as String,
-          startTime: bookingData['startTime'] as String,
-          endDate: bookingData['endDate'] as String,
-          endTime: bookingData['endTime'] as String,
-          airport: bookingData['airport'] as String,
-          outboundTerminal: bookingData['outboundTerminal'] as String,
-          outboundFlightNo: bookingData['outboundFlightNo'] as String,
-          inboundTerminal: bookingData['inboundTerminal'] as String,
-          inboundFlightNo: bookingData['inboundFlightNo'] as String,
-          title: bookingData['title'] as String,
-          firstName: bookingData['firstName'] as String,
-          lastName: bookingData['lastName'] as String,
-          email: bookingData['email'] as String,
-          phoneNo: bookingData['phoneNo'] as String,
-          vehicleRegistrationNo: bookingData['vehicleRegistrationNo'] as String,
-          vehicleManufacturer: bookingData['vehicleManufacturer'] as String,
-          vehicleModel: bookingData['vehicleModel'] as String,
-          vehicleColor: bookingData['vehicleColor'] as String,
-          numberOfPassengers: bookingData['numberOfPassengers'] as String,
-          type: bookingData['type'] as String,
-          userId: bookingData['userId'] as String,
-          name: bookingData['name'] as String,
-          price: bookingData['price'] as String,
-          description: bookingData['description'] as String,
-          bulletPoints: (bookingData['bulletPoints'] is List)
-              ? List<String>.from(bookingData['bulletPoints'] as List)
-              : [],
-          totalPrice: bookingData['totalPrice'] as String,
-          referenceNo: bookingData['referenceNo'] as String,
-        );
-
-        // You can check if the resultMessage matches your expected success value
-        if (resultMessage.toString().contains("Booking")) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              contentPadding: const EdgeInsets.all(24),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SvgPicture.asset(
-                    'assets/images/success.svg', // <-- Make sure this file is in your assets
-                    height: 80,
-                    width: 80,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Booking Successful!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Your parking has been booked successfully.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Close dialog
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, MyRoutes.mainPage, (_) => false);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Booking failed: $resultMessage")),
-          );
-        }
-      } catch (e) {
+      if (resultMessage.toString().contains("Booking")) {
+        _showSuccessDialog();
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Booking failed: $e')),
+          SnackBar(content: Text("Booking failed: $resultMessage")),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking failed: $e')),
+      );
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Ensure you have this asset or replace with Icon
+            // SvgPicture.asset('assets/images/success.svg', height: 80, width: 80),
+            Icon(Icons.check_circle, color: Colors.green, size: 80),
+            const SizedBox(height: 20),
+            const Text(
+              'Booking Successful!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Your parking has been booked successfully.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, MyRoutes.mainPage, (_) => false);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+              child: const Text('OK', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> startStripePayment() async {
+    try {
+      final rawAmount =
+          (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
+      final amountInPence =
+          (double.tryParse(rawAmount)! * 100).toInt().toString();
+
+      debugPrint('Creating payment intent for amount: $amountInPence pence');
+
+      final response = await GeneralRepository().createPaymentIntent(
+          amount: amountInPence,
+          currency: "gbp",
+          startDate: Globals.startDate,
+          endDate: Globals.endDate);
+
+      final clientSecret = response['paymentIntent']?['client_secret'] ??
+          response['clientSecret'];
+      if (clientSecret == null)
+        throw Exception('Missing client secret in response');
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Parking Pilot',
+          style: ThemeMode.system,
+          allowsDelayedPaymentMethods: false,
+        ),
+      );
+
+      await Stripe.instance.presentPaymentSheet();
+      final paymentId =
+          response['paymentIntent']?['id'] ?? response['paymentId'];
+
+      await _handlePayment(paymentId);
+    } on StripeException catch (e) {
+      if (e.error.code == FailureCode.Canceled) {
+        // User cancelled, do nothing
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Payment error: ${e.error.localizedMessage}")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment failed: ${e.toString()}")));
     }
   }
 
@@ -196,81 +204,36 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
-                      _buildLabel("Card Payment"),
-                      SizedBox(
-                        height: 150,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: cardTypes.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            final card = cardTypes[index];
-                            final isSelected = selectedCardType == card['type'];
-                            return GestureDetector(
-                              onTap: () => setState(
-                                  () => selectedCardType = card['type']!),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? Theme.of(context).primaryColor
-                                        : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Image.asset(
-                                  card['image']!,
-                                  height: 300,
-                                  width: 300,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: startStripePayment,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  6), // 🔽 Reduce radius here
-                            ),
-                          ),
-                          child: Text('Proceed to Pay ${Globals.option?.price}',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white)),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          'Your personal data will be used to process your order, support your experience and for other purposes described in our privacy policy.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ),
-                      SizedBox(
-                          height: MediaQuery.of(context).viewInsets.bottom),
-                    ],
-                  ),
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Booking Summary Wrapper
+                    _buildBookingSummaryCard(),
+
+                    SizedBox(height: 24.h),
+
+                    Text("Payment Method",
+                        style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Archivo')),
+                    SizedBox(height: 12.h),
+
+                    // Layout: Row with Payment Methods (Left) and Order Summary (Right) for Tablet/Web?
+                    // But for Mobile, usually stacked. Design shows possibly side-by-side or stacked.
+                    // Given standard mobile width, I will stack them but style them distinctively.
+                    // Actually design shows separate "Choose Payment Method" box and "Order Summary" box side-by-side?
+                    // If it's mobile, they should be stacked. Let's stack them nicely.
+
+                    _buildPaymentMethodsSection(),
+
+                    SizedBox(height: 24.h),
+
+                    _buildOrderSummaryCard(),
+
+                    SizedBox(height: 40.h),
+                  ],
                 ),
               ),
             ),
@@ -280,70 +243,296 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Padding _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Archivo',
+  Widget _buildBookingSummaryCard() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 4))
+          ],
+          border: Border.all(color: Colors.grey.shade100)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Booking Summary",
+              style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo')),
+          SizedBox(height: 12.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSummaryLabel("Flight Details"),
+                    _buildSummaryText(
+                        "Outbound: ${Globals.booking_info_model?.outBoundTerminal ?? 'N/A'}"),
+                    _buildSummaryText(
+                        "Inbound: ${Globals.booking_info_model?.inBoundTerminal ?? 'N/A'}"),
+                    SizedBox(height: 8.h),
+                    _buildSummaryLabel("Vehicle Details"),
+                    _buildSummaryText(
+                        "Registration: ${Globals.booking_info_model?.vehicleRegNo ?? 'N/A'}"),
+                    _buildSummaryText(
+                        "Type: ${Globals.booking_info_model?.type ?? 'N/A'}"),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSummaryLabel("Parking Period"),
+                    _buildSummaryText(
+                        "From: ${Globals.startDate} at ${Globals.startTime}"),
+                    _buildSummaryText(
+                        "To: ${Globals.endDate} at ${Globals.endTime}"),
+                    _buildSummaryText("Airport: ${Globals.selectedAirport}"),
+                  ],
+                ),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodsSection() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+          color: Color(0xFFF8FDF8), // Light greenish bg
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.grey.shade200)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Choose Payment Method",
+              style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo')),
+          SizedBox(height: 16.h),
+          _buildPaymentOption(
+              icon: Icons.credit_card,
+              label: "Credit/Debit Card",
+              subLabel: "Pay with Visa, Mastercard, or Amex",
+              value: 'card',
+              color: Color(0xFF4285F4),
+              textColor: Colors.white),
+          SizedBox(height: 12.h),
+          _buildPaymentOption(
+              icon: Icons.phone_iphone,
+              label: "Apple Pay",
+              subLabel: "Pay securely with Apple Pay",
+              value: 'apple_pay',
+              color: Colors.black,
+              textColor: Colors.white,
+              isComingSoon: true),
+          SizedBox(height: 12.h),
+          _buildPaymentOption(
+              icon: Icons.money,
+              label: "Klarna",
+              subLabel: "Pay in installments",
+              value: 'klarna',
+              color: Color(0xFFFFB3C7),
+              textColor: Colors.black,
+              isComingSoon: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+      {required IconData icon,
+      required String label,
+      required String subLabel,
+      required String value,
+      required Color color,
+      required Color textColor,
+      bool isComingSoon = false}) {
+    // Only 'card' is interactive for now
+    return GestureDetector(
+      onTap: () {
+        if (!isComingSoon) {
+          startStripePayment(); // Directly trigger stripe for card
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: textColor),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13.sp,
+                          fontFamily: 'Archivo')),
+                  Text(subLabel,
+                      style: TextStyle(
+                          color: textColor.withOpacity(0.8),
+                          fontSize: 10.sp,
+                          fontFamily: 'Archivo')),
+                ],
+              ),
+            ),
+            if (isComingSoon)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(4.r)),
+                child: Text("Coming Soon",
+                    style: TextStyle(color: textColor, fontSize: 9.sp)),
+              )
+          ],
         ),
       ),
     );
   }
-  Future<void> startStripePayment() async {
-  try {
-    
-    final rawAmount = (Globals.option?.price ?? "0")
-        .replaceAll(RegExp(r'[^\d.]'), '');
-    final amountInPence = (double.tryParse(rawAmount)! * 100).toInt().toString();
 
-    debugPrint('Creating payment intent for amount: $amountInPence pence');
-    
-    final response = await GeneralRepository().createPaymentIntent(
-      amount: amountInPence,
-      currency: "gbp",
-      startDate: Globals.startDate,
-      endDate: Globals.endDate
-    );
+  Widget _buildOrderSummaryCard() {
+    double price = double.tryParse(
+            (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '')) ??
+        0.0;
 
-    
-    final clientSecret = response['paymentIntent']?['client_secret'] ??
-                        response['clientSecret'];
-
-    if (clientSecret == null) {
-      throw Exception('Missing client secret in response');
-    }
-
-    
-    await Stripe.instance.initPaymentSheet(
-      paymentSheetParameters: SetupPaymentSheetParameters(
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'Parking Pilot',
-        style: ThemeMode.system,
-        applePay: null,
-        googlePay: null,
-        allowsDelayedPaymentMethods: false,
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+          color: Color(0xFFF8FDF8),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.grey.shade200)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Order Summary",
+              style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo')),
+          SizedBox(height: 12.h),
+          Text(Globals.option?.name ?? "Parking Service",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                  fontFamily: 'Archivo')),
+          Text("Parking Type: ${Globals.option?.type ?? 'Meet and Greet'}",
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey[700],
+                  fontFamily: 'Archivo')),
+          SizedBox(height: 12.h),
+          _buildSummaryRow(
+              "Check-in", "${Globals.startDate} - ${Globals.startTime}"),
+          _buildSummaryRow(
+              "Check-out", "${Globals.endDate} - ${Globals.endTime}"),
+          SizedBox(height: 16.h),
+          Divider(),
+          SizedBox(height: 8.h),
+          _buildPriceRow("Subtotal", "£${price.toStringAsFixed(2)}"),
+          _buildPriceRow("Booking Fee", "£0.00"),
+          _buildPriceRow("Taxes & Fees", "£0.00"),
+          SizedBox(height: 12.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Total Amount",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A6F56),
+                      fontSize: 14.sp,
+                      fontFamily: 'Archivo')),
+              Text("£${price.toStringAsFixed(2)}",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A6F56),
+                      fontSize: 14.sp,
+                      fontFamily: 'Archivo')),
+            ],
+          )
+        ],
       ),
     );
+  }
 
-    await Stripe.instance.presentPaymentSheet();
-
-    final paymentId = response['paymentIntent']?['id'] ?? response['paymentId'];
-
-    await _handlePayment(paymentId);
-
-  } on StripeException catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payment error: ${e.error.localizedMessage}")),
-    );
-  } catch (e, stack) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Payment failed: ${e.toString()}")),
+  Widget _buildSummaryLabel(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Text(text,
+          style: TextStyle(
+              color: Color(0xFF2E5B5B),
+              fontWeight: FontWeight.bold,
+              fontSize: 12.sp,
+              fontFamily: 'Archivo')),
     );
   }
-}
 
+  Widget _buildSummaryText(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 2.h),
+      child: Text(text,
+          style: TextStyle(
+              fontSize: 11.sp, color: Colors.black87, fontFamily: 'Archivo')),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Row(
+        children: [
+          Icon(Icons.check, size: 12.sp, color: Colors.green),
+          SizedBox(width: 4.w),
+          Text("$label: ",
+              style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Archivo')),
+          Expanded(
+              child: Text(value,
+                  style: TextStyle(fontSize: 11.sp, fontFamily: 'Archivo'))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, String price) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Archivo')),
+          Text(price,
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo')),
+        ],
+      ),
+    );
+  }
 }
