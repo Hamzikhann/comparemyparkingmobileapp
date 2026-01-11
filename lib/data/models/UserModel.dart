@@ -3,6 +3,7 @@ class UserModel {
   String firstName;
   String lastName;
   String email;
+  String phoneNo;
   String roleId;
   String? imageUrl;
   String roleTitle;
@@ -13,6 +14,7 @@ class UserModel {
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.phoneNo,
     required this.roleId,
     required this.imageUrl,
     required this.roleTitle,
@@ -26,6 +28,7 @@ class UserModel {
       firstName: user['firstName'] ?? '',
       lastName: user['lastName'] ?? '',
       email: user['email'] ?? '',
+      phoneNo: user['phoneNo'] ?? '',
       roleId: user['roleId'] ?? '',
       imageUrl: user['userProfile']?['imageUrl'],
       roleTitle: user['role']?['title'] ?? '',
@@ -40,6 +43,7 @@ class UserModel {
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
+      'phoneNo': phoneNo,
       'roleId': roleId,
       'imageUrl': imageUrl,
       'roleTitle': roleTitle,

@@ -4,12 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/providers/AlertNotifier.dart';
-import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
-import 'package:parkingapp/widgets/CustomDropdown.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
-import '../widgets/CustomTextField.dart';
 import '../widgets/PrimaryButton.dart';
 
 class Editprofile extends StatefulWidget {
@@ -21,15 +17,11 @@ class Editprofile extends StatefulWidget {
 
 class _EditprofileState extends State<Editprofile> {
   final _formKey = GlobalKey<FormState>();
-  String? selectedTitle;
 
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
 
   XFile? _pickedImage;
   final ImagePicker _picker = ImagePicker();
@@ -78,9 +70,10 @@ class _EditprofileState extends State<Editprofile> {
   @override
   void initState() {
     super.initState();
-    firstNameController.text = Globals.user!.firstName;
-    lastNameController.text = Globals.user!.lastName;
+    fullNameController.text =
+        "${Globals.user!.firstName} ${Globals.user!.lastName}".trim();
     emailController.text = Globals.user!.email;
+    phoneController.text = Globals.user!.phoneNo;
   }
 
   @override
@@ -91,14 +84,14 @@ class _EditprofileState extends State<Editprofile> {
         child: Column(
           children: [
             TopBar(
-              greeting: 'Edit Profile',
+              greeting: 'User Profile',
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
             ),
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -106,157 +99,95 @@ class _EditprofileState extends State<Editprofile> {
                       children: [
                         SizedBox(height: 20.h),
 
-                        // Circular Avatar with Edit Icon
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              width: 120.w,
-                              height: 120.h,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 2,
+                        // Avatar Section
+                        Center(
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 100.w,
+                                height: 100.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: _pickedImage != null
+                                        ? FileImage(File(_pickedImage!.path))
+                                        : const AssetImage(
+                                                'assets/images/profilee.png')
+                                            as ImageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                              child: ClipOval(
-                                child: _pickedImage != null
-                                    ? Image.file(
-                                        File(_pickedImage!.path),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Icon(
-                                        Icons.person,
-                                        size: 60.sp,
-                                        color: Colors.grey.shade400,
-                                      ),
-                              ),
-                            ),
-                            Container(
-                              width: 36.w,
-                              height: 36.h,
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
+                              // Green status dot
+                              Positioned(
+                                top: 5.h,
+                                right: 5.w,
+                                child: Container(
+                                  width: 14.w,
+                                  height: 14.w,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        const Color(0xFF4B725D), // Green color
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
                                 ),
                               ),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.edit,
-                                  size: 18.sp,
-                                  color: Colors.white,
+                              // Edit Icon
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: _showImageSourceBottomSheet,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 4,
+                                        )
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.edit_outlined,
+                                      size: 16.sp,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
-                                padding: EdgeInsets.zero,
-                                onPressed: _showImageSourceBottomSheet,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
 
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 40.h),
 
-                        // Title Dropdown
-                        CustomDropdown(
-                          hint: "Title",
-                          items: const ["Mr", "Mrs", "Do not want to Specify"],
-                          isSearchable: false,
-                          defaultValue: "Mr",
-                          onSelectItem: (item) {
-                            setState(() {
-                              selectedTitle = item;
-                            });
-                          },
-                        ),
+                        _buildProfileField("Full name", fullNameController),
+                        SizedBox(height: 24.h),
+                        _buildProfileField("Email address", emailController,
+                            keyboardType: TextInputType.emailAddress),
+                        SizedBox(height: 24.h),
+                        _buildProfileField("Phone number", phoneController,
+                            keyboardType: TextInputType.phone),
 
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 40.h),
 
-                        // First Name
-                        CustomTextField(
-                          hintText: "First Name",
-                          controller: firstNameController,
-                          keyboardType: TextInputType.name,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your first name';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 20.h),
-
-                        // Last Name
-                        CustomTextField(
-                          hintText: "Last Name",
-                          controller: lastNameController,
-                          keyboardType: TextInputType.name,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your last name';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 20.h),
-
-                        // Email
-                        CustomTextField(
-                          hintText: "Email",
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                                .hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 20.h),
-
-                        // Phone Number
-                        CustomTextField(
-                          hintText: "Phone number",
-                          controller: phoneController,
-                          keyboardType: TextInputType.phone,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your phone number';
-                            }
-                            if (value.length < 10) {
-                              return 'Phone number must be at least 10 digits';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 20.h),
                         const CustomAlert(alertKey: 'editProfile'),
 
                         // Save Button
                         PrimaryButton(
                           text: "Save",
                           onPressed: () {
-                            if (_formKey.currentState!.validate() &&
-                                selectedTitle != null) {
-                              // registerUser(selectedTitle!,firstNameController.text,lastNameController.text,emailController.text,phoneController.text,passwordController.text,confirmPasswordController.text);
-                            } else if (selectedTitle == null) {
-                              Alertify.showAlert(
-                                alertKey: 'editProfile',
-                                message: 'Please select a title',
-                                type: AlertType.error,
-                              );
+                            if (_formKey.currentState!.validate()) {
+                              // Handle save logic
+                              // Split full name if needed
                             }
                           },
+                          // Assuming PrimaryButton uses the primary theme color (green)
                         ),
                         SizedBox(height: 20.h),
                       ],
@@ -268,6 +199,49 @@ class _EditprofileState extends State<Editprofile> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileField(String label, TextEditingController controller,
+      {bool obscureText = false,
+      TextInputType keyboardType = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontFamily: 'Archivo',
+            color: const Color(0xFF9E9E9E), // Grey color for label
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontFamily: 'Archivo',
+            color: const Color(0xFF1A1A2E), // Darker color for value
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(vertical: 8),
+            border: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF4B725D)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

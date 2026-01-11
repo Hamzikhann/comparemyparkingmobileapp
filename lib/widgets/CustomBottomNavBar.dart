@@ -55,7 +55,7 @@ class Custombottomnavbar extends StatelessWidget {
               height: 40.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? colors.primary : Colors.transparent,
+                color: isSelected ? colors.primaryNew : Colors.transparent,
               ),
               child: Center(
                 child: SvgPicture.asset(
@@ -69,7 +69,6 @@ class Custombottomnavbar extends StatelessWidget {
                 ),
               ),
             ),
-            
           ],
         ),
       ),

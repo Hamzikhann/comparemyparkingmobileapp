@@ -49,7 +49,6 @@ class SettingsScreen extends StatelessWidget {
                     onChanged: (value) {
                       // Handle notification toggle
                       // You might want to save this preference to SharedPreferences
-                      
                     },
                   ),
                   SizedBox(height: 24.h),

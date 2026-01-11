@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/utils/colors.dart';
 
 class TopBar extends StatelessWidget {
   final String greeting;
   final VoidCallback onBackPressed;
   final bool showBackButton;
+  final Color? textColor;
 
   const TopBar({
     super.key,
     required this.greeting,
     required this.onBackPressed,
     this.showBackButton = true,
+    this.textColor,
   });
 
   @override
@@ -18,7 +21,7 @@ class TopBar extends StatelessWidget {
     return Container(
       height: 85.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF201A56),
+        color: Colors.white,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24.r),
           bottomRight: Radius.circular(24.r),
@@ -39,7 +42,7 @@ class TopBar extends StatelessWidget {
                   child: IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: Colors.white,
+                      color: textColor ?? Colors.black,
                       size: 24.sp,
                     ),
                     onPressed: onBackPressed,
@@ -52,20 +55,10 @@ class TopBar extends StatelessWidget {
                 child: Text(
                   greeting,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: textColor ?? Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 18.sp,
                   ),
-                ),
-              ),
-
-              // Avatar (right-aligned)
-              Align(
-                alignment: Alignment.centerRight,
-                child: const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 18,
-                  backgroundImage: AssetImage('assets/images/male.png'),
                 ),
               ),
             ],
