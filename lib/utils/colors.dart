@@ -57,6 +57,6 @@ class colors {
   static const Color gradientShadow2 = Color(0x19000000);
 
   //new colors
-  static const Color primaryNew = Color(0xDD000000);
+  static const Color primaryNew = Color(0xFF214D53);
   static const Color secondarynew = Color(0xFF4B725D);
 }
