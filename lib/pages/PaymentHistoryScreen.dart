@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/utils/colors.dart';
-import 'package:parkingapp/widgets/TopBar.dart'; // Make sure to import your TopBar
+import 'package:parkingapp/widgets/TopBar.dart';
+import 'package:parkingapp/pages/ReceiptScreen.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({Key? key}) : super(key: key);
@@ -131,7 +132,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Add navigation to payment details if needed
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReceiptScreen(payment: payment),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
