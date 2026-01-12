@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart' as http;
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
@@ -561,13 +560,13 @@ class GeneralRepository {
 
   Future<BookingResponse> bookParking({
     required String startDate,
-    required String endDate,
-    required String airport,
     required String startTime,
+    required String endDate,
     required String endTime,
+    required String airport,
     required String outboundTerminal,
-    required String outboundFlightNo,
     required String inboundTerminal,
+    required String outboundFlightNo,
     required String inboundFlightNo,
     required String title,
     required String firstName,
@@ -576,83 +575,77 @@ class GeneralRepository {
     required String phoneNo,
     required String vehicleRegistrationNo,
     required String vehicleManufacturer,
+    required String vehicleYear,
     required String vehicleModel,
     required String vehicleColor,
-    required String numberOfPassengers,
     required String type,
+    required String numberOfPassengers,
     required String userId,
     required String name,
     required String price,
     required String description,
     required List<String> bulletPoints,
-    required String totalPrice,
+    required String totalPayment,
+    required String packageType,
     required String referenceNo,
+    required String paymentMethod,
+    required String paymentMethodDisplay,
+    required String paymentStatus,
+    required String paymentDate,
+    required String transactionId,
   }) async {
     Completer<BookingResponse> completer = Completer();
 
     try {
-      // Validate input parameters
-      if (startDate.isEmpty ||
-          endDate.isEmpty ||
-          airport.isEmpty ||
-          startTime.isEmpty ||
-          endTime.isEmpty ||
-          outboundTerminal.isEmpty ||
-          outboundFlightNo.isEmpty ||
-          inboundTerminal.isEmpty ||
-          inboundFlightNo.isEmpty ||
-          title.isEmpty ||
-          firstName.isEmpty ||
-          lastName.isEmpty ||
-          email.isEmpty ||
-          phoneNo.isEmpty ||
-          vehicleRegistrationNo.isEmpty ||
-          vehicleManufacturer.isEmpty ||
-          vehicleModel.isEmpty ||
-          vehicleColor.isEmpty ||
-          numberOfPassengers.isEmpty ||
-          type.isEmpty ||
-          userId.isEmpty ||
-          name.isEmpty ||
-          price.isEmpty ||
-          description.isEmpty ||
-          bulletPoints.isEmpty ||
-          totalPrice.isEmpty ||
-          referenceNo.isEmpty) {
-        throw Exception('All parameters are required');
-      }
       server.makeApiRequest(
-        apiEndpoint:
-            ApiFiles.bookParking, // Ensure this endpoint is defined in ApiFiles
+        apiEndpoint: ApiFiles.bookParking,
         requestMethod: RequestMethod.post,
-
         requestData: {
+          // Booking
           "startDate": startDate,
-          "endDate": endDate,
-          "airport": airport,
           "startTime": startTime,
+          "endDate": endDate,
           "endTime": endTime,
+          "airport": airport,
+
+          // Flight
           "outboundTerminal": outboundTerminal,
-          "outboundFlightNo": outboundFlightNo,
           "inboundTerminal": inboundTerminal,
+          "outboundFlightNo": outboundFlightNo,
           "inboundFlightNo": inboundFlightNo,
+
+          // Customer
           "title": title,
           "firstName": firstName,
           "lastName": lastName,
           "email": email,
           "phoneNo": phoneNo,
+
+          // Vehicle
           "vehicleRegistrationNo": vehicleRegistrationNo,
           "vehicleManufacturer": vehicleManufacturer,
+          "vehicleYear": vehicleYear,
           "vehicleModel": vehicleModel,
           "vehicleColor": vehicleColor,
+          "type": type,
           "numberOfPassengers": numberOfPassengers,
+
+          // Package
           "userId": userId,
           "name": name,
           "price": price,
           "description": description,
           "bulletPoints": bulletPoints,
-          "totalPayment": totalPrice,
+          "totalPayment": totalPayment,
+          "packageType": packageType,
+
+          // Payment
           "referenceNo": referenceNo,
+          "paymentMethod": paymentMethod,
+          "paymentMethodDisplay": paymentMethodDisplay,
+          "paymentStatus": paymentStatus,
+          "paymentDate": paymentDate,
+          "transactionId": transactionId,
         },
         onLoad: () {
           EasyLoading.show(status: "Booking parking...");
@@ -816,40 +809,62 @@ class GeneralRepository {
     required String endDate,
   }) async {
     final url = Uri.parse(
-        'https://stanstedairportparking247.com/api/stripe/create-payment-intent');
+      'http://test.thefutureinno.com/stripe/create-payment-intent',
+    );
 
     final token = Globals.user?.token ?? '';
 
-    // Convert amount to integer
+    // Convert amount to integer (smallest unit e.g. pence)
     final amountInt = int.tryParse(amount) ?? 0;
     if (amountInt <= 0) {
       throw Exception('Invalid amount: $amount');
     }
 
-    final response = await http.post(
-      url,
-      body: jsonEncode({
-        // Use jsonEncode for proper JSON formatting
-        'amount': amountInt, // Send as integer
-        'currency': currency.toLowerCase(),
+    try {
+      // HttpClient to bypass SSL issue
+      final client = HttpClient()
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+
+      final request = await client.postUrl(url);
+      request.headers.set('content-type', 'application/json');
+      request.headers.set('access-token', token);
+
+      final body = jsonEncode({
+        "amount": amountInt, // e.g. 3869
+        "currency": currency.toLowerCase(), // gbp
+        "payment_method": "card",
+        "test_mode": false,
+
         "startDate": startDate,
         "startTime": Globals.startTime,
         "endDate": endDate,
         "endTime": Globals.endTime,
-        "userId": Globals.user!.id,
-        "airport": Globals.selectedAirport // Ensure lowercase currency
-      }),
-      headers: {
-        'access-token': token,
-        'Content-Type': 'application/json', // Add content-type header
-      },
-    );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception(
-          'Failed to create payment intent: ${response.statusCode} ${response.body}');
+        "airport": Globals.selectedAirport,
+        "userId": Globals.user?.id,
+
+        "customer": {
+          "email": Globals.booking_info_model?.email,
+          "name":
+              "${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}"
+        }
+      });
+
+      request.write(body);
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode == 200) {
+        return jsonDecode(responseBody) as Map<String, dynamic>;
+      } else {
+        throw Exception(
+          'Failed to create payment intent: ${response.statusCode} $responseBody',
+        );
+      }
+    } catch (e) {
+      throw Exception('Payment Intent Error: $e');
     }
   }
 

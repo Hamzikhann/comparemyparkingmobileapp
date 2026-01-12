@@ -12,6 +12,7 @@ class BookingInfoModel {
   final String vehicleRegNo;
   final String carMaker;
   final String carModel;
+  final String carYear;
   final String carColor;
   final String noOfPassengers;
   final String type;
@@ -29,6 +30,7 @@ class BookingInfoModel {
     required this.vehicleRegNo,
     required this.carMaker,
     required this.carModel,
+    required this.carYear,
     required this.carColor,
     required this.noOfPassengers,
     required this.type,
@@ -66,6 +68,7 @@ class BookingInfoModel {
       vehicleRegNo: json['vehicleRegNo'],
       carMaker: json['carMaker'],
       carModel: json['carModel'],
+      carYear: json['carYear'],
       carColor: json['carColor'],
       noOfPassengers: json['noOfPassengers'],
       type: json['type'],

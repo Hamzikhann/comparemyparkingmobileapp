@@ -35,6 +35,7 @@ class ParkingOption {
   final double rating;
   final String ratingText;
   final int reviews;
+  final String? frontPageSummary;
   final String? specialLabel;
 
   ParkingOption({
@@ -50,6 +51,7 @@ class ParkingOption {
     this.ratingText = '',
     this.reviews = 0,
     this.specialLabel,
+    this.frontPageSummary,
   });
 
   factory ParkingOption.fromJson(Map<String, dynamic> json) {
@@ -70,6 +72,7 @@ class ParkingOption {
       ratingText: json['ratingText']?.toString() ?? '',
       reviews: (json['reviewCount'] is int) ? json['reviewCount'] as int : 0,
       specialLabel: json['specialLabel']?.toString(),
+      frontPageSummary: json['frontPageSummary']?.toString(),
     );
   }
 }

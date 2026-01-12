@@ -435,6 +435,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       vehicleRegNo: vehicleRegNoController.text,
       carMaker: carMakerController.text,
       carModel: carModelController.text,
+      carYear: carYearController.text,
       carColor: carColorController.text,
       noOfPassengers: numPassengersController.text.isEmpty
           ? "1"

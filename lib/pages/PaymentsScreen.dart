@@ -25,81 +25,68 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.initState();
   }
 
-  Future<void> _handlePayment(String referenceNo) async {
-    // Prepare the booking data
-    final bookingData = {
-      "startDate": Globals.startDate,
-      "startTime": Globals.startTime,
-      "endDate": Globals.endDate,
-      "endTime": Globals.endTime,
-      "airport": Globals.selectedAirport,
-      "outboundTerminal": Globals.booking_info_model?.outBoundTerminal,
-      "outboundFlightNo": "00000",
-      "inboundTerminal": Globals.booking_info_model?.inBoundTerminal,
-      "inboundFlightNo": "00000",
-      "title": Globals.booking_info_model?.title,
-      "firstName": Globals.booking_info_model?.firstName,
-      "lastName": Globals.booking_info_model?.lastName,
-      "email": Globals.booking_info_model?.email,
-      "phoneNo": Globals.booking_info_model?.phone,
-      "vehicleRegistrationNo": Globals.booking_info_model?.vehicleRegNo,
-      "vehicleManufacturer": Globals.booking_info_model?.carMaker,
-      "vehicleModel": Globals.booking_info_model?.carModel,
-      "vehicleColor": Globals.booking_info_model?.carColor,
-      "numberOfPassengers": Globals.booking_info_model?.noOfPassengers,
-      "type": Globals.booking_info_model?.type,
-      "userId": Globals.user?.id,
-      "name": Globals.option?.name ?? '',
-      "price": Globals.option?.price ?? '',
-      "description": Globals.option?.description ?? '',
-      "bulletPoints": Globals.option?.bulletPoints ?? [],
-      "totalPrice": Globals.option?.price ?? '',
-      "referenceNo": referenceNo,
-    };
-
+  Future<void> _handlePayment(String paymentIntentId) async {
     try {
-      final resultMessage = await GeneralRepository().bookParking(
-        startDate: bookingData['startDate'] as String,
-        startTime: bookingData['startTime'] as String,
-        endDate: bookingData['endDate'] as String,
-        endTime: bookingData['endTime'] as String,
-        airport: bookingData['airport'] as String,
-        outboundTerminal: bookingData['outboundTerminal'] as String,
-        outboundFlightNo: bookingData['outboundFlightNo'] as String,
-        inboundTerminal: bookingData['inboundTerminal'] as String,
-        inboundFlightNo: bookingData['inboundFlightNo'] as String,
-        title: bookingData['title'] as String,
-        firstName: bookingData['firstName'] as String,
-        lastName: bookingData['lastName'] as String,
-        email: bookingData['email'] as String,
-        phoneNo: bookingData['phoneNo'] as String,
-        vehicleRegistrationNo: bookingData['vehicleRegistrationNo'] as String,
-        vehicleManufacturer: bookingData['vehicleManufacturer'] as String,
-        vehicleModel: bookingData['vehicleModel'] as String,
-        vehicleColor: bookingData['vehicleColor'] as String,
-        numberOfPassengers: bookingData['numberOfPassengers'] as String,
-        type: bookingData['type'] as String,
-        userId: bookingData['userId'] as String,
-        name: bookingData['name'] as String,
-        price: bookingData['price'] as String,
-        description: bookingData['description'] as String,
-        bulletPoints: (bookingData['bulletPoints'] is List)
-            ? List<String>.from(bookingData['bulletPoints'] as List)
-            : [],
-        totalPrice: bookingData['totalPrice'] as String,
-        referenceNo: bookingData['referenceNo'] as String,
+      final result = await GeneralRepository().bookParking(
+        // Booking
+        startDate: Globals.startDate,
+        startTime: Globals.startTime,
+        endDate: Globals.endDate,
+        endTime: Globals.endTime,
+        airport: Globals.selectedAirport,
+
+        // Flight
+        outboundTerminal: Globals.booking_info_model?.outBoundTerminal ?? "",
+        inboundTerminal: Globals.booking_info_model?.inBoundTerminal ?? "",
+        outboundFlightNo: "00000",
+        inboundFlightNo: "00000",
+
+        // Customer
+        title: Globals.booking_info_model?.title ?? "",
+        firstName: Globals.booking_info_model?.firstName ?? "",
+        lastName: Globals.booking_info_model?.lastName ?? "",
+        email: Globals.booking_info_model?.email ?? "",
+        phoneNo: Globals.booking_info_model?.phone ?? "",
+
+        // Vehicle
+        vehicleRegistrationNo: Globals.booking_info_model?.vehicleRegNo ?? "",
+        vehicleManufacturer: Globals.booking_info_model?.carMaker ?? "",
+        vehicleYear: Globals.booking_info_model?.carModel ?? "",
+        vehicleModel: Globals.booking_info_model?.carModel ?? "",
+        vehicleColor: Globals.booking_info_model?.carColor ?? "",
+        type: Globals.booking_info_model?.type ?? "",
+        numberOfPassengers: Globals.booking_info_model?.noOfPassengers ?? "1",
+
+        // Package
+        userId: Globals.user?.id ?? "",
+        name: Globals.option?.name ?? "",
+        price: Globals.option?.price ?? "",
+        description: Globals.option?.description ??
+            Globals.option?.frontPageSummary ??
+            "",
+        bulletPoints: List<String>.from(Globals.option?.bulletPoints ?? []),
+        totalPayment: Globals.option?.price ?? "",
+        packageType: Globals.option?.type ?? "",
+
+        // Payment
+        referenceNo: "STRIPE-$paymentIntentId",
+        paymentMethod: "card",
+        paymentMethodDisplay: "Credit / Debit Card",
+        paymentStatus: "completed",
+        paymentDate: DateTime.now().toIso8601String(),
+        transactionId: paymentIntentId,
       );
 
-      if (resultMessage.toString().contains("Booking")) {
+      if (result.toString().contains("Booking")) {
         _showSuccessDialog();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Booking failed: $resultMessage")),
+          SnackBar(content: Text("Booking failed: $result")),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking failed: $e')),
+        SnackBar(content: Text("Booking failed: $e")),
       );
     }
   }
@@ -134,7 +121,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Navigator.pushNamedAndRemoveUntil(
                     context, MyRoutes.mainPage, (_) => false);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: colors.primaryNew),
               child: const Text('OK', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -147,8 +135,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       final rawAmount =
           (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
-      final amountInPence =
-          (double.tryParse(rawAmount)! * 100).toInt().toString();
+      final amountInPence = (double.tryParse(rawAmount)!).toInt().toString();
 
       debugPrint('Creating payment intent for amount: $amountInPence pence');
 
