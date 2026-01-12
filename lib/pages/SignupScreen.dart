@@ -128,7 +128,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   // Full Name
                   CustomTextField(
                     labelText: 'Full Name',
-                    hintText: "Ali Malik",
+                    hintText: "Enter your full name",
                     controller: fullNameController,
                     keyboardType: TextInputType.name,
                     useLightBackground: true,
@@ -158,7 +158,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       SizedBox(height: 8.h),
                       IntlPhoneField(
                         decoration: InputDecoration(
-                          hintText: '+6289876543210',
+                          hintText: 'Enter your phone number',
                           hintStyle: TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontFamily: 'Archivo',
