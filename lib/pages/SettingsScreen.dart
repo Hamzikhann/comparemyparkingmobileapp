@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -130,7 +131,7 @@ class SettingsScreen extends StatelessWidget {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF201A56),
+        activeColor: colors.secondarynew,
       ),
     );
   }

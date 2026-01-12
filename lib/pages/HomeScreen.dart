@@ -68,11 +68,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAirportDialog() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (context) {
         return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
           padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -86,26 +90,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              ...airportOptions
-                  .map((airport) => ListTile(
-                        title: Text(
-                          airport,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontFamily: 'Archivo',
-                          ),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            selectedAirport = airport;
-                          });
-                          Navigator.pop(context);
-                        },
-                        trailing: selectedAirport == airport
-                            ? Icon(Icons.check, color: Color(0xFF4B725D))
-                            : null,
-                      ))
-                  .toList(),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: airportOptions
+                        .map((airport) => ListTile(
+                              title: Text(
+                                airport,
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontFamily: 'Archivo',
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  selectedAirport = airport;
+                                });
+                                Navigator.pop(context);
+                              },
+                              trailing: selectedAirport == airport
+                                  ? Icon(Icons.check, color: Color(0xFF4B725D))
+                                  : null,
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -470,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _buildErrorState(snapshot.error.toString());
                     }
                     if (snapshot.hasData) {
-                      final bookings = snapshot.data!.reservedParkings;
+                      final bookings = snapshot.data!.completedParkings;
                       if (bookings.isEmpty) {
                         return _noBookingCard();
                       }
@@ -515,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Address',
+                booking.airport,
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontFamily: 'Archivo',
@@ -540,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(width: 4.w),
               Text(
-                '400 m away',
+                booking.registrations.first.inboundTerminal,
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontFamily: 'Archivo',
@@ -561,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'From ${booking.startTime} to ${booking.endTime}, ${_formatDate(booking.startDate)}',
                 style: TextStyle(
-                  fontSize: 14.sp,
+                  fontSize: 12.sp,
                   fontFamily: 'Archivo',
                   color: Color(0xFF6B6B6B),
                 ),
@@ -593,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 child: Text(
-                  'Book Again',
+                  'Booked',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontFamily: 'Archivo',

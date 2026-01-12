@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart'; // Make sure to import your TopBar
 
 class PaymentHistoryScreen extends StatefulWidget {
@@ -122,6 +123,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Widget _buildPaymentCard(BuildContext context, Payment payment) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -235,7 +237,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                          color: colors.secondarynew,
                         ),
                       ),
                     ],
@@ -260,7 +262,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'completed':
-        return Colors.green;
+        return colors.secondarynew;
       case 'inprogress':
         return Colors.orange;
       case 'pending':

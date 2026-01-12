@@ -497,9 +497,15 @@ class GeneralRepository {
           endTime.isEmpty) {
         throw Exception('All parameters are required');
       }
+      final apiEndpoint;
+      if (airport == 'Stansted' || airport == 'Luton' || airport == 'Bristol') {
+        apiEndpoint = ApiFiles.searchParking;
+      } else {
+        apiEndpoint = ApiFiles.searchParking2;
+      }
 
       server.makeApiRequest(
-        apiEndpoint: ApiFiles.searchParking,
+        apiEndpoint: apiEndpoint,
         requestMethod: RequestMethod.post,
         requestData: {
           "startDate": startDate,
