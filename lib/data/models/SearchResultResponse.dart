@@ -31,6 +31,7 @@ class ParkingOption {
   final List<String> bulletPoints;
   final bool hasParkMark;
   final String? image;
+  final String? imagenew;
   final String? type;
   final double rating;
   final String ratingText;
@@ -46,6 +47,7 @@ class ParkingOption {
     required this.bulletPoints,
     required this.hasParkMark,
     this.image,
+    this.imagenew,
     this.type,
     this.rating = 0.0,
     this.ratingText = '',
@@ -66,6 +68,7 @@ class ParkingOption {
           [],
       hasParkMark: json['hasParkMark'] as bool? ?? false,
       image: json['image']?.toString(),
+      imagenew: json['imagenew']?.toString(),
       type: json['type']?.toString(),
       rating:
           (json['rating'] is num) ? (json['rating'] as num).toDouble() : 0.0,

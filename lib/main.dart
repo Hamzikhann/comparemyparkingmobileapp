@@ -36,6 +36,7 @@ import 'package:parkingapp/pages/resetOtp/OtpScreen2.dart';
 import 'package:provider/provider.dart';
 import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
+import 'package:parkingapp/pages/BookingConfirmationScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
@@ -128,6 +129,7 @@ class MyApp extends StatelessWidget {
             '/notifications': (context) => NotificationsScreen(),
             '/notificationsDriver': (context) => NotificationsScreenDriver(),
             '/packageDetail': (context) => PackageDetailScreen(),
+            '/bookingConfirmation': (context) => BookingConfirmationScreen(),
           },
         );
       },

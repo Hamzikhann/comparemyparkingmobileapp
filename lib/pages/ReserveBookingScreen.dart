@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingInfoModel.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 
 class ReserveBookingScreen extends StatefulWidget {
@@ -47,68 +47,18 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSavedBookingInfo();
+    _loadUserProfileInfo();
   }
 
-  Future<void> _loadSavedBookingInfo() async {
-    final savedInfo = await SharedStorage.loadBookingInfo();
-    if (savedInfo != null && mounted) {
+  void _loadUserProfileInfo() {
+    if (Globals.user != null) {
       setState(() {
-        if (outBoundController.text.isEmpty)
-          outBoundController.text = savedInfo.outBoundTerminal;
-        if (inBoundController.text.isEmpty)
-          inBoundController.text = savedInfo.inBoundTerminal;
-        if (departureFlightController.text.isEmpty)
-          departureFlightController.text = savedInfo.departureFlight;
-        if (returnFlightController.text.isEmpty)
-          returnFlightController.text = savedInfo.returnFlight;
-
-        selectedTitle = savedInfo.title;
-
-        if (fullNameController.text.isEmpty) {
-          // Combine first and last name if we have them
-          String first = savedInfo.firstName;
-          String last = savedInfo.lastName;
-          if (first.isNotEmpty || last.isNotEmpty) {
-            fullNameController.text = "$first $last".trim();
-          } else {
-            // Fallback to global user if needed
-            if (Globals.user != null) {
-              fullNameController.text =
-                  "${Globals.user!.firstName} ${Globals.user!.lastName}";
-            }
-          }
-        }
-
-        if (phoneController.text.isEmpty)
-          phoneController.text = savedInfo.phone;
-        if (emailController.text.isEmpty) {
-          emailController.text = savedInfo.email.isNotEmpty
-              ? savedInfo.email
-              : (Globals.user?.email ?? "");
-        }
-
-        // Vehicle
-        if (vehicleRegNoController.text.isEmpty)
-          vehicleRegNoController.text = savedInfo.vehicleRegNo;
-        if (carMakerController.text.isEmpty)
-          carMakerController.text = savedInfo.carMaker;
-        // logic for year/model might have been swapped in previous versions, just mapping straight here
-        if (carModelController.text.isEmpty)
-          carModelController.text = savedInfo.carModel;
-        if (carColorController.text.isEmpty)
-          carColorController.text = savedInfo.carColor;
-        if (numPassengersController.text.isEmpty)
-          numPassengersController.text = savedInfo.noOfPassengers;
-        transmissionType = savedInfo.type;
-      });
-    } else {
-      // Pre-fill from Globals if no saved info
-      if (Globals.user != null && fullNameController.text.isEmpty) {
         fullNameController.text =
-            "${Globals.user!.firstName} ${Globals.user!.lastName}";
+            "${Globals.user!.firstName} ${Globals.user!.lastName}".trim();
         emailController.text = Globals.user!.email;
-      }
+        phoneController.text = Globals.user!.phoneNo;
+        selectedTitle = "Mr"; // Default since UserModel doesn't have title
+      });
     }
   }
 
@@ -117,8 +67,36 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       setState(() {
         _currentStep--;
       });
-    } else {
-      Navigator.of(context).pop();
+    }
+  }
+
+  void _handleVehicleLookup() async {
+    String regNo = vehicleLookupController.text.trim();
+    if (regNo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Please enter a registration number")));
+      return;
+    }
+
+    try {
+      final response = await GeneralRepository().lookupVehicle(regNo);
+      if (response.success && response.data?.vehicleDescription != null) {
+        print(response.data!.vehicleDescription!);
+        final vd = response.data!.vehicleDescription!;
+        setState(() {
+          vehicleRegNoController.text = regNo;
+          carMakerController.text = vd.manufacturer ?? "";
+          carModelController.text = vd.model ?? "";
+          carYearController.text = vd.year ?? "";
+          carColorController.text = vd.colour ?? "";
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("No data found. Please enter details manually.")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Search failed. Please enter manually.")));
     }
   }
 
@@ -289,13 +267,16 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                     controller: vehicleLookupController,
                     hint: "Enter register number")),
             SizedBox(width: 8.w),
-            Container(
-              height: 50.h,
-              width: 50.w,
-              decoration: BoxDecoration(
-                  color: Color(0xFF2E5B5B), // primary dark green
-                  borderRadius: BorderRadius.circular(8.r)),
-              child: Icon(Icons.search, color: Colors.white),
+            InkWell(
+              onTap: _handleVehicleLookup,
+              child: Container(
+                height: 50.h,
+                width: 50.w,
+                decoration: BoxDecoration(
+                    color: Color(0xFF2E5B5B), // primary dark green
+                    borderRadius: BorderRadius.circular(8.r)),
+                child: Icon(Icons.search, color: Colors.white),
+              ),
             )
           ],
         ),
@@ -442,12 +423,6 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
           : numPassengersController.text,
       type: transmissionType,
     );
-
-    // Save info logic (Skipping dialog for speed as per 'Update design' usually implies simplified flow,
-    // but the screenshot doesn't show a save dialog. I will auto-save or just proceed.
-    // I'll keep the save logic implicit or ask. For a wizard, usually it just submits.
-    // I will AUTO SAVE for convenience).
-    await SharedStorage.saveBookingInfo(bookingInfo);
 
     Globals.booking_info_model = bookingInfo;
     Navigator.pushNamed(context, MyRoutes.payment);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
@@ -109,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Navigator.pop(context);
                               },
                               trailing: selectedAirport == airport
-                                  ? Icon(Icons.check, color: Color(0xFF4B725D))
+                                  ? Icon(Icons.check, color: colors.primaryNew)
                                   : null,
                             ))
                         .toList(),
@@ -133,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: Color(0xFF4B725D),
+              primary: colors.primaryNew,
             ),
           ),
           child: child!,
@@ -150,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: Color(0xFF4B725D),
+              primary: colors.primaryNew,
             ),
           ),
           child: child!,
@@ -221,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -243,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       icon: Icon(
                         Icons.notifications,
-                        color: Color(0xFF4B725D),
+                        color: colors.primaryNew,
                         size: 28.sp,
                       ),
                     ),
@@ -253,17 +254,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Hero section with car
               Container(
-                padding: EdgeInsets.all(0.w),
+                width: double.infinity,
+                padding: EdgeInsets.only(left: 20.w, top: 40.h, bottom: 20.h),
                 decoration: BoxDecoration(
-                  color: Color(0x0D214D53), // #214D530D
+                  color: colors.primaryNew,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30.r),
+                    bottomRight: Radius.circular(30.r),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    // Car image
-                    Image.asset(
-                      'assets/images/home_image.png',
-                      fit: BoxFit.cover,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hi, Where would\nyou like to\nPark?',
+                          style: TextStyle(
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'Archivo',
+                            height: 1.1,
+                          ),
+                        ),
+                        SizedBox(height: 60.h),
+                      ],
+                    ),
+                    Positioned(
+                      right: -30.w,
+                      bottom: -70.h,
+                      child: Image.asset(
+                        'assets/images/car.png',
+                        width: 290.w,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ],
                 ),
@@ -272,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Three buttons row
               // Search Bar
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 20.w),
+                margin: EdgeInsets.symmetric(horizontal: 10.w),
                 decoration: BoxDecoration(
                   color: Color(0xFFF0F3F5),
                   borderRadius: BorderRadius.circular(50.r),
@@ -299,12 +324,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.w, vertical: 16.h),
+                                horizontal: 4.w, vertical: 4.h),
                             child: Center(
                               child: Text(
                                 selectedAirport ?? 'Select Airport',
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontFamily: 'Archivo',
                                   color: selectedAirport != null
                                       ? Color(0xFF1A1A2E)
@@ -361,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontSize: 10.sp,
                                       fontFamily: 'Archivo',
-                                      color: Color(0xFF4B725D),
+                                      color: colors.primaryNew,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -413,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontSize: 10.sp,
                                       fontFamily: 'Archivo',
-                                      color: Color(0xFF4B725D),
+                                      color: colors.primaryNew,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -433,7 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 48.w,
                             height: 48.h,
                             decoration: BoxDecoration(
-                              color: Color(0xFF4B725D),
+                              color: colors.primaryNew,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -508,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -570,15 +595,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : Colors.orange.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
-                          child: Text(
-                            booking.status.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Archivo',
-                              color: booking.status.toLowerCase() == 'completed'
-                                  ? Colors.green
-                                  : Colors.orange,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              _showUpdateBooking(context, booking);
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  "EDIT",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Archivo',
+                                    color: booking.status.toLowerCase() ==
+                                            'completed'
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                Icon(Icons.edit,
+                                    color: booking.status.toLowerCase() ==
+                                            'completed'
+                                        ? Colors.green
+                                        : Colors.orange,
+                                    size: 16.sp),
+                              ],
                             ),
                           ),
                         ),
@@ -607,7 +650,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(Icons.flight_takeoff,
-                                    color: Color(0xFF4B725D), size: 20.sp),
+                                    color: colors.primaryNew, size: 20.sp),
                               ),
                               SizedBox(width: 16.w),
                               Column(
@@ -679,7 +722,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Icon(Icons.directions_car_filled,
-                                  color: Color(0xFF4B725D), size: 24.sp),
+                                  color: colors.primaryNew, size: 24.sp),
                             ),
                             SizedBox(width: 16.w),
                             Column(
@@ -730,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4B725D),
+                    backgroundColor: colors.primaryNew,
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
@@ -758,7 +801,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 20.sp, color: Color(0xFF4B725D)),
+        Icon(icon, size: 20.sp, color: colors.primaryNew),
         SizedBox(width: 8.w),
         Text(
           title,
@@ -792,12 +835,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 12.w,
                   height: 12.w,
                   decoration: BoxDecoration(
-                    color: Color(0xFF4B725D),
+                    color: colors.primaryNew,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0xFF4B725D).withOpacity(0.3),
+                        color: colors.primaryNew.withOpacity(0.3),
                         blurRadius: 4,
                         spreadRadius: 2,
                       ),
@@ -902,7 +945,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Icon(
                   Icons.directions_car,
-                  color: Color(0xFF4B725D),
+                  color: colors.primaryNew,
                   size: 24.sp,
                 ),
               ],
@@ -935,12 +978,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFF6B6B6B),
                 ),
                 SizedBox(width: 4.w),
-                Text(
-                  'From ${booking.startTime} to ${booking.endTime}, ${_formatDate(booking.startDate)}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontFamily: 'Archivo',
-                    color: Color(0xFF6B6B6B),
+                Expanded(
+                  child: Text(
+                    'From ${booking.startTime} to ${booking.endTime}, ${_formatDate(booking.startDate)}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontFamily: 'Archivo',
+                      color: Color(0xFF6B6B6B),
+                    ),
                   ),
                 ),
               ],
@@ -974,7 +1019,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontFamily: 'Archivo',
-                      color: Color(0xFF4B725D),
+                      color: colors.primaryNew,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1065,6 +1110,408 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showUpdateBooking(BuildContext screenContext, Parking booking) {
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime? updateStartDate = DateTime.tryParse(booking.startDate);
+    DateTime? updateEndDate = DateTime.tryParse(booking.endDate);
+    TimeOfDay _robustTimeParse(String timeStr) {
+      try {
+        // Replace any whitespace/invisible characters with standard space
+        final sanitized = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim();
+        return TimeOfDay.fromDateTime(DateFormat.jm().parse(sanitized));
+      } catch (e) {
+        try {
+          final sanitized = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim();
+          return TimeOfDay.fromDateTime(DateFormat("h:mm a").parse(sanitized));
+        } catch (e2) {
+          // Manual fallback for "h:mm a" or "hh:mm a"
+          final parts = timeStr.split(RegExp(r'[:\s\u00A0\u202F]'));
+          int hour = int.parse(parts[0]);
+          int minute = int.parse(parts[1]);
+          bool isPm = timeStr.toUpperCase().contains('PM');
+          if (isPm && hour < 12) hour += 12;
+          if (!isPm && hour == 12) hour = 0;
+          return TimeOfDay(hour: hour, minute: minute);
+        }
+      }
+    }
+
+    TimeOfDay updateStartTime = _robustTimeParse(booking.startTime);
+    TimeOfDay updateEndTime = _robustTimeParse(booking.endTime);
+
+    Widget _buildNoteText(String text) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 4.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("• ",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Color(0xFF856404))),
+            Expanded(
+                child: Text(text,
+                    style:
+                        TextStyle(fontSize: 12.sp, color: Color(0xFF856404)))),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildUpdatePicker(BuildContext context, String label,
+        DateTime? date, TimeOfDay? time, VoidCallback onTap) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500)),
+          SizedBox(height: 8.h),
+          InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    date != null && time != null
+                        ? "${DateFormat('dd MMM yyyy').format(date)} at ${time.format(context)}"
+                        : "Select Date & Time",
+                    style:
+                        TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                  ),
+                  Icon(Icons.calendar_today,
+                      size: 20.sp, color: colors.primaryNew),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    int _calculateAdditionalDays() {
+      if (updateStartDate == null || updateEndDate == null) return 0;
+
+      final originalStart = DateTime.parse(booking.startDate);
+      final originalEnd = DateTime.parse(booking.endDate);
+      final originalDays = originalEnd.difference(originalStart).inDays + 1;
+
+      final newDays = updateEndDate!.difference(updateStartDate!).inDays + 1;
+
+      return (newDays - originalDays).clamp(0, 100);
+    }
+
+    double _calculateTotalCost() {
+      int extraDays = _calculateAdditionalDays();
+      return 20.0 + (extraDays * 15.0);
+    }
+
+    Future<void> _handleUpdatePayment(
+        String paymentId, double totalCost, StateSetter setState) async {
+      final messenger = ScaffoldMessenger.of(this.context);
+      final navigator = Navigator.of(this.context);
+      try {
+        await _repository.updateBooking(
+          bookingId: booking.id,
+          startDate: _formatDateForApi(updateStartDate!),
+          startTime: _formatTimeForApi(updateStartTime),
+          endDate: _formatDateForApi(updateEndDate!),
+          endTime: _formatTimeForApi(updateEndTime),
+          paymentMethod: "card",
+          totalPayment: totalCost.toStringAsFixed(2),
+          referenceNo: "STRIPE-$paymentId",
+        );
+
+        if (!mounted) return;
+
+        // Dismiss both sheets safely
+        if (navigator.canPop()) navigator.pop(); // Close update sheet
+        if (navigator.canPop()) navigator.pop(); // Close details sheet
+
+        // Show Success Dialog
+        showDialog(
+          context: this.context,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, color: colors.primaryNew, size: 64.sp),
+                SizedBox(height: 16.h),
+                Text(
+                  "Update Successful",
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Archivo',
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  "Your booking has been updated and paid successfully.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                    fontFamily: 'Archivo',
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primaryNew,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r)),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                    child: Text("OK",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        // Refresh Main Screen Data
+        this.setState(() {
+          _bookingsFuture = _repository.getBookings();
+        });
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text("Update failed: $e")),
+        );
+      }
+    }
+
+    Future<void> _startUpdatePayment(
+        double totalCost, StateSetter setState) async {
+      final localMessenger = ScaffoldMessenger.of(this.context);
+      try {
+        final amountInPence = (totalCost).toInt().toString();
+
+        final response = await _repository.createPaymentIntent(
+          amount: amountInPence,
+          currency: "gbp",
+          startDate: _formatDateForApi(updateStartDate!),
+          endDate: _formatDateForApi(updateEndDate!),
+        );
+
+        final clientSecret = response['paymentIntent']?['client_secret'] ??
+            response['clientSecret'];
+        if (clientSecret == null)
+          throw Exception('Missing client secret in response');
+
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            merchantDisplayName: 'Parking Pilot',
+            style: ThemeMode.system,
+            allowsDelayedPaymentMethods: false,
+          ),
+        );
+
+        await Stripe.instance.presentPaymentSheet();
+        if (!mounted) return;
+
+        final paymentId =
+            response['paymentIntent']?['id'] ?? response['paymentId'];
+
+        await _handleUpdatePayment(paymentId, totalCost, setState);
+      } catch (e) {
+        if (!mounted) return;
+        if (e is StripeException) {
+          if (e.error.code != FailureCode.Canceled) {
+            localMessenger.showSnackBar(SnackBar(
+                content: Text("Payment error: ${e.error.localizedMessage}")));
+          }
+        } else {
+          localMessenger.showSnackBar(
+              SnackBar(content: Text("Payment failed: ${e.toString()}")));
+        }
+      }
+    }
+
+    showModalBottomSheet(
+      context: screenContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setState) {
+          double totalCost = _calculateTotalCost();
+          int extraDays = _calculateAdditionalDays();
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 12.h),
+                Container(
+                    width: 60.w,
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2.5.r))),
+                SizedBox(height: 20.h),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Update Booking",
+                            style: TextStyle(
+                                fontSize: 24.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A1A2E))),
+                        SizedBox(height: 24.h),
+                        _buildUpdatePicker(
+                          context,
+                          "New Drop-off",
+                          updateStartDate,
+                          updateStartTime,
+                          () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: (updateStartDate != null &&
+                                      !updateStartDate!.isBefore(today))
+                                  ? updateStartDate!
+                                  : today,
+                              firstDate: today,
+                              lastDate: today.add(Duration(days: 365)),
+                            );
+                            if (date != null) {
+                              final time = await showTimePicker(
+                                context: context,
+                                initialTime: updateStartTime,
+                              );
+                              if (time != null) {
+                                setState(() {
+                                  updateStartDate = date;
+                                  updateStartTime = time;
+                                });
+                              }
+                            }
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        _buildUpdatePicker(
+                          context,
+                          "New Pick-up",
+                          updateEndDate,
+                          updateEndTime,
+                          () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: (updateEndDate != null &&
+                                      !updateEndDate!
+                                          .isBefore(updateStartDate ?? today))
+                                  ? updateEndDate!
+                                  : (updateStartDate ?? today),
+                              firstDate: updateStartDate ?? today,
+                              lastDate: today.add(Duration(days: 365)),
+                            );
+                            if (date != null) {
+                              final time = await showTimePicker(
+                                context: context,
+                                initialTime: updateEndTime,
+                              );
+                              if (time != null) {
+                                setState(() {
+                                  updateEndDate = date;
+                                  updateEndTime = time;
+                                });
+                              }
+                            }
+                          },
+                        ),
+                        SizedBox(height: 30.h),
+                        Container(
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFFF9E6),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Color(0xFFFFE082)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Booking Update Charges",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp,
+                                      color: Color(0xFF856404))),
+                              SizedBox(height: 8.h),
+                              _buildNoteText(
+                                  "A fixed update fee of £20 applies to every booking modification."),
+                              _buildNoteText(
+                                  "Each additional day costs an extra £15."),
+                              _buildNoteText(
+                                  "No refunds are provided for reduced booking days."),
+                              Divider(color: Color(0xFFFFE082)),
+                              Text(
+                                "Total Update Cost: £20 + (£15 × $extraDays extra days) = £${totalCost.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13.sp,
+                                    color: Color(0xFF856404)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 40.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                _startUpdatePayment(totalCost, setState),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primaryNew,
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r)),
+                            ),
+                            child: Text(
+                              "Pay & Update Booking",
+                              style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

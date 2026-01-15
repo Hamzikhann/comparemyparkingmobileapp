@@ -5,7 +5,9 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
+import 'dart:math';
 
 class PackagesScreen extends StatefulWidget {
   const PackagesScreen({super.key});
@@ -430,54 +432,111 @@ class _PackagesScreenState extends State<PackagesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Left Image Section
-            Stack(
+            Column(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.r),
-                  child: (option.image != null && option.image!.isNotEmpty)
-                      ? Image.network(
-                          option.image!,
-                          width: 100.w,
-                          height: 100.w,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => Container(
-                            width: 100.w,
-                            height: 100.w,
-                            color: Colors.grey[200],
-                            child:
-                                Icon(Icons.local_parking, color: Colors.grey),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: (option.imagenew != null &&
+                              option.imagenew!.isNotEmpty)
+                          ? Image.network(
+                              option.imagenew!,
+                              width: 100.w,
+                              height: 100.w,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) => Container(
+                                width: 100.w,
+                                height: 100.w,
+                                color: Colors.grey[200],
+                                child: Icon(Icons.local_parking,
+                                    color: Colors.grey),
+                              ),
+                            )
+                          : Image.network(
+                              option.image!,
+                              width: 100.w,
+                              height: 100.w,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) => Container(
+                                width: 100.w,
+                                height: 100.w,
+                                color: Colors.grey[200],
+                                child: Icon(Icons.local_parking,
+                                    color: Colors.grey),
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF6B8E78), // Greenish background
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8.r),
+                            bottomRight: Radius.circular(8.r),
                           ),
-                        )
-                      : Container(
-                          width: 100.w,
-                          height: 100.w,
-                          color: Colors.grey[200],
-                          child: Icon(Icons.local_parking, color: Colors.grey),
                         ),
+                        child: Text(
+                          "Secure My Parking Spot",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF6B8E78), // Greenish background
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(8.r),
-                        bottomRight: Radius.circular(8.r),
-                      ),
-                    ),
-                    child: Text(
-                      "Secure My Parking Spot",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: 100.w,
+                  child: Builder(builder: (context) {
+                    final int views =
+                        Random(option.name.hashCode).nextInt(70) + 20;
+                    final int bought =
+                        Random(option.name.hashCode + 1).nextInt(views - 5) + 5;
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.remove_red_eye_outlined,
+                                size: 14.sp, color: colors.secondarynew),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "$views views",
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: colors.secondarynew,
+                                fontFamily: 'Archivo',
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(Icons.shopping_bag_outlined,
+                                size: 14.sp, color: colors.secondarynew),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "$bought bought",
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: colors.secondarynew,
+                                fontFamily: 'Archivo',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ],
             ),

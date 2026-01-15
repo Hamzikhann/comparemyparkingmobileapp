@@ -47,11 +47,10 @@ class PackageDetailScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
                   image: DecorationImage(
-                    image: (option.image != null && option.image!.isNotEmpty)
-                        ? NetworkImage(option.image!)
-                        : const AssetImage(
-                                'assets/images/parking_placeholder.jpg')
-                            as ImageProvider,
+                    image:
+                        (option.imagenew != null && option.imagenew!.isNotEmpty)
+                            ? NetworkImage(option.imagenew!)
+                            : NetworkImage(option.image!),
                     fit: BoxFit.cover,
                   ),
                 ),

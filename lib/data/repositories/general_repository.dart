@@ -20,6 +20,7 @@ import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/models/UserUpdateModel.dart';
+import 'package:parkingapp/data/models/VehicleLookupModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
@@ -686,6 +687,83 @@ class GeneralRepository {
       completer.completeError(e.toString());
     }
 
+    return completer.future;
+  }
+
+  Future<BookingResponse> updateBooking({
+    required String bookingId,
+    required String startDate,
+    required String startTime,
+    required String endDate,
+    required String endTime,
+    required String paymentMethod,
+    required String totalPayment,
+    required String referenceNo,
+  }) async {
+    Completer<BookingResponse> completer = Completer();
+
+    try {
+      server.makeApiRequest(
+        apiEndpoint: ApiFiles.updateBooking,
+        requestMethod: RequestMethod.post,
+        requestData: {
+          "bookingId": bookingId,
+          "startDate": startDate,
+          "startTime": startTime,
+          "endDate": endDate,
+          "endTime": endTime,
+          "paymentMethod": paymentMethod,
+          "totalPayment": totalPayment,
+          "referenceNo": referenceNo,
+        },
+        onLoad: () {
+          EasyLoading.show(status: "Updating booking...");
+        },
+        onSuccess: (Map<String, dynamic> response) {
+          EasyLoading.dismiss();
+          try {
+            BookingResponse bookingResponse =
+                BookingResponse.fromJson(response);
+            completer.complete(bookingResponse);
+          } catch (e) {
+            completer.completeError('Error processing update response: $e');
+          }
+        },
+        onError: (String errorMessage) {
+          EasyLoading.dismiss();
+          completer.completeError(errorMessage);
+        },
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      completer.completeError(e.toString());
+    }
+
+    return completer.future;
+  }
+
+  Future<VehicleLookupResponse> lookupVehicle(String registrationNumber) async {
+    Completer<VehicleLookupResponse> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.vehicleLookup,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "registrationNumber": registrationNumber,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Looking up vehicle...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        VehicleLookupResponse response = VehicleLookupResponse.fromJson(res);
+        completer.complete(response);
+      },
+      onError: (String errorMessage) {
+        print(errorMessage);
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
     return completer.future;
   }
 

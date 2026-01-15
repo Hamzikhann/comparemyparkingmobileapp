@@ -6,7 +6,6 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
-import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -77,58 +76,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
         transactionId: paymentIntentId,
       );
 
-      if (result.toString().contains("Booking")) {
-        _showSuccessDialog();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Booking failed: $result")),
-        );
-      }
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        MyRoutes.bookingConfirmation,
+        (_) => false,
+        arguments: result,
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Booking failed: $e")),
       );
     }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.all(24),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Ensure you have this asset or replace with Icon
-            // SvgPicture.asset('assets/images/success.svg', height: 80, width: 80),
-            Icon(Icons.check_circle, color: Colors.green, size: 80),
-            const SizedBox(height: 20),
-            const Text(
-              'Booking Successful!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Your parking has been booked successfully.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushNamedAndRemoveUntil(
-                    context, MyRoutes.mainPage, (_) => false);
-              },
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: colors.primaryNew),
-              child: const Text('OK', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> startStripePayment() async {

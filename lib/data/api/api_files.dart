@@ -19,4 +19,6 @@ class ApiFiles {
   static String getNotifications = "/notification/list";
   static String markNotificationsAsRead = "/notification/update";
   static String clearAllNotifications = "/notification/delete";
+  static String vehicleLookup = "/vechile/info";
+  static String updateBooking = "/booking/update";
 }
