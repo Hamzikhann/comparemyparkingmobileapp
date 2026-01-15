@@ -21,4 +21,6 @@ class ApiFiles {
   static String clearAllNotifications = "/notification/delete";
   static String vehicleLookup = "/vechile/info";
   static String updateBooking = "/booking/update";
+  static String updateProfileImage = "/users/update/image";
+  static String updateProfileInfo = "/users/update";
 }

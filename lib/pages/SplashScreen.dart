@@ -17,11 +17,42 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+
+    _controller.forward();
     _initializeApp(); // Move the async logic to a separate method
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {
@@ -29,7 +60,8 @@ class _SplashScreenState extends State<SplashScreen> {
     await SharedStorage.loadUser();
 
     // Navigate to the appropriate screen after a delay
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
       if (Globals.user != null) {
         if (Globals.roleTitle == "Employee") {
           Navigator.pushReplacement(
@@ -85,54 +117,60 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
 
-          /// Texts at bottom
+          /// Texts at bottom with animation
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.only(bottom: 40.h),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Secure Parking',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: colors.secondarynew,
-                    ),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Secure Parking',
+                        style: TextStyle(
+                          fontFamily: 'Archivo',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: colors.secondarynew,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Easy Booking',
+                        style: TextStyle(
+                          fontFamily: 'Archivo',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: colors.secondarynew,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Shuttle Included',
+                        style: TextStyle(
+                          fontFamily: 'Archivo',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: colors.secondarynew,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Free Cancellation',
+                        style: TextStyle(
+                          fontFamily: 'Archivo',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: colors.secondarynew,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Easy Booking',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: colors.secondarynew,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Shuttle Included',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: colors.secondarynew,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Free Cancellation',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: colors.secondarynew,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

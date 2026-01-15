@@ -20,9 +20,8 @@ class SharedStorage {
 
     if (jsonString != null) {
       final data = json.decode(jsonString);
-      final userData = data['user'];
-      Globals.roleTitle = userData['roleTitle'];
       Globals.user = UserModel.fromJson(data);
+      Globals.roleTitle = Globals.user?.roleTitle ?? "";
     }
   }
 
@@ -91,9 +90,10 @@ class SharedStorage {
     final jsonString = json.encode(bookingInfo.toJson());
     await prefs.setString(bookingInfoKey, jsonString);
   }
+
   static Future<void> removeBookingInfo() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.remove(bookingInfoKey);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove(bookingInfoKey);
   }
 
   static Future<BookingInfoModel?> loadBookingInfo() async {

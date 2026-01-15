@@ -8,6 +8,7 @@ import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/pages/EditProfile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -234,9 +235,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CircleAvatar(
-                      radius: 22.r,
-                      backgroundImage: AssetImage('assets/images/profilee.png'),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Editprofile()),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 22.r,
+                        backgroundImage: (Globals.user?.imageUrl != null &&
+                                Globals.user!.imageUrl!.isNotEmpty)
+                            ? NetworkImage(Globals.user!.imageUrl!)
+                            : const AssetImage('assets/images/profilee.png')
+                                as ImageProvider,
+                      ),
                     ),
                     IconButton(
                       onPressed: () {

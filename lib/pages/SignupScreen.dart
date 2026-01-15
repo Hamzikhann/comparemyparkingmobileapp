@@ -475,6 +475,7 @@ class _SignupScreenState extends State<SignupScreen> {
         type: AlertType.success,
         onClose: () {
           Globals.user = value;
+          Globals.roleTitle = value.roleTitle;
           SharedStorage.saveUser(value);
           Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
         },

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/data/api/api_service.dart';
@@ -31,15 +32,20 @@ class GeneralRepository {
 
   Future<UserModel> signin(String email, String password) async {
     Completer<UserModel> completer = Completer();
-    //String? token = await FirebaseMessaging.instance.getToken();
-    //print(token);
+    String? fcmToken = "";
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      print("Error getting FCM token: $e");
+    }
+
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signin,
       requestMethod: RequestMethod.post,
       requestData: {
         "email": email,
         "password": password,
-        "fcmToken": "",
+        "fcmToken": fcmToken ?? "",
       },
       onLoad: () {
         EasyLoading.show(status: "Loading...");
@@ -217,7 +223,12 @@ class GeneralRepository {
     required String confirmPassword,
   }) async {
     Completer<UserModel> completer = Completer();
-    // String? token = await FirebaseMessaging.instance.getToken();
+    String? fcmToken = "";
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      print("Error getting FCM token: $e");
+    }
 
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signup, // Make sure you have this endpoint defined
@@ -230,7 +241,7 @@ class GeneralRepository {
         "phoneNo": phoneNo,
         "password": password,
         "confirmPassword": confirmPassword,
-        "fcmToken": "",
+        "fcmToken": fcmToken ?? "",
       },
       onLoad: () {
         EasyLoading.show(status: "Creating account...");
@@ -274,6 +285,12 @@ class GeneralRepository {
     required String confirmPassword,
   }) async {
     Completer<UserModel> completer = Completer();
+    String? fcmToken = "";
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      print("Error getting FCM token: $e");
+    }
 
     server.makeApiRequest(
       apiEndpoint: ApiFiles.signup, // Make sure you have this endpoint defined
@@ -287,7 +304,7 @@ class GeneralRepository {
         "password": password,
         "confirmPassword": confirmPassword,
         "roleId": 'RmFBM1Z3UCtvNEJYNXZ2bXcxT00yUT09',
-        "fcmToken": "",
+        "fcmToken": fcmToken ?? "",
       },
       onLoad: () {
         EasyLoading.show(status: "Add driver...");
@@ -363,6 +380,59 @@ class GeneralRepository {
       },
     );
 
+    return completer.future;
+  }
+
+  Future<void> updateProfileImage(String userId, File image) async {
+    Completer<void> completer = Completer();
+    server.makeMultipartRequest(
+      apiEndpoint: ApiFiles.updateProfileImage,
+      requestMethod: RequestMethod.post,
+      fields: {"userId": userId},
+      files: [MultipartFileInfo(file: image, fieldName: "image")],
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete();
+      },
+      onError: (String errorMessage) {
+        print(errorMessage);
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'editProfile',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
+  }
+
+  Future<void> updateProfileInfo(Map<String, dynamic> data) async {
+    Completer<void> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.updateProfileInfo,
+      requestMethod: RequestMethod.post,
+      requestData: data,
+      onLoad: () {
+        EasyLoading.show(status: "Updating profile...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete();
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'editProfile',
+          message: errorMessage,
+          duration: 10,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
     return completer.future;
   }
 
@@ -565,7 +635,7 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<BookingResponse> bookParking({
+  Future<Map<String, dynamic>> bookParking({
     required String startDate,
     required String startTime,
     required String endDate,
@@ -601,7 +671,7 @@ class GeneralRepository {
     required String paymentDate,
     required String transactionId,
   }) async {
-    Completer<BookingResponse> completer = Completer();
+    Completer<Map<String, dynamic>> completer = Completer();
 
     try {
       server.makeApiRequest(
@@ -666,11 +736,7 @@ class GeneralRepository {
               throw Exception('Booking response is empty or invalid');
             }
 
-            final bookingData = response;
-            BookingResponse bookingResponse =
-                BookingResponse.fromJson(bookingData);
-
-            completer.complete(bookingResponse);
+            completer.complete(response);
           } catch (e) {
             EasyLoading.dismiss();
 
@@ -690,7 +756,7 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<BookingResponse> updateBooking({
+  Future<Map<String, dynamic>> updateBooking({
     required String bookingId,
     required String startDate,
     required String startTime,
@@ -700,7 +766,7 @@ class GeneralRepository {
     required String totalPayment,
     required String referenceNo,
   }) async {
-    Completer<BookingResponse> completer = Completer();
+    Completer<Map<String, dynamic>> completer = Completer();
 
     try {
       server.makeApiRequest(
@@ -722,9 +788,7 @@ class GeneralRepository {
         onSuccess: (Map<String, dynamic> response) {
           EasyLoading.dismiss();
           try {
-            BookingResponse bookingResponse =
-                BookingResponse.fromJson(response);
-            completer.complete(bookingResponse);
+            completer.complete(response);
           } catch (e) {
             completer.completeError('Error processing update response: $e');
           }

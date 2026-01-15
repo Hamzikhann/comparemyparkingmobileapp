@@ -1,9 +1,11 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import '../widgets/PrimaryButton.dart';
@@ -25,6 +27,7 @@ class _EditprofileState extends State<Editprofile> {
 
   XFile? _pickedImage;
   final ImagePicker _picker = ImagePicker();
+  final GeneralRepository _repository = GeneralRepository();
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -33,10 +36,62 @@ class _EditprofileState extends State<Editprofile> {
         setState(() {
           _pickedImage = image;
         });
+        // Auto-upload image as per user request flow usually
+        await _uploadImage(File(image.path));
       }
     } catch (e) {
       debugPrint("Error picking image: $e");
-      // You might want to show an error message to the user
+    }
+  }
+
+  Future<void> _uploadImage(File imageFile) async {
+    try {
+      EasyLoading.show(status: 'Uploading image...');
+      await _repository.updateProfileImage(Globals.user!.id, imageFile);
+      // Since we don't have the new URL from API response here explicitly in instructions,
+      // we'll at least update the local state if needed or show success.
+      // If the app uses Globals.user!.imageUrl, we might need to set it if we had a URL.
+      // For now, we reflect the picked image locally.
+      EasyLoading.showSuccess('Image updated');
+    } catch (e) {
+      EasyLoading.showError('Image upload failed');
+    }
+  }
+
+  Future<void> _handleSave() async {
+    if (_formKey.currentState!.validate()) {
+      String fullName = fullNameController.text.trim();
+      List<String> nameParts = fullName.split(' ');
+      String firstName = nameParts.isNotEmpty ? nameParts[0] : "";
+      String lastName =
+          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : "";
+
+      Map<String, dynamic> data = {
+        "title": "Mr", // Default title as not provided in UI fields
+        "firstName": firstName,
+        "lastName": lastName,
+        "phoneNo": phoneController.text.trim(),
+        "userId": Globals.user!.id,
+      };
+
+      try {
+        await _repository.updateProfileInfo(data);
+
+        // Update Globals and SharedStorage to reflect in app
+        setState(() {
+          Globals.user!.firstName = firstName;
+          Globals.user!.lastName = lastName;
+          Globals.user!.phoneNo = phoneController.text.trim();
+        });
+
+        await SharedStorage.saveUser(Globals.user!);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      } catch (e) {
+        // Error already handled in repository
+      }
     }
   }
 
@@ -111,9 +166,14 @@ class _EditprofileState extends State<Editprofile> {
                                   image: DecorationImage(
                                     image: _pickedImage != null
                                         ? FileImage(File(_pickedImage!.path))
-                                        : const AssetImage(
-                                                'assets/images/profilee.png')
-                                            as ImageProvider,
+                                        : (Globals.user?.imageUrl != null &&
+                                                Globals
+                                                    .user!.imageUrl!.isNotEmpty)
+                                            ? NetworkImage(
+                                                Globals.user!.imageUrl!)
+                                            : const AssetImage(
+                                                    'assets/images/profilee.png')
+                                                as ImageProvider,
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -181,13 +241,7 @@ class _EditprofileState extends State<Editprofile> {
                         // Save Button
                         PrimaryButton(
                           text: "Save",
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              // Handle save logic
-                              // Split full name if needed
-                            }
-                          },
-                          // Assuming PrimaryButton uses the primary theme color (green)
+                          onPressed: _handleSave,
                         ),
                         SizedBox(height: 20.h),
                       ],

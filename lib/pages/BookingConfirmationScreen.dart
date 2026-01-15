@@ -180,60 +180,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ),
                     ),
                     SizedBox(height: 16.h),
-
-                    // Info Rows
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Customer Information",
-                            [
-                              "Full Name:\n${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}",
-                              "Email Address:\n${Globals.booking_info_model?.email}",
-                              "Phone:\n${Globals.booking_info_model?.phone}",
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Flight Details",
-                            [
-                              "Outbound Flight:\n${Globals.booking_info_model?.outBoundTerminal}",
-                              "Inbound Flight:\n${Globals.booking_info_model?.inBoundTerminal}",
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Vehicle Details",
-                            [
-                              "Registration:\n${Globals.booking_info_model?.vehicleRegNo}",
-                              "Make & Model:\n${Globals.booking_info_model?.carMaker}, ${Globals.booking_info_model?.carModel}",
-                              "Color:\n${Globals.booking_info_model?.carColor}",
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Booking Period",
-                            [
-                              "Start Date:\n${Globals.startDate}",
-                              "End Date:\n${Globals.endDate}",
-                              "Airport:\n${Globals.selectedAirport}",
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-
                     // Payment Summary
                     Container(
                       width: double.infinity,
@@ -290,6 +236,59 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ),
                     ),
                     SizedBox(height: 24.h),
+
+                    // Info Rows
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Customer Information",
+                            [
+                              "Full Name:\n${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}",
+                              "Email Address:\n${Globals.booking_info_model?.email}",
+                              "Phone:\n${Globals.booking_info_model?.phone}",
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Flight Details",
+                            [
+                              "Outbound Flight:\n${Globals.booking_info_model?.outBoundTerminal}",
+                              "Inbound Flight:\n${Globals.booking_info_model?.inBoundTerminal}",
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Vehicle Details",
+                            [
+                              "Registration:\n${Globals.booking_info_model?.vehicleRegNo}",
+                              "Make & Model:\n${Globals.booking_info_model?.carMaker}, ${Globals.booking_info_model?.carModel}",
+                              "Color:\n${Globals.booking_info_model?.carColor}",
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Booking Period",
+                            [
+                              "Start Date:\n${Globals.startDate}",
+                              "End Date:\n${Globals.endDate}",
+                              "Airport:\n${Globals.selectedAirport}",
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
 
                     // Important Info Section
                     Align(

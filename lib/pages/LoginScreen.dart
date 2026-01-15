@@ -60,7 +60,8 @@ class _LoginPageState extends State<LoginScreen> {
                   child: Image.asset(
                     'assets/images/car.png',
                     height: 200.h,
-                    fit: BoxFit.fitWidth,
+                    width: 350.w,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 SizedBox(height: 30.h),
@@ -217,6 +218,7 @@ class _LoginPageState extends State<LoginScreen> {
         type: AlertType.success,
         onClose: () {
           Globals.user = value;
+          Globals.roleTitle = value.roleTitle;
           SharedStorage.saveUser(value);
           emailController.clear();
           passwordController.clear();

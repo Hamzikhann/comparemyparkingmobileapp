@@ -45,8 +45,8 @@ class UserModel {
       'email': email,
       'phoneNo': phoneNo,
       'roleId': roleId,
-      'imageUrl': imageUrl,
-      'roleTitle': roleTitle,
+      'userProfile': {'imageUrl': imageUrl},
+      'role': {'title': roleTitle},
       'token': token,
     };
   }
