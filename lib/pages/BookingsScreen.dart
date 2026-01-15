@@ -915,11 +915,35 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   : today,
                               firstDate: today,
                               lastDate: today.add(const Duration(days: 365)),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: const Color(0xFF4B725D),
+                                      onPrimary: Colors.white,
+                                      onSurface: Colors.black,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
                             if (date != null) {
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: updateStartTime,
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: const Color(0xFF4B725D),
+                                        onPrimary: Colors.white,
+                                        onSurface: Colors.black,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
                               );
                               if (time != null) {
                                 setState(() {
@@ -946,11 +970,35 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   : (updateStartDate ?? today),
                               firstDate: updateStartDate ?? today,
                               lastDate: today.add(const Duration(days: 365)),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: const Color(0xFF4B725D),
+                                      onPrimary: Colors.white,
+                                      onSurface: Colors.black,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
                             if (date != null) {
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: updateEndTime,
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: const Color(0xFF4B725D),
+                                        onPrimary: Colors.white,
+                                        onSurface: Colors.black,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
                               );
                               if (time != null) {
                                 setState(() {

@@ -103,7 +103,15 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey, // ✅ Required for global navigation
           builder: EasyLoading.init(),
-          theme: ThemeData.light(),
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF4B725D),
+              primary: const Color(0xFF4B725D),
+              secondary: const Color(0xFF214D53),
+            ),
+            fontFamily: 'Archivo',
+          ),
           home: const SplashScreen(),
           routes: {
             '/login': (context) => LoginScreen(),
