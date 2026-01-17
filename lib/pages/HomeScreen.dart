@@ -998,7 +998,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(width: 4.w),
                 Expanded(
                   child: Text(
-                    'From ${booking.startTime} to ${booking.endTime}, ${_formatDate(booking.startDate)}',
+                    'From ${_formatDate(booking.startDate)} to ${_formatDate(booking.endDate)}',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontFamily: 'Archivo',
