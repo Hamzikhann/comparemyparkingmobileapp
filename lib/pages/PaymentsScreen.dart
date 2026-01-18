@@ -1,5 +1,6 @@
 // ignore_for_file: unused_catch_stack
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -71,8 +72,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Payment
         referenceNo: "STRIPE-$paymentIntentId",
         paymentMethod: paymentMethod,
-        paymentMethodDisplay:
-            paymentMethod == 'apple_pay' ? "Apple Pay" : "Credit / Debit Card",
+        paymentMethodDisplay: paymentMethod == 'apple_pay'
+            ? "Apple Pay"
+            : paymentMethod == 'google_pay'
+                ? "Google Pay"
+                : "Credit / Debit Card",
         paymentStatus: "completed",
         paymentDate: DateTime.now().toIso8601String(),
         transactionId: paymentIntentId,
@@ -286,14 +290,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
               color: Color(0xFF4285F4),
               textColor: Colors.white),
           SizedBox(height: 12.h),
-          _buildPaymentOption(
-              icon: Icons.phone_iphone,
-              label: "Apple Pay",
-              subLabel: "Pay securely with Apple Pay",
-              value: 'apple_pay',
-              color: Colors.black,
-              textColor: Colors.white,
-              isComingSoon: false),
+          if (Platform.isIOS)
+            _buildPaymentOption(
+                icon: Icons.phone_iphone,
+                label: "Apple Pay",
+                subLabel: "Pay securely with Apple Pay",
+                value: 'apple_pay',
+                color: Colors.black,
+                textColor: Colors.white,
+                isComingSoon: false),
+          if (Platform.isAndroid)
+            _buildPaymentOption(
+                icon: Icons.android,
+                label: "Google Pay",
+                subLabel: "Pay securely with Google Pay",
+                value: 'google_pay',
+                color: Colors.black,
+                textColor: Colors.white,
+                isComingSoon: false),
           SizedBox(height: 12.h),
           _buildPaymentOption(
               icon: Icons.money,
