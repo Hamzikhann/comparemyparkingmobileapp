@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -595,9 +596,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             SizedBox(height: 4.h),
                             Text(
-                              "ID: ${booking.id.substring(0, 8).toUpperCase()}",
+                              "ID: ${booking.id.toUpperCase()}",
                               style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: 10.sp,
                                 fontFamily: 'Archivo',
                                 color: Colors.grey[600],
                               ),
@@ -1015,8 +1016,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Star rating
                 Row(
                   children: List.generate(5, (index) {
+                    final randomRating =
+                        (Random(booking.id.hashCode).nextInt(3) + 3);
                     return Icon(
-                      index < 3 ? Icons.star : Icons.star_border,
+                      index < randomRating ? Icons.star : Icons.star_border,
                       color: Color(0xFFFFC107),
                       size: 20.sp,
                     );
@@ -1027,10 +1030,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () {
                     Globals.detailType = "reserved";
                     GlobalsBookingDetail.bookingdetailuser = booking;
-                    Navigator.pushNamed(
-                      context,
-                      MyRoutes.bookingDetailUser,
-                    );
                   },
                   child: Text(
                     'Booked',

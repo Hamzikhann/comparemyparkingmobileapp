@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -589,9 +590,29 @@ class GeneralRepository {
           EasyLoading.show(
             status: "Searching parking options...",
             maskType: EasyLoadingMaskType.black,
+            indicator: Image.asset(
+              'assets/images/load.gif',
+              width: 150.w,
+            ),
           );
         },
         onSuccess: (Map<String, dynamic> response) {
+          final status = response['status']?.toString().toLowerCase();
+          final jobId = response['jobId']?.toString() ?? '';
+          final message = response['message']?.toString().toLowerCase() ?? '';
+
+          // If we have a jobId AND (it's a known background status OR the message indicates background processing)
+          if (jobId.isNotEmpty &&
+              (status == 'processing' ||
+                  status == 'queued' ||
+                  status == 'pending' ||
+                  status == 'started' ||
+                  message.contains('background') ||
+                  message.contains('process'))) {
+            print("Background search detected. JobId: $jobId");
+            _pollSearchStatus(jobId, completer);
+            return; // ✅ Ensure we return here to wait for polling
+          }
           try {
             // Validate response structure
             if (response['data'] == null) {
@@ -606,33 +627,157 @@ class GeneralRepository {
               EasyLoading.dismiss();
             }
 
-            completer.complete(result);
+            if (!completer.isCompleted) completer.complete(result);
           } catch (e) {
             EasyLoading.dismiss();
 
-            completer.completeError('Failed to process parking options: $e');
+            if (!completer.isCompleted)
+              completer.completeError('Failed to process parking options: $e');
           }
         },
         onError: (String errorMessage) {
+          print("Initial search error: $errorMessage. Retrying...");
+          // If it's the first attempt, we could retry once automatically
+          // For now, let's just make it more resilient in polling
           EasyLoading.dismiss();
 
-          // Enhance error message for common cases
           final enhancedError = errorMessage.contains('timeout')
-              ? 'Request timed out. Please check your connection'
-              : errorMessage.contains('404')
-                  ? 'Service not available'
-                  : errorMessage;
+              ? 'Search is taking longer than expected. Please try again.'
+              : errorMessage;
 
-          completer.completeError(enhancedError);
+          if (!completer.isCompleted) completer.completeError(enhancedError);
         },
       );
     } catch (e) {
+      print("Search exception: $e");
       EasyLoading.dismiss();
-
-      completer.completeError(e.toString());
+      if (!completer.isCompleted) completer.completeError(e.toString());
     }
 
     return completer.future;
+  }
+
+  void _pollSearchStatus(
+      String jobId, Completer<SearchResultResponse> completer) {
+    server.makeApiRequest(
+      apiEndpoint: "${ApiFiles.searchStatus}/$jobId",
+      requestMethod: RequestMethod.post,
+      onLoad: () {
+        // We can keep the loading status or update it
+        // EasyLoading.show(
+        //   status: "Processing search results...",
+        //   maskType: EasyLoadingMaskType.black,
+        // );
+      },
+      onSuccess: (Map<String, dynamic> response) {
+        final status = response['status']?.toString().toLowerCase();
+        final message = response['message']?.toString().toLowerCase() ?? '';
+
+        // Check for progress percentage
+        dynamic progressData = response['progress'] ?? response['percentage'];
+        int percent = 0;
+        if (progressData != null) {
+          if (progressData is Map) {
+            percent =
+                int.tryParse(progressData['percent']?.toString() ?? '0') ?? 0;
+          } else {
+            percent = int.tryParse(progressData.toString()) ?? 0;
+          }
+        }
+
+        if (status == 'processing' ||
+            status == 'queued' ||
+            status == 'pending' ||
+            status == 'started' ||
+            (percent > 0 && percent < 100) ||
+            message.contains('background') ||
+            message.contains('process')) {
+          print(
+              "Polling: Search still in progress... Percent: $percent% Message: ${response['message']}");
+
+          if (percent > 0) {
+            EasyLoading.show(
+              status: "Processing search results... $percent%",
+              maskType: EasyLoadingMaskType.black,
+              indicator: Image.asset(
+                'assets/images/load.gif',
+                width: 100.w,
+              ),
+            );
+          } else {
+            EasyLoading.show(
+              status: "Processing search results...",
+              maskType: EasyLoadingMaskType.black,
+              indicator: Image.asset(
+                'assets/images/load.gif',
+                width: 100.w,
+              ),
+            );
+          }
+
+          // Poll again after 25 seconds
+          Future.delayed(const Duration(seconds: 25), () {
+            _pollSearchStatus(jobId, completer);
+          });
+        } else if (status == 'completed' ||
+            status == 'success' ||
+            percent == 100 ||
+            response['data'] != null) {
+          print("Polling: Search completed or 100%!");
+          try {
+            final result = SearchResultResponse.fromJson(response);
+            if (result.data.isEmpty &&
+                (status != 'completed' && percent < 100)) {
+              // If data is empty but not officially complete, poll again just in case
+              Future.delayed(const Duration(seconds: 10), () {
+                _pollSearchStatus(jobId, completer);
+              });
+              return;
+            }
+
+            if (result.data.isEmpty) {
+              EasyLoading.showInfo('No parking options available');
+            } else {
+              EasyLoading.dismiss();
+            }
+            if (!completer.isCompleted) completer.complete(result);
+          } catch (e) {
+            // If parsing fails but it's 100%, maybe data is coming late?
+            if (percent == 100 || status == 'completed') {
+              EasyLoading.dismiss();
+              if (!completer.isCompleted)
+                completer
+                    .completeError('Failed to process parking options: $e');
+            } else {
+              // Retry polling if parsing fails but not yet 100%
+              Future.delayed(const Duration(seconds: 10), () {
+                _pollSearchStatus(jobId, completer);
+              });
+            }
+          }
+        } else {
+          EasyLoading.dismiss();
+          if (!completer.isCompleted)
+            completer.completeError(
+                response['message'] ?? 'Search failed or was cancelled');
+        }
+      },
+      onError: (String errorMessage) {
+        print("Polling error: $errorMessage. Retrying in 5 seconds...");
+        // Keep the loader visible even on error
+        EasyLoading.show(
+          status: "Waiting for results...",
+          maskType: EasyLoadingMaskType.black,
+          indicator: Image.asset(
+            'assets/images/load.gif',
+            width: 100.w,
+          ),
+        );
+        Future.delayed(const Duration(seconds: 5), () {
+          _pollSearchStatus(jobId, completer);
+        });
+      },
+    );
   }
 
   Future<Map<String, dynamic>> bookParking({

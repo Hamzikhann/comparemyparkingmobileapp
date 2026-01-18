@@ -158,7 +158,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 ),
                                 TextSpan(
                                   text: bookingData?['referenceNo'] ??
-                                      "CP-BRI-000034-5PSL",
+                                      "No Reference Number",
                                   style: TextStyle(
                                       color: Colors.grey[800],
                                       fontWeight: FontWeight.w600,
@@ -228,7 +228,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            "Reference: ${bookingData?['referenceNo'] ?? 'CP-BRI-000034-5PSL'}",
+                            "Reference: ${bookingData?['referenceNo'] ?? 'No Reference Number'}",
                             style: TextStyle(
                                 color: Colors.white54, fontSize: 11.sp),
                           ),

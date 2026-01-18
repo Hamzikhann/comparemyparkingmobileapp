@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
     EasyLoading.instance
       ..dismissOnTap = true
       ..loadingStyle = EasyLoadingStyle.light
-      ..indicatorWidget = Image.asset('assets/images/load.gif');
+      ..indicatorType = EasyLoadingIndicatorType.ring;
 
     return ScreenUtilInit(
       designSize: const Size(375, 812),

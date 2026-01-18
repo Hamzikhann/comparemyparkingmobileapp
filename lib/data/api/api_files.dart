@@ -23,4 +23,5 @@ class ApiFiles {
   static String updateBooking = "/booking/update";
   static String updateProfileImage = "/users/update/image";
   static String updateProfileInfo = "/users/update";
+  static String searchStatus = "/search/status";
 }
