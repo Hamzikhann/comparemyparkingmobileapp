@@ -239,8 +239,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
-                        color:
-                            notification.isRead ? Colors.black : colors.primary,
+                        color: notification.isRead
+                            ? Colors.black
+                            : colors.primaryNew,
                       ),
                     ),
                   ),
@@ -248,7 +249,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Container(
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: colors.primary,
+                        color: colors.primaryNew,
                         shape: BoxShape.circle,
                       ),
                     ),

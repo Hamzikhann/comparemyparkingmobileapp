@@ -575,6 +575,7 @@ class GeneralRepository {
       } else {
         apiEndpoint = ApiFiles.searchParking2;
       }
+      print(apiEndpoint);
 
       server.makeApiRequest(
         apiEndpoint: apiEndpoint,
@@ -1335,7 +1336,6 @@ class GeneralRepository {
       apiEndpoint: ApiFiles.markNotificationsAsRead,
       requestMethod: RequestMethod.post,
       requestData: {
-        "userId": Globals.user?.id ?? "",
         "notificationIds": notificationIds,
       },
       onLoad: () {
@@ -1362,7 +1362,6 @@ class GeneralRepository {
       apiEndpoint: ApiFiles.clearAllNotifications,
       requestMethod: RequestMethod.post,
       requestData: {
-        "userId": Globals.user?.id ?? "",
         "notificationIds": notificationIds,
       },
       onLoad: () {
