@@ -24,7 +24,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.initState();
   }
 
-  Future<void> _handlePayment(String paymentIntentId) async {
+  Future<void> _handlePayment(
+      String paymentIntentId, String paymentMethod) async {
     try {
       final result = await GeneralRepository().bookParking(
         // Booking
@@ -69,8 +70,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // Payment
         referenceNo: "STRIPE-$paymentIntentId",
-        paymentMethod: "card",
-        paymentMethodDisplay: "Credit / Debit Card",
+        paymentMethod: paymentMethod,
+        paymentMethodDisplay:
+            paymentMethod == 'apple_pay' ? "Apple Pay" : "Credit / Debit Card",
         paymentStatus: "completed",
         paymentDate: DateTime.now().toIso8601String(),
         transactionId: paymentIntentId,
@@ -89,7 +91,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<void> startStripePayment() async {
+  Future<void> startStripePayment(String method) async {
     try {
       final rawAmount =
           (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
@@ -114,6 +116,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
           merchantDisplayName: 'Parking Pilot',
           style: ThemeMode.system,
           allowsDelayedPaymentMethods: false,
+          applePay: const PaymentSheetApplePay(
+            merchantCountryCode: 'GB',
+            cartItems: [], // Can be empty, Stripe uses total from Intent
+          ),
+          googlePay: const PaymentSheetGooglePay(
+            merchantCountryCode: 'GB',
+            testEnv: true, // Set to false for production
+            currencyCode: 'GBP',
+          ),
         ),
       );
 
@@ -121,7 +132,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final paymentId =
           response['paymentIntent']?['id'] ?? response['paymentId'];
 
-      await _handlePayment(paymentId);
+      await _handlePayment(paymentId, method);
     } on StripeException catch (e) {
       if (e.error.code == FailureCode.Canceled) {
         // User cancelled, do nothing
@@ -282,7 +293,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               value: 'apple_pay',
               color: Colors.black,
               textColor: Colors.white,
-              isComingSoon: true),
+              isComingSoon: false),
           SizedBox(height: 12.h),
           _buildPaymentOption(
               icon: Icons.money,
@@ -309,7 +320,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return GestureDetector(
       onTap: () {
         if (!isComingSoon) {
-          startStripePayment(); // Directly trigger stripe for card
+          startStripePayment(value); // Pass the selected method
         }
       },
       child: Container(
