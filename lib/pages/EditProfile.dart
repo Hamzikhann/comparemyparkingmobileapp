@@ -47,12 +47,31 @@ class _EditprofileState extends State<Editprofile> {
   Future<void> _uploadImage(File imageFile) async {
     try {
       EasyLoading.show(status: 'Uploading image...');
-      await _repository.updateProfileImage(Globals.user!.id, imageFile);
-      // Since we don't have the new URL from API response here explicitly in instructions,
-      // we'll at least update the local state if needed or show success.
-      // If the app uses Globals.user!.imageUrl, we might need to set it if we had a URL.
-      // For now, we reflect the picked image locally.
-      EasyLoading.showSuccess('Image updated');
+      final response =
+          await _repository.updateProfileImage(Globals.user!.id, imageFile);
+
+      // Check if response contains the new image URL
+      if (response != null && response['data'] != null) {
+        String? newImageUrl = response['data']['imageUrl'];
+        if (newImageUrl != null && newImageUrl.isNotEmpty) {
+          // Prepend base URL if relative
+          if (!newImageUrl.startsWith('http')) {
+            newImageUrl = "http://test.thefutureinno.com$newImageUrl";
+          }
+
+          setState(() {
+            Globals.user!.imageUrl = newImageUrl;
+          });
+
+          // Save updated user to persistent storage
+          await SharedStorage.saveUser(Globals.user!);
+          EasyLoading.showSuccess('Image updated');
+        } else {
+          EasyLoading.showSuccess('Image updated');
+        }
+      } else {
+        EasyLoading.showSuccess('Image updated');
+      }
     } catch (e) {
       EasyLoading.showError('Image upload failed');
     }

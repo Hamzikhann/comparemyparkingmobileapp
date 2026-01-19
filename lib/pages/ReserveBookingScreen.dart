@@ -67,6 +67,8 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       setState(() {
         _currentStep--;
       });
+    } else {
+      Navigator.pop(context);
     }
   }
 
@@ -559,22 +561,45 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _onBackPressed();
-        return false;
+        if (_currentStep > 0) {
+          _onBackPressed();
+          return false;
+        }
+        return true;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
           child: Column(
             children: [
-              // Header (Custom TopBar-ish)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                 child: Row(
                   children: [
-                    // Optional Back button on top if needed? Screenshot doesn't clearly show one, but standard UX implies it.
-                    // The title "Complete Your Booking" suggests a main page.
-                    // I'll keep it simple: Title + Subtitle
+                    GestureDetector(
+                      onTap: _onBackPressed,
+                      child: Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFEFF1F3),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Icon(
+                          Icons.arrow_back,
+                          size: 20.sp,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Text(
+                      "Complete Your Booking",
+                      style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Archivo',
+                          color: Color(0xFF1A1A2E)),
+                    ),
                   ],
                 ),
               ),
@@ -585,13 +610,6 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 10.h),
-                      Text(
-                        "Complete Your Booking",
-                        style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Archivo'),
-                      ),
                       Text(
                         "Secure your parking reservation in just a few steps",
                         style: TextStyle(

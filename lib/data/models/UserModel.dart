@@ -23,6 +23,11 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final user = json['user'] ?? {};
+    String? imgUrl = user['userProfile']?['imageUrl'];
+    if (imgUrl != null && imgUrl.isNotEmpty && !imgUrl.startsWith('http')) {
+      imgUrl = "http://test.thefutureinno.com$imgUrl";
+    }
+
     return UserModel(
       id: user['id'] ?? '',
       firstName: user['firstName'] ?? '',
@@ -30,10 +35,9 @@ class UserModel {
       email: user['email'] ?? '',
       phoneNo: user['phoneNo'] ?? '',
       roleId: user['roleId'] ?? '',
-      imageUrl: user['userProfile']?['imageUrl'],
+      imageUrl: imgUrl,
       roleTitle: user['role']?['title'] ?? '',
-      token: json['token'] ??
-          '', // token should come from the root of json, not from user
+      token: json['token'] ?? '',
     );
   }
 

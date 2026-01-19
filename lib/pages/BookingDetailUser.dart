@@ -23,7 +23,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
   }
 
   Future<void> _launchWhatsApp() async {
-    final phoneNumber = GlobalsBookingDetail.bookingdetailuser?.bookingAssignments.first.employee!.phoneNo;
+    final phoneNumber = GlobalsBookingDetail
+        .bookingdetailuser?.bookingAssignments.first.employee!.phoneNo;
     final message = Uri.encodeComponent("Hello, I need help with my booking.");
     final url = Uri.parse(
         "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");
@@ -53,8 +54,11 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
 
   @override
   Widget build(BuildContext context) {
-     final checkPoints = (GlobalsBookingDetail.bookingdetailuser?.bookingCheckPoints.isNotEmpty ?? false)
-        ? GlobalsBookingDetail.bookingdetailuser!.bookingCheckPoints.first.bookingCheckPointsImages
+    final checkPoints = (GlobalsBookingDetail
+                .bookingdetailuser?.bookingCheckPoints.isNotEmpty ??
+            false)
+        ? GlobalsBookingDetail.bookingdetailuser!.bookingCheckPoints.first
+            .bookingCheckPointsImages
         : [];
     return WillPopScope(
       onWillPop: () async {
@@ -145,7 +149,45 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                                 SizedBox(height: 8.h),
                                 NonEditableTextField(
                                   hintText:
+                                      "${GlobalsBookingDetail.bookingdetailuser?.vehicles.first.vehicleModel}",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Car Color",
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText:
                                       "${GlobalsBookingDetail.bookingdetailuser?.vehicles.first.vehicleColour}",
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Passengers",
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText:
+                                      "${GlobalsBookingDetail.bookingdetailuser?.vehicles.first.numberofPassengers}",
                                 ),
                               ],
                             ),
@@ -227,17 +269,18 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           runSpacing: 10,
                           children: checkPoints
                               .map((url) => GestureDetector(
-                                  onTap: () => _showImageDialog("https://stanstedairportparking247.com/${url.imageUrl}"),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      "https://stanstedairportparking247.com/${url.imageUrl}",
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover,
+                                    onTap: () => _showImageDialog(
+                                        "https://stanstedairportparking247.com/${url.imageUrl}"),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        "https://stanstedairportparking247.com/${url.imageUrl}",
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
-                                  ),
-                                ))
+                                  ))
                               .toList(),
                         ),
                         SizedBox(height: 24.h),
@@ -312,11 +355,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                                           desiredAccuracy:
                                               LocationAccuracy.high);
                                   postLocation(
-                                      GlobalsBookingDetail
-                                          .bookingdetailuser!
-                                          .registrations
-                                          .first
-                                          .bookingId,
+                                      GlobalsBookingDetail.bookingdetailuser!
+                                          .registrations.first.bookingId,
                                       position.latitude.toString(),
                                       position.longitude.toString());
                                 } else {
@@ -356,7 +396,9 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
 
   Future<void> postLocation(
       String bookingID, String latitude, String longitude) async {
-    GeneralRepository().postLocation(bookingID, latitude, longitude).then((value) {
+    GeneralRepository()
+        .postLocation(bookingID, latitude, longitude)
+        .then((value) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(

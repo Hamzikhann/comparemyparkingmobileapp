@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import '../routes/MyRoutes.dart';
 import '../utils/colors.dart';
 import '../widgets/PrimaryButton.dart';
@@ -71,8 +72,8 @@ class _OtpScreenState extends State<OtpScreen> {
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                        MediaQuery.of(context).padding.top,
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -84,7 +85,8 @@ class _OtpScreenState extends State<OtpScreen> {
                       icon: Icon(Icons.arrow_back, size: 24.w),
                       color: Colors.black,
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, MyRoutes.signUpRoute);
+                        Navigator.pushReplacementNamed(
+                            context, MyRoutes.signUpRoute);
                       },
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),
@@ -123,7 +125,8 @@ class _OtpScreenState extends State<OtpScreen> {
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         maxLength: 1,
-                        style: TextStyle(fontSize: 16.sp, fontFamily: 'Archivo'),
+                        style:
+                            TextStyle(fontSize: 16.sp, fontFamily: 'Archivo'),
                         decoration: InputDecoration(
                           counterText: '',
                           contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -141,7 +144,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           ),
                         ),
                         onChanged: (value) {
-                          if (value.isNotEmpty && !RegExp(r'^[0-9]$').hasMatch(value)) {
+                          if (value.isNotEmpty &&
+                              !RegExp(r'^[0-9]$').hasMatch(value)) {
                             otpControllers[index].clear();
                             return;
                           }
@@ -225,8 +229,10 @@ class _OtpScreenState extends State<OtpScreen> {
                     text: "Proceed",
                     onPressed: () {
                       String otp = otpControllers.map((c) => c.text).join();
-                      if (otp.trim().length == 6 && otp.trim() == Globals.otp.trim()) {
-                        resetPassword(Globals.passwordReset, Globals.confirmPassword);
+                      if (otp.trim().length == 6 &&
+                          otp.trim() == Globals.otp.trim()) {
+                        resetPassword(
+                            Globals.passwordReset, Globals.confirmPassword);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -250,11 +256,12 @@ class _OtpScreenState extends State<OtpScreen> {
     GeneralRepository().resetPassword(password, confirmPassword).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Password reset successfully! Login Now"),
+          content: Text("Password updated successfully! Login Now"),
           duration: Duration(seconds: 2),
         ),
       );
 
+      SharedStorage.removeFromSharedPreferences();
       Future.delayed(Duration(seconds: 2), () {
         Navigator.pushReplacementNamed(context, MyRoutes.loginRoute);
       });

@@ -66,15 +66,6 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
                     height: 100
                         .h), // Reduced from 150.h to account for the row height
 
-                // Phone Input
-                CustomTextField(
-                  hintText: "Email",
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-
-                SizedBox(height: 40.h),
-
                 // Password Input
                 CustomTextField(
                   hintText: "Password",
@@ -113,17 +104,18 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
   }
 
   Future<void> forgotPassword(String userName) async {
-    GeneralRepository().forgotPassword(userName).then((value) {
+    GeneralRepository()
+        .resetPassword(passwordController.text.toString(),
+            confirmPasswordController.text.toString())
+        .then((value) {
       Alertify.showAlert(
         duration: 1,
         alertKey: 'reset',
         message: 'Navigate to OTP Screen',
         type: AlertType.success,
         onClose: () {
-          Globals.otp = value.otp;
-          Globals.emailReset = emailController.text.toString();
           Globals.passwordReset = passwordController.text.toString();
-          Globals.confirmPassword = passwordController.text.toString();
+          Globals.confirmPassword = confirmPasswordController.text.toString();
           Navigator.pushReplacementNamed(context, MyRoutes.otp);
         },
       );

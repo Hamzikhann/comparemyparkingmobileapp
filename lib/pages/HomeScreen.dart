@@ -744,28 +744,40 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: colors.primaryNew, size: 24.sp),
                             ),
                             SizedBox(width: 16.w),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  booking.vehicles.first.vehicleRegistration,
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Archivo',
-                                    color: Color(0xFF1A1A2E),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    booking.vehicles.first.vehicleRegistration,
+                                    style: TextStyle(
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo',
+                                      color: Color(0xFF1A1A2E),
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  "${booking.vehicles.first.vehicleManufacturer} ${booking.vehicles.first.vehicleModel}",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontFamily: 'Archivo',
-                                    color: Colors.grey[600],
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    "${booking.vehicles.first.vehicleManufacturer} ${booking.vehicles.first.vehicleModel}",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontFamily: 'Archivo',
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: 4.h),
+                                  Row(
+                                    children: [
+                                      _buildVehicleBadge(Icons.palette,
+                                          booking.vehicles.first.vehicleColour),
+                                      SizedBox(width: 8.w),
+                                      _buildVehicleBadge(Icons.people,
+                                          "${booking.vehicles.first.numberofPassengers} Passengers"),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -832,6 +844,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildVehicleBadge(IconData icon, String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: colors.primaryNew.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14.sp, color: colors.primaryNew),
+          SizedBox(width: 6.w),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Archivo',
+              color: colors.primaryNew,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

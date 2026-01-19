@@ -99,15 +99,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ViewAllScreen(title: "Reserved", parkings: relevantBookings),
           ),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No related bookings found')),
-        );
-      }
+      } else {}
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Error: $e')),
+      // );
     }
   }
 
@@ -221,7 +217,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
       ),
-      color: notification.isRead ? Colors.white : colors.blueLight2,
+      color: notification.isRead ? Colors.white : colors.secondarynew,
       child: InkWell(
         onTap: () => _markAsReadAndNavigate(notification.id, bookingIds),
         borderRadius: BorderRadius.circular(12.r),
@@ -239,9 +235,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
-                        color: notification.isRead
-                            ? Colors.black
-                            : colors.primaryNew,
+                        color:
+                            notification.isRead ? Colors.black : Colors.white,
                       ),
                     ),
                   ),
@@ -249,7 +244,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Container(
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: colors.primaryNew,
+                        color: Colors.white,
                         shape: BoxShape.circle,
                       ),
                     ),

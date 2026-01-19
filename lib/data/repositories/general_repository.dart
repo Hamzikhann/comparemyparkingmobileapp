@@ -384,8 +384,9 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<void> updateProfileImage(String userId, File image) async {
-    Completer<void> completer = Completer();
+  Future<Map<String, dynamic>?> updateProfileImage(
+      String userId, File image) async {
+    Completer<Map<String, dynamic>?> completer = Completer();
     server.makeMultipartRequest(
       apiEndpoint: ApiFiles.updateProfileImage,
       requestMethod: RequestMethod.post,
@@ -393,7 +394,7 @@ class GeneralRepository {
       files: [MultipartFileInfo(file: image, fieldName: "image")],
       onSuccess: (Map<String, dynamic> res) {
         EasyLoading.dismiss();
-        completer.complete();
+        completer.complete(res);
       },
       onError: (String errorMessage) {
         print(errorMessage);
@@ -589,11 +590,47 @@ class GeneralRepository {
         },
         onLoad: () {
           EasyLoading.show(
-            status: "Searching parking options...",
+            status: "",
             maskType: EasyLoadingMaskType.black,
-            indicator: Image.asset(
-              'assets/images/load.gif',
-              width: 150.w,
+            indicator: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/load.gif',
+                  width: 150.w,
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  "Finding Your Trusted CarParking",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Archivo',
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  "Trusted by over 2 million satisfied customers",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  "Searching multiple providers for the best deals...",
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey[500],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           );
         },
@@ -693,28 +730,54 @@ class GeneralRepository {
             (percent > 0 && percent < 100) ||
             message.contains('background') ||
             message.contains('process')) {
-          print(
-              "Polling: Search still in progress... Percent: $percent% Message: ${response['message']}");
+          String statusText = percent > 0
+              ? "Searching multiple providers for the best deals... $percent%"
+              : "Searching multiple providers for the best deals...";
 
-          if (percent > 0) {
-            EasyLoading.show(
-              status: "Processing search results... $percent%",
-              maskType: EasyLoadingMaskType.black,
-              indicator: Image.asset(
-                'assets/images/load.gif',
-                width: 100.w,
-              ),
-            );
-          } else {
-            EasyLoading.show(
-              status: "Processing search results...",
-              maskType: EasyLoadingMaskType.black,
-              indicator: Image.asset(
-                'assets/images/load.gif',
-                width: 100.w,
-              ),
-            );
-          }
+          EasyLoading.show(
+            status: "",
+            maskType: EasyLoadingMaskType.black,
+            indicator: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/load.gif',
+                  width: 100.w,
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  "Finding Your Trusted CarParking",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Archivo',
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  "Trusted by over 2 million satisfied customers",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontFamily: 'Archivo',
+                    color: Colors.grey[500],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
 
           // Poll again after 25 seconds
           Future.delayed(const Duration(seconds: 25), () {
@@ -767,11 +830,47 @@ class GeneralRepository {
         print("Polling error: $errorMessage. Retrying in 5 seconds...");
         // Keep the loader visible even on error
         EasyLoading.show(
-          status: "Waiting for results...",
+          status: "",
           maskType: EasyLoadingMaskType.black,
-          indicator: Image.asset(
-            'assets/images/load.gif',
-            width: 100.w,
+          indicator: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/images/load.gif',
+                width: 100.w,
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                "Finding Your Trusted CarParking",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo',
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                "Trusted by over 2 million satisfied customers",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontFamily: 'Archivo',
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                "Waiting for results...",
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontFamily: 'Archivo',
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
         Future.delayed(const Duration(seconds: 5), () {
