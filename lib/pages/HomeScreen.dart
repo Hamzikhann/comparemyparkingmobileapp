@@ -1,9 +1,11 @@
 import 'dart:math';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/airport_service_config.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
@@ -127,10 +129,51 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _pickDateAndTime({required bool isStart}) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    DateTime initialDate = today;
+    DateTime firstDate = today;
+
+    if (isStart) {
+      if (parsedStartDate != null) {
+        initialDate = parsedStartDate!;
+      }
+    } else {
+      if (parsedStartDate != null) {
+        // Calculate the minimum valid end datetime (Start + 2 hours)
+        DateTime minEndDateTime = parsedStartDate!;
+        if (parsedStartTime != null) {
+          final startDateTime = DateTime(
+            parsedStartDate!.year,
+            parsedStartDate!.month,
+            parsedStartDate!.day,
+            parsedStartTime!.hour,
+            parsedStartTime!.minute,
+          );
+          final validEndDateTime = startDateTime.add(const Duration(hours: 2));
+          // The first allowable date is the date part of (Start + 2h)
+          // This handles the case where Start + 2h pushes into the next day.
+          minEndDateTime = DateTime(validEndDateTime.year,
+              validEndDateTime.month, validEndDateTime.day);
+        }
+
+        firstDate = minEndDateTime;
+      }
+
+      if (parsedEndDate != null) {
+        initialDate = parsedEndDate!;
+      } else {
+        initialDate = firstDate;
+      }
+    }
+
+    if (initialDate.isBefore(firstDate)) initialDate = firstDate;
+
     final DateTime? date = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: firstDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -148,9 +191,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (date == null) return;
 
+    // Calculate initial time for picker to suggest a valid time
+    TimeOfDay initialTime = TimeOfDay.now();
+    if (!isStart && parsedStartDate != null && parsedStartTime != null) {
+      final startDateTime = DateTime(
+        parsedStartDate!.year,
+        parsedStartDate!.month,
+        parsedStartDate!.day,
+        parsedStartTime!.hour,
+        parsedStartTime!.minute,
+      );
+      // If selected date is same as start date (or the forced next day), suggest appropriate time
+      // Actually, just suggest Start + 2h as a baseline if we are on the tightest possible day
+      final targetDateTime = startDateTime.add(const Duration(hours: 2));
+
+      // If the user picked the date that corresponds to the minimum valid date
+      if (date.year == targetDateTime.year &&
+          date.month == targetDateTime.month &&
+          date.day == targetDateTime.day) {
+        initialTime =
+            TimeOfDay(hour: targetDateTime.hour, minute: targetDateTime.minute);
+      }
+    }
+
     final TimeOfDay? time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: initialTime,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -171,6 +237,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (isStart) {
         parsedStartDate = date;
         parsedStartTime = time;
+        if (parsedEndDate != null && parsedStartDate!.isAfter(parsedEndDate!)) {
+          parsedEndDate = null;
+          parsedEndTime = null;
+        }
       } else {
         parsedEndDate = date;
         parsedEndTime = time;
@@ -211,7 +281,41 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // Logic to enforce End > Start if needed, but not strictly requested.
+    if (parsedEndDate!.isBefore(parsedStartDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('End date must be greater than or equal to start date')),
+      );
+      return;
+    }
+
+    final startDateTime = DateTime(
+      parsedStartDate!.year,
+      parsedStartDate!.month,
+      parsedStartDate!.day,
+      parsedStartTime!.hour,
+      parsedStartTime!.minute,
+    );
+    final endDateTime = DateTime(
+      parsedEndDate!.year,
+      parsedEndDate!.month,
+      parsedEndDate!.day,
+      parsedEndTime!.hour,
+      parsedEndTime!.minute,
+    );
+
+    if (parsedStartDate!.isAtSameMomentAs(parsedEndDate!)) {
+      final difference = endDateTime.difference(startDateTime);
+      if (difference.inHours < 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'If start and end dates are the same, time difference must be at least 2 hours')),
+        );
+        return;
+      }
+    }
 
     Globals.startDate = _formatDateForApi(parsedStartDate!);
     Globals.endDate = _formatDateForApi(parsedEndDate!);
@@ -241,25 +345,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => const Editprofile()),
                         );
+                        setState(() {});
                       },
                       child: CircleAvatar(
                         radius: 22.r,
                         backgroundImage: (Globals.user?.imageUrl != null &&
                                 Globals.user!.imageUrl!.isNotEmpty)
-                            ? NetworkImage(Globals.user!.imageUrl!)
-                            : const AssetImage('assets/images/profilee.png')
-                                as ImageProvider,
+                            ? (Globals.user!.imageUrl!.startsWith('http')
+                                ? NetworkImage(Globals.user!.imageUrl!)
+                                : FileImage(File(Globals.user!.imageUrl!))
+                                    as ImageProvider)
+                            : const AssetImage('assets/images/profilee.png'),
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, MyRoutes.notifications);
+                      onPressed: () async {
+                        await Navigator.pushNamed(
+                            context, MyRoutes.notifications);
+                        if (context.mounted) {
+                          (context as Element).markNeedsBuild();
+                        }
                       },
                       icon: Icon(
                         Icons.notifications,
@@ -672,29 +783,140 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: colors.primaryNew, size: 20.sp),
                               ),
                               SizedBox(width: 16.w),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.airport,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Archivo',
-                                      color: Color(0xFF1A1A2E),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      booking.airport,
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Archivo',
+                                        color: Color(0xFF1A1A2E),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    "Terminal: ${booking.registrations.first.inboundTerminal}",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontFamily: 'Archivo',
-                                      color: Colors.grey[600],
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      "Outbound Terminal: ${booking.registrations.first.outboundTerminal}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      "Inbound Terminal: ${booking.registrations.first.inboundTerminal}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
+                          ),
+                          // Add service-specific contact and location if available
+                          Builder(
+                            builder: (context) {
+                              // Use the selected package type from Globals as fallback
+                              final packageType =
+                                  Globals.option?.type ?? 'meet and greet';
+                              final serviceInfo = getAirportServiceInfo(
+                                booking.airport,
+                                packageType,
+                              );
+
+                              if (serviceInfo == null) return SizedBox.shrink();
+
+                              return Column(
+                                children: [
+                                  SizedBox(height: 16.h),
+                                  Divider(color: Colors.grey[300]),
+                                  SizedBox(height: 12.h),
+                                  if (serviceInfo['contact']?['number'] != null)
+                                    Row(
+                                      children: [
+                                        Icon(Icons.phone,
+                                            color: colors.primaryNew,
+                                            size: 18.sp),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Contact Number",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontFamily: 'Archivo',
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                              SizedBox(height: 2.h),
+                                              Text(
+                                                serviceInfo['contact']
+                                                    ['number'],
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: 'Archivo',
+                                                  color: Color(0xFF1A1A2E),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  if (serviceInfo['location']?['address'] !=
+                                      null)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 12.h),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(Icons.location_on,
+                                              color: colors.primaryNew,
+                                              size: 18.sp),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Service Location",
+                                                  style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    fontFamily: 'Archivo',
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2.h),
+                                                Text(
+                                                  serviceInfo['location']
+                                                      ['address'],
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontFamily: 'Archivo',
+                                                    color: Color(0xFF1A1A2E),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -1479,17 +1701,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           updateEndDate,
                           updateEndTime,
                           () async {
+                            if (updateStartDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Please select start date first')),
+                              );
+                              return;
+                            }
                             final date = await showDatePicker(
                               context: context,
                               initialDate: (updateEndDate != null &&
                                       !updateEndDate!
-                                          .isBefore(updateStartDate ?? today))
+                                          .isBefore(updateStartDate!))
                                   ? updateEndDate!
-                                  : (updateStartDate ?? today),
-                              firstDate: updateStartDate ?? today,
+                                  : updateStartDate!,
+                              firstDate: updateStartDate!,
                               lastDate: today.add(Duration(days: 365)),
                             );
                             if (date != null) {
+                              if (date.isBefore(updateStartDate!)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'End date cannot be before start date')),
+                                );
+                                return;
+                              }
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: updateEndTime,
@@ -1527,12 +1765,60 @@ class _HomeScreenState extends State<HomeScreen> {
                               _buildNoteText(
                                   "No refunds are provided for reduced booking days."),
                               Divider(color: Color(0xFFFFE082)),
-                              Text(
-                                "Total Update Cost: £20 + (£15 × $extraDays extra days) = £${totalCost.toStringAsFixed(2)}",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13.sp,
-                                    color: Color(0xFF856404)),
+                              SizedBox(height: 8.h),
+                              Container(
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: colors.primaryNew.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                    color: colors.primaryNew,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.account_balance_wallet,
+                                      color: colors.primaryNew,
+                                      size: 24.sp,
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Total Update Cost",
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            "£${totalCost.toStringAsFixed(2)}",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24.sp,
+                                              color: colors.primaryNew,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2.h),
+                                          Text(
+                                            "£20 update fee + (£15 × $extraDays extra days)",
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -1541,8 +1827,46 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                _startUpdatePayment(totalCost, setState),
+                            onPressed: () {
+                              if (updateEndDate!.isBefore(updateStartDate!)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'End date must be greater than or equal to start date')),
+                                );
+                                return;
+                              }
+
+                              final startDateTime = DateTime(
+                                updateStartDate!.year,
+                                updateStartDate!.month,
+                                updateStartDate!.day,
+                                updateStartTime.hour,
+                                updateStartTime.minute,
+                              );
+                              final endDateTime = DateTime(
+                                updateEndDate!.year,
+                                updateEndDate!.month,
+                                updateEndDate!.day,
+                                updateEndTime.hour,
+                                updateEndTime.minute,
+                              );
+
+                              if (updateStartDate!
+                                  .isAtSameMomentAs(updateEndDate!)) {
+                                final difference =
+                                    endDateTime.difference(startDateTime);
+                                if (difference.inHours < 2) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'If start and end dates are the same, time difference must be at least 2 hours')),
+                                  );
+                                  return;
+                                }
+                              }
+                              _startUpdatePayment(totalCost, setState);
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colors.primaryNew,
                               padding: EdgeInsets.symmetric(vertical: 16.h),

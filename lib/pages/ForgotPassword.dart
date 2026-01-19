@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
@@ -111,12 +112,14 @@ class _ForgotpasswordPageState extends State<Forgotpassword> {
       Alertify.showAlert(
         duration: 1,
         alertKey: 'reset',
-        message: 'Navigate to OTP Screen',
+        message: 'Password Reset Successfully',
         type: AlertType.success,
-        onClose: () {
+        onClose: () async {
           Globals.passwordReset = passwordController.text.toString();
           Globals.confirmPassword = confirmPasswordController.text.toString();
-          Navigator.pushReplacementNamed(context, MyRoutes.otp);
+          await SharedStorage.removeFromSharedPreferences();
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
         },
       );
     });

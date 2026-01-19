@@ -7,7 +7,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Map<String, dynamic>? bookingResult;
@@ -23,42 +25,181 @@ class BookingConfirmationScreen extends StatefulWidget {
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   final GlobalKey _receiptKey = GlobalKey();
 
-  Future<void> _captureAndShareReceipt() async {
+  Future<void> _downloadPdf() async {
     try {
-      // Small delay to ensure the UI has finished painting and avoids '!debugNeedsPaint' assertion
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      final RenderRepaintBoundary? boundary = _receiptKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary?;
-
-      if (boundary == null) {
-        throw Exception("Could not find render object for receipt");
+      // Request storage permission
+      if (Platform.isAndroid) {
+        final status = await Permission.storage.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Storage permission denied")),
+          );
+          return;
+        }
       }
 
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      // Create PDF
+      final pdf = pw.Document();
 
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/parking_receipt.png');
-      await file.writeAsBytes(pngBytes);
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Header
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(20),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#1B4D4D'),
+                    borderRadius: pw.BorderRadius.circular(10),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        'Booking Confirmation',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 10),
+                      pw.Text(
+                        Globals.option?.price ?? '0.00',
+                        style: pw.TextStyle(
+                          fontSize: 32,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        'Status: Confirmed',
+                        style: const pw.TextStyle(
+                          fontSize: 14,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 20),
 
-      final box = context.findRenderObject() as RenderBox?;
+                // Customer Information
+                pw.Text(
+                  'Customer Information',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                _buildPdfRow('Name',
+                    '${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}'),
+                _buildPdfRow(
+                    'Email', Globals.booking_info_model?.email ?? 'N/A'),
+                _buildPdfRow(
+                    'Phone', Globals.booking_info_model?.phone ?? 'N/A'),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Parking Booking Confirmation',
-        subject: 'My Parking Receipt',
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+                // Booking Details
+                pw.Text(
+                  'Booking Details',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                _buildPdfRow('Airport', Globals.selectedAirport),
+                _buildPdfRow('Start Date', Globals.startDate),
+                _buildPdfRow('End Date', Globals.endDate),
+                _buildPdfRow('Vehicle Reg',
+                    Globals.booking_info_model?.vehicleRegNo ?? 'N/A'),
+                _buildPdfRow('Vehicle',
+                    '${Globals.booking_info_model?.carMaker}, ${Globals.booking_info_model?.carModel}'),
+                pw.SizedBox(height: 20),
+
+                // Total
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(15),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#F8F9FA'),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'Total Paid',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        Globals.option?.price ?? '0.00',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      // Save PDF
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file =
+          File('${directory!.path}/booking_confirmation_$timestamp.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF downloaded to: ${file.path}'),
+          duration: const Duration(seconds: 3),
+        ),
       );
     } catch (e) {
-      debugPrint("Error sharing receipt: $e");
+      debugPrint("Error downloading PDF: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Unable to share receipt: $e")),
+        SnackBar(content: Text("Failed to download PDF: $e")),
       );
     }
+  }
+
+  pw.Widget _buildPdfRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label, style: const pw.TextStyle(fontSize: 12)),
+          pw.Text(
+            value,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -368,10 +509,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             ),
                           ),
                           ElevatedButton.icon(
-                            onPressed: _captureAndShareReceipt,
+                            onPressed: _downloadPdf,
                             icon:
                                 const Icon(Icons.download, color: Colors.white),
-                            label: const Text("Get PDF Receipt",
+                            label: const Text("Download PDF Receipt",
                                 style: TextStyle(color: Colors.white)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF234D4D),

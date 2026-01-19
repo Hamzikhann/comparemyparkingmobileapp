@@ -52,14 +52,44 @@ class _EditprofileState extends State<Editprofile> {
 
       // Check if response contains the new image URL
       if (response != null && response['data'] != null) {
-        String? newImageUrl = response['data']['imageUrl'];
+        // Robust parsing of imageUrl from response
+        String? newImageUrl;
+        if (response['data'] is Map) {
+          // Prioritize explicit matches
+          newImageUrl = response['data']['imageurl'] ??
+              response['data']['image'] ??
+              response['data']['userProfile']?['image'] ??
+              (response['data']['user'] is Map
+                  ? (response['data']['user']['userProfile']?['image'] ??
+                      response['data']['user']['image'])
+                  : null);
+
+          // Fallback to CamelCase matches
+          newImageUrl ??= response['data']['imageUrl'] ??
+              response['data']['userProfile']?['imageUrl'] ??
+              (response['data']['user'] is Map
+                  ? (response['data']['user']['userProfile']?['imageUrl'] ??
+                      response['data']['user']['imageUrl'])
+                  : null);
+        }
+
         if (newImageUrl != null && newImageUrl.isNotEmpty) {
-          // Prepend base URL if relative
-          if (!newImageUrl.startsWith('http')) {
+          // Prepend base URL if relative (and not a local path)
+          if (!newImageUrl.startsWith('http') && !newImageUrl.startsWith('/')) {
             newImageUrl = "http://test.thefutureinno.com$newImageUrl";
           }
 
+          // Force a cache-breaker to ensure image refreshes if URL is the same
+          if (newImageUrl.startsWith('http')) {
+            if (newImageUrl.contains('?')) {
+              newImageUrl += "&t=${DateTime.now().millisecondsSinceEpoch}";
+            } else {
+              newImageUrl += "?t=${DateTime.now().millisecondsSinceEpoch}";
+            }
+          }
+
           setState(() {
+            print("newImageUrl: $newImageUrl");
             Globals.user!.imageUrl = newImageUrl;
           });
 
@@ -67,6 +97,14 @@ class _EditprofileState extends State<Editprofile> {
           await SharedStorage.saveUser(Globals.user!);
           EasyLoading.showSuccess('Image updated');
         } else {
+          // Fallback: If API returns success but no URL, use local path
+          // This allows "gallery selection" to persist at least for the session/device
+          setState(() {
+            print(
+                "Fallback: Using locally picked image path: ${imageFile.path}");
+            Globals.user!.imageUrl = imageFile.path;
+          });
+          await SharedStorage.saveUser(Globals.user!);
           EasyLoading.showSuccess('Image updated');
         }
       } else {
@@ -160,7 +198,7 @@ class _EditprofileState extends State<Editprofile> {
             TopBar(
               greeting: 'User Profile',
               showBackButton: true,
-              onBackPressed: () => Navigator.pop(context),
+              onBackPressed: () => Navigator.pop(context, true),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -188,11 +226,15 @@ class _EditprofileState extends State<Editprofile> {
                                         : (Globals.user?.imageUrl != null &&
                                                 Globals
                                                     .user!.imageUrl!.isNotEmpty)
-                                            ? NetworkImage(
-                                                Globals.user!.imageUrl!)
+                                            ? (Globals.user!.imageUrl!
+                                                    .startsWith('http')
+                                                ? NetworkImage(
+                                                    Globals.user!.imageUrl!)
+                                                : FileImage(File(Globals
+                                                        .user!.imageUrl!))
+                                                    as ImageProvider)
                                             : const AssetImage(
-                                                    'assets/images/profilee.png')
-                                                as ImageProvider,
+                                                'assets/images/profilee.png'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),

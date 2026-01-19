@@ -246,16 +246,6 @@ class PackageDetailScreen extends StatelessWidget {
                             // style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF1B3D38)),
                           ),
                         ),
-                        SizedBox(width: 16.w),
-                        Container(
-                          width: 50.w,
-                          height: 50.h,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5D8F6F),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Icon(Icons.send, color: Colors.white),
-                        ),
                       ],
                     ),
                     SizedBox(height: 40.h),

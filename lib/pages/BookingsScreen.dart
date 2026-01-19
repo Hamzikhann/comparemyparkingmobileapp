@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/airport_service_config.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModel.dart';
 
-import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -227,29 +227,140 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                     color: Color(0xFF4B725D), size: 20.sp),
                               ),
                               SizedBox(width: 16.w),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.airport,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Archivo',
-                                      color: Color(0xFF1A1A2E),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      booking.airport,
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Archivo',
+                                        color: Color(0xFF1A1A2E),
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    "Terminal: ${booking.registrations.first.inboundTerminal}",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontFamily: 'Archivo',
-                                      color: Colors.grey[600],
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      "Outbound Terminal: ${booking.registrations.first.outboundTerminal}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Text(
+                                      "Inbound Terminal: ${booking.registrations.first.inboundTerminal}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
+                          ),
+                          // Add service-specific contact and location if available
+                          Builder(
+                            builder: (context) {
+                              // Use the selected package type from Globals as fallback
+                              final packageType =
+                                  Globals.option?.type ?? 'meet and greet';
+                              final serviceInfo = getAirportServiceInfo(
+                                booking.airport,
+                                packageType,
+                              );
+
+                              if (serviceInfo == null) return SizedBox.shrink();
+
+                              return Column(
+                                children: [
+                                  SizedBox(height: 16.h),
+                                  Divider(color: Colors.grey[300]),
+                                  SizedBox(height: 12.h),
+                                  if (serviceInfo['contact']?['number'] != null)
+                                    Row(
+                                      children: [
+                                        Icon(Icons.phone,
+                                            color: Color(0xFF4B725D),
+                                            size: 18.sp),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Contact Number",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontFamily: 'Archivo',
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                              SizedBox(height: 2.h),
+                                              Text(
+                                                serviceInfo['contact']
+                                                    ['number'],
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: 'Archivo',
+                                                  color: Color(0xFF1A1A2E),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  if (serviceInfo['location']?['address'] !=
+                                      null)
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 12.h),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(Icons.location_on,
+                                              color: Color(0xFF4B725D),
+                                              size: 18.sp),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Service Location",
+                                                  style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    fontFamily: 'Archivo',
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2.h),
+                                                Text(
+                                                  serviceInfo['location']
+                                                      ['address'],
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontFamily: 'Archivo',
+                                                    color: Color(0xFF1A1A2E),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -499,27 +610,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    // This helper is deprecated by the new UI but kept if needed by other widgets,
-    // though effectively unused in the new design.
-    // We can just keep it or convert it.
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14.sp)),
-          Flexible(
-            child: Text(value,
-                textAlign: TextAlign.right,
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp)),
           ),
         ],
       ),
@@ -998,14 +1088,22 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           updateEndDate,
                           updateEndTime,
                           () async {
+                            if (updateStartDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Please select start date first')),
+                              );
+                              return;
+                            }
                             final date = await showDatePicker(
                               context: context,
                               initialDate: (updateEndDate != null &&
                                       !updateEndDate!
-                                          .isBefore(updateStartDate ?? today))
+                                          .isBefore(updateStartDate!))
                                   ? updateEndDate!
-                                  : (updateStartDate ?? today),
-                              firstDate: updateStartDate ?? today,
+                                  : updateStartDate!,
+                              firstDate: updateStartDate!,
                               lastDate: today.add(const Duration(days: 365)),
                               builder: (context, child) {
                                 return Theme(
@@ -1021,6 +1119,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               },
                             );
                             if (date != null) {
+                              if (date.isBefore(updateStartDate!)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'End date cannot be before start date')),
+                                );
+                                return;
+                              }
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: updateEndTime,
@@ -1070,12 +1176,61 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               _buildNoteText(
                                   "No refunds are provided for reduced booking days."),
                               const Divider(color: Color(0xFFFFE082)),
-                              Text(
-                                "Total Update Cost: £20 + (£15 × $extraDays extra days) = £${totalCost.toStringAsFixed(2)}",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13.sp,
-                                    color: const Color(0xFF856404)),
+                              SizedBox(height: 8.h),
+                              Container(
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFF4B725D).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                    color: const Color(0xFF4B725D),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.account_balance_wallet,
+                                      color: const Color(0xFF4B725D),
+                                      size: 24.sp,
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Total Update Cost",
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            "£${totalCost.toStringAsFixed(2)}",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24.sp,
+                                              color: const Color(0xFF4B725D),
+                                            ),
+                                          ),
+                                          SizedBox(height: 2.h),
+                                          Text(
+                                            "£20 update fee + (£15 × $extraDays extra days)",
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -1084,8 +1239,46 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                _startUpdatePayment(totalCost, setState),
+                            onPressed: () {
+                              if (updateEndDate!.isBefore(updateStartDate!)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'End date must be greater than or equal to start date')),
+                                );
+                                return;
+                              }
+
+                              final startDateTime = DateTime(
+                                updateStartDate!.year,
+                                updateStartDate!.month,
+                                updateStartDate!.day,
+                                updateStartTime.hour,
+                                updateStartTime.minute,
+                              );
+                              final endDateTime = DateTime(
+                                updateEndDate!.year,
+                                updateEndDate!.month,
+                                updateEndDate!.day,
+                                updateEndTime.hour,
+                                updateEndTime.minute,
+                              );
+
+                              if (updateStartDate!
+                                  .isAtSameMomentAs(updateEndDate!)) {
+                                final difference =
+                                    endDateTime.difference(startDateTime);
+                                if (difference.inHours < 2) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'If start and end dates are the same, time difference must be at least 2 hours')),
+                                  );
+                                  return;
+                                }
+                              }
+                              _startUpdatePayment(totalCost, setState);
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF4B725D),
                               padding: EdgeInsets.symmetric(vertical: 16.h),

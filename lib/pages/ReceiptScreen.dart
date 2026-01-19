@@ -9,6 +9,9 @@ import 'package:intl/intl.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 
 class ReceiptScreen extends StatefulWidget {
   final Payment payment;
@@ -267,11 +270,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       children: [
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
-              // Mock Download behavior
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Receipt downloaded successfully")),
-              );
+            onPressed: () async {
+              await _downloadPdf(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
@@ -385,5 +385,176 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     } catch (e) {
       return "N/A";
     }
+  }
+
+  Future<void> _downloadPdf(BuildContext context) async {
+    try {
+      // Request storage permission
+      if (Platform.isAndroid) {
+        final status = await Permission.storage.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Storage permission denied")),
+          );
+          return;
+        }
+      }
+
+      // Create PDF
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Header
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(20),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#4B725D'),
+                    borderRadius: pw.BorderRadius.circular(10),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        'Payment Receipt',
+                        style: pw.TextStyle(
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 10),
+                      pw.Text(
+                        '£${widget.payment.totalPayment}',
+                        style: pw.TextStyle(
+                          fontSize: 32,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        _formatDate(widget.payment.createdAt),
+                        style: const pw.TextStyle(
+                          fontSize: 12,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 20),
+
+                // Details
+                pw.Text(
+                  'Transaction Details',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                _buildPdfRow('Reference ID', widget.payment.referenceNo),
+                _buildPdfRow('Payment Method', widget.payment.paymentMethod),
+                _buildPdfRow('Status', 'Completed'),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+
+                // Booking Details
+                pw.Text(
+                  'Booking Details',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                _buildPdfRow('Service', 'Car Parking'),
+                _buildPdfRow('Airport', widget.payment.booking.airport),
+                _buildPdfRow('Duration', _getDurationString()),
+                _buildPdfRow('Start Date', widget.payment.booking.startDate),
+                _buildPdfRow('End Date', widget.payment.booking.endDate),
+                pw.SizedBox(height: 20),
+
+                // Total
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(15),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#F8F9FA'),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'Total Paid',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        '£${widget.payment.totalPayment}',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      // Save PDF
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${directory!.path}/receipt_$timestamp.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF downloaded to: ${file.path}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error downloading PDF: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to download PDF: $e")),
+      );
+    }
+  }
+
+  pw.Widget _buildPdfRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label, style: const pw.TextStyle(fontSize: 12)),
+          pw.Text(
+            value,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 }

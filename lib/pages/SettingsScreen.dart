@@ -28,9 +28,12 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingItem(
                     "Edit Profile",
                     Icons.person_outline,
-                    onTap: () {
+                    onTap: () async {
                       // Navigate to edit profile screen
-                      Navigator.pushNamed(context, MyRoutes.editProfile);
+                      await Navigator.pushNamed(context, MyRoutes.editProfile);
+                      if (context.mounted) {
+                        (context as Element).markNeedsBuild();
+                      }
                     },
                   ),
                   _buildSettingItem(
@@ -71,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   _buildSettingItem(
-                    "Support",
+                    "Help Center",
                     Icons.help_outline_outlined,
                     onTap: () {
                       // Navigate to support screen

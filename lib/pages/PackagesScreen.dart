@@ -60,10 +60,51 @@ class _PackagesScreenState extends State<PackagesScreen> {
   }
 
   Future<void> _pickDateAndTime({required bool isStart}) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    DateTime initialDate = today;
+    DateTime firstDate = today;
+
+    if (isStart) {
+      if (parsedStartDate != null) {
+        initialDate = parsedStartDate!;
+      }
+    } else {
+      if (parsedStartDate != null) {
+        // Calculate the minimum valid end datetime (Start + 2 hours)
+        DateTime minEndDateTime = parsedStartDate!;
+        if (parsedStartTime != null) {
+          final startDateTime = DateTime(
+            parsedStartDate!.year,
+            parsedStartDate!.month,
+            parsedStartDate!.day,
+            parsedStartTime!.hour,
+            parsedStartTime!.minute,
+          );
+          final validEndDateTime = startDateTime.add(const Duration(hours: 2));
+          // The first allowable date is the date part of (Start + 2h)
+          // This handles the case where Start + 2h pushes into the next day.
+          minEndDateTime = DateTime(validEndDateTime.year,
+              validEndDateTime.month, validEndDateTime.day);
+        }
+
+        firstDate = minEndDateTime;
+      }
+
+      if (parsedEndDate != null) {
+        initialDate = parsedEndDate!;
+      } else {
+        initialDate = firstDate;
+      }
+    }
+
+    if (initialDate.isBefore(firstDate)) initialDate = firstDate;
+
     final DateTime? date = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: firstDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -79,9 +120,32 @@ class _PackagesScreenState extends State<PackagesScreen> {
 
     if (date == null) return;
 
+    // Calculate initial time for picker to suggest a valid time
+    TimeOfDay initialTime = TimeOfDay.now();
+    if (!isStart && parsedStartDate != null && parsedStartTime != null) {
+      final startDateTime = DateTime(
+        parsedStartDate!.year,
+        parsedStartDate!.month,
+        parsedStartDate!.day,
+        parsedStartTime!.hour,
+        parsedStartTime!.minute,
+      );
+      // If selected date is same as start date (or the forced next day), suggest appropriate time
+      // However, we just want to ensure we don't start before the valid window if that's the date chosen
+      final validEndDateTime = startDateTime.add(const Duration(hours: 2));
+
+      // If the user picked the date that corresponds to the minimum valid date
+      if (date.year == validEndDateTime.year &&
+          date.month == validEndDateTime.month &&
+          date.day == validEndDateTime.day) {
+        initialTime = TimeOfDay(
+            hour: validEndDateTime.hour, minute: validEndDateTime.minute);
+      }
+    }
+
     final TimeOfDay? time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: initialTime,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -100,6 +164,24 @@ class _PackagesScreenState extends State<PackagesScreen> {
       if (isStart) {
         parsedStartDate = date;
         parsedStartTime = time;
+        // Reset end date if it becomes invalid
+        if (parsedEndDate != null) {
+          final startDateTime =
+              DateTime(date.year, date.month, date.day, time.hour, time.minute);
+          final endDateTime = DateTime(
+              parsedEndDate!.year,
+              parsedEndDate!.month,
+              parsedEndDate!.day,
+              parsedEndTime?.hour ?? 0,
+              parsedEndTime?.minute ?? 0);
+
+          // Check if existing end date is valid (must be >= start + 2 hours)
+          if (endDateTime
+              .isBefore(startDateTime.add(const Duration(hours: 2)))) {
+            parsedEndDate = null;
+            parsedEndTime = null;
+          }
+        }
       } else {
         parsedEndDate = date;
         parsedEndTime = time;
@@ -138,6 +220,50 @@ class _PackagesScreenState extends State<PackagesScreen> {
   }
 
   void _retrySearch() {
+    if (parsedStartDate == null ||
+        parsedStartTime == null ||
+        parsedEndDate == null ||
+        parsedEndTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Please select both Check In and Check Out dates and times')),
+      );
+      return;
+    }
+
+    final startDateTime = DateTime(
+      parsedStartDate!.year,
+      parsedStartDate!.month,
+      parsedStartDate!.day,
+      parsedStartTime!.hour,
+      parsedStartTime!.minute,
+    );
+    final endDateTime = DateTime(
+      parsedEndDate!.year,
+      parsedEndDate!.month,
+      parsedEndDate!.day,
+      parsedEndTime!.hour,
+      parsedEndTime!.minute,
+    );
+
+    if (endDateTime.isBefore(startDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('End date must be greater than or equal to start date')),
+      );
+      return;
+    }
+
+    if (endDateTime.difference(startDateTime).inHours < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Time difference must be at least 2 hours')),
+      );
+      return;
+    }
+
     // Update Globals before searching
     if (parsedStartDate != null)
       Globals.startDate = _formatDateForApi(parsedStartDate!);

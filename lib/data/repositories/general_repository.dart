@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:parkingapp/utils/colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -29,6 +31,10 @@ import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 
 class GeneralRepository {
+  Timer? _searchTimer;
+  // Use ValueNotifier to update UI without calling EasyLoading.show repeatedly
+  final ValueNotifier<int> _searchProgressNotifier = ValueNotifier<int>(0);
+
   APIService server = APIService();
 
   Future<UserModel> signin(String email, String password) async {
@@ -405,6 +411,8 @@ class GeneralRepository {
           duration: 10,
           type: AlertType.error,
         );
+        print(errorMessage);
+
         completer.completeError(errorMessage);
       },
     );
@@ -432,6 +440,7 @@ class GeneralRepository {
           duration: 10,
           type: AlertType.error,
         );
+        print(errorMessage);
         completer.completeError(errorMessage);
       },
     );
@@ -589,57 +598,33 @@ class GeneralRepository {
           "endTime": endTime,
         },
         onLoad: () {
+          // Initialize loader settings
+          EasyLoading.instance.dismissOnTap = false;
+          _searchTimer?.cancel();
+          _searchProgressNotifier.value = 10;
+
+          // Show loader ONCE with the notifier widget
           EasyLoading.show(
             status: "",
             maskType: EasyLoadingMaskType.black,
-            indicator: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/load.gif',
-                  width: 150.w,
-                ),
-                SizedBox(height: 12.h),
-                Text(
-                  "Finding Your Trusted CarParking",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Archivo',
-                    color: Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  "Trusted by over 2 million satisfied customers",
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontFamily: 'Archivo',
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  "Searching multiple providers for the best deals...",
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontFamily: 'Archivo',
-                    color: Colors.grey[500],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+            indicator:
+                _SearchLoaderWidget(progressNotifier: _searchProgressNotifier),
           );
+
+          // Start dummy progress timer
+          _searchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            int current = _searchProgressNotifier.value;
+            current += (Random().nextInt(2) + 2); // Increment by 2 or 3
+            if (current > 90) current = 90; // Cap at 90 until done
+            _searchProgressNotifier.value = current;
+          });
         },
         onSuccess: (Map<String, dynamic> response) {
           final status = response['status']?.toString().toLowerCase();
           final jobId = response['jobId']?.toString() ?? '';
           final message = response['message']?.toString().toLowerCase() ?? '';
 
-          // If we have a jobId AND (it's a known background status OR the message indicates background processing)
+          // If background processing
           if (jobId.isNotEmpty &&
               (status == 'processing' ||
                   status == 'queued' ||
@@ -649,47 +634,26 @@ class GeneralRepository {
                   message.contains('process'))) {
             print("Background search detected. JobId: $jobId");
             _pollSearchStatus(jobId, completer);
-            return; // ✅ Ensure we return here to wait for polling
+            return;
           }
+
           try {
-            // Validate response structure
+            // Immediate success
             if (response['data'] == null) {
               throw Exception('Invalid API response structure');
             }
-
-            final result = SearchResultResponse.fromJson(response);
-
-            if (result.data.isEmpty) {
-              EasyLoading.showInfo('No parking options available');
-            } else {
-              EasyLoading.dismiss();
-            }
-
-            if (!completer.isCompleted) completer.complete(result);
+            _finalizeSearch(completer, SearchResultResponse.fromJson(response));
           } catch (e) {
-            EasyLoading.dismiss();
-
-            if (!completer.isCompleted)
-              completer.completeError('Failed to process parking options: $e');
+            _handleSearchError(completer, e.toString());
           }
         },
         onError: (String errorMessage) {
-          print("Initial search error: $errorMessage. Retrying...");
-          // If it's the first attempt, we could retry once automatically
-          // For now, let's just make it more resilient in polling
-          EasyLoading.dismiss();
-
-          final enhancedError = errorMessage.contains('timeout')
-              ? 'Search is taking longer than expected. Please try again.'
-              : errorMessage;
-
-          if (!completer.isCompleted) completer.completeError(enhancedError);
+          _handleSearchError(completer, errorMessage);
         },
       );
     } catch (e) {
       print("Search exception: $e");
-      EasyLoading.dismiss();
-      if (!completer.isCompleted) completer.completeError(e.toString());
+      _handleSearchError(completer, e.toString());
     }
 
     return completer.future;
@@ -701,183 +665,71 @@ class GeneralRepository {
       apiEndpoint: "${ApiFiles.searchStatus}/$jobId",
       requestMethod: RequestMethod.post,
       onLoad: () {
-        // We can keep the loading status or update it
-        // EasyLoading.show(
-        //   status: "Processing search results...",
-        //   maskType: EasyLoadingMaskType.black,
-        // );
+        // Do not show separate loader, rely on the timer from searchParking
       },
       onSuccess: (Map<String, dynamic> response) {
         final status = response['status']?.toString().toLowerCase();
-        final message = response['message']?.toString().toLowerCase() ?? '';
-
-        // Check for progress percentage
-        dynamic progressData = response['progress'] ?? response['percentage'];
-        int percent = 0;
-        if (progressData != null) {
-          if (progressData is Map) {
-            percent =
-                int.tryParse(progressData['percent']?.toString() ?? '0') ?? 0;
-          } else {
-            percent = int.tryParse(progressData.toString()) ?? 0;
-          }
-        }
 
         if (status == 'processing' ||
             status == 'queued' ||
             status == 'pending' ||
-            status == 'started' ||
-            (percent > 0 && percent < 100) ||
-            message.contains('background') ||
-            message.contains('process')) {
-          String statusText = percent > 0
-              ? "Searching multiple providers for the best deals... $percent%"
-              : "Searching multiple providers for the best deals...";
-
-          EasyLoading.show(
-            status: "",
-            maskType: EasyLoadingMaskType.black,
-            indicator: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/load.gif',
-                  width: 100.w,
-                ),
-                SizedBox(height: 12.h),
-                Text(
-                  "Finding Your Trusted CarParking",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Archivo',
-                    color: Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  "Trusted by over 2 million satisfied customers",
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontFamily: 'Archivo',
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  statusText,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontFamily: 'Archivo',
-                    color: Colors.grey[500],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-
-          // Poll again after 25 seconds
-          Future.delayed(const Duration(seconds: 25), () {
+            status == 'started') {
+          // Continue polling.
+          // We increased polling frequency to check more often since we have a nice loader now.
+          Future.delayed(const Duration(seconds: 2), () {
             _pollSearchStatus(jobId, completer);
           });
         } else if (status == 'completed' ||
             status == 'success' ||
-            percent == 100 ||
             response['data'] != null) {
-          print("Polling: Search completed or 100%!");
           try {
             final result = SearchResultResponse.fromJson(response);
-            if (result.data.isEmpty &&
-                (status != 'completed' && percent < 100)) {
-              // If data is empty but not officially complete, poll again just in case
-              Future.delayed(const Duration(seconds: 10), () {
-                _pollSearchStatus(jobId, completer);
-              });
-              return;
-            }
-
-            if (result.data.isEmpty) {
-              EasyLoading.showInfo('No parking options available');
-            } else {
-              EasyLoading.dismiss();
-            }
-            if (!completer.isCompleted) completer.complete(result);
+            // if empty data with success status, that's a valid empty result.
+            _finalizeSearch(completer, result);
           } catch (e) {
-            // If parsing fails but it's 100%, maybe data is coming late?
-            if (percent == 100 || status == 'completed') {
-              EasyLoading.dismiss();
-              if (!completer.isCompleted)
-                completer
-                    .completeError('Failed to process parking options: $e');
-            } else {
-              // Retry polling if parsing fails but not yet 100%
-              Future.delayed(const Duration(seconds: 10), () {
-                _pollSearchStatus(jobId, completer);
-              });
-            }
+            // If parsing fails, maybe not really complete? Retry or fail.
+            print("Parsing failed despite success status: $e");
+            _handleSearchError(completer, 'Failed to process results: $e');
           }
         } else {
-          EasyLoading.dismiss();
-          if (!completer.isCompleted)
-            completer.completeError(
-                response['message'] ?? 'Search failed or was cancelled');
+          // Failed/Unknown
+          _handleSearchError(completer, response['message'] ?? 'Search failed');
         }
       },
       onError: (String errorMessage) {
-        print("Polling error: $errorMessage. Retrying in 5 seconds...");
-        // Keep the loader visible even on error
-        EasyLoading.show(
-          status: "",
-          maskType: EasyLoadingMaskType.black,
-          indicator: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/load.gif',
-                width: 100.w,
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                "Finding Your Trusted CarParking",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Archivo',
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Trusted by over 2 million satisfied customers",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontFamily: 'Archivo',
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                "Waiting for results...",
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontFamily: 'Archivo',
-                  color: Colors.grey[500],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
+        print("Polling error: $errorMessage. Retrying...");
+        // Retry polling on error
         Future.delayed(const Duration(seconds: 5), () {
           _pollSearchStatus(jobId, completer);
         });
       },
     );
+  }
+
+  void _finalizeSearch(
+      Completer<SearchResultResponse> completer, SearchResultResponse result) {
+    _searchTimer?.cancel();
+    _searchProgressNotifier.value = 100;
+
+    // Show 100% for a brief moment
+    Future.delayed(const Duration(milliseconds: 500), () {
+      EasyLoading.dismiss();
+      EasyLoading.instance.dismissOnTap = true; // Reset
+
+      if (result.data.isEmpty) {
+        EasyLoading.showInfo('No parking options available');
+      }
+
+      if (!completer.isCompleted) completer.complete(result);
+    });
+  }
+
+  void _handleSearchError(
+      Completer<SearchResultResponse> completer, String error) {
+    _searchTimer?.cancel();
+    EasyLoading.dismiss();
+    EasyLoading.instance.dismissOnTap = true;
+    if (!completer.isCompleted) completer.completeError(error);
   }
 
   Future<Map<String, dynamic>> bookParking({
@@ -1478,5 +1330,102 @@ class GeneralRepository {
     );
 
     return completer.future;
+  }
+}
+
+class _SearchLoaderWidget extends StatelessWidget {
+  final ValueNotifier<int> progressNotifier;
+
+  const _SearchLoaderWidget({Key? key, required this.progressNotifier})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: ValueListenableBuilder<int>(
+        valueListenable: progressNotifier,
+        builder: (context, percent, child) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "$percent%",
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo',
+                  color: colors.primaryNew,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 150.w,
+                    height: 150.w,
+                    child: CircularProgressIndicator(
+                      value: percent / 100.0,
+                      strokeWidth: 6.w,
+                      color: colors.primaryNew,
+                      backgroundColor: Colors.grey[200],
+                    ),
+                  ),
+                  Container(
+                    width: 110.w, // Ensure it fits inside the ring
+                    height: 110.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/load.gif',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                "Finding Your Trusted CarParking",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo',
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                "Trusted by over 2 million satisfied customers",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontFamily: 'Archivo',
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                "Searching multiple providers for the best deals...",
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontFamily: 'Archivo',
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }

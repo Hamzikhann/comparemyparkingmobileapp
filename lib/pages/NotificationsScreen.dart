@@ -257,7 +257,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     notification.body!,
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: colors.blueLight2,
+                      color: notification.isRead ? Colors.black : Colors.white,
                     ),
                   ),
                 ),
@@ -267,7 +267,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   formattedDate,
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: Colors.grey,
+                    color: notification.isRead ? Colors.black : Colors.white,
                   ),
                 ),
               ),
