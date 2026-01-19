@@ -1,6 +1,6 @@
 {
-    "name": "Parking Pilot",
-    "short_name": "Parking Pilot",
+    "name": "Compare My Airport Parking",
+    "short_name": "Compare My Airport Parking",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

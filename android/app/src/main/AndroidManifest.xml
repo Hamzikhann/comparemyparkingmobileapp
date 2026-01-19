@@ -15,7 +15,7 @@
     
 
     <application
-        android:label="Parking Pilot"
+        android:label="Compare My Airport Parking"
         android:theme="@style/Theme.ParkingApp"
         android:name="${applicationName}"
         android:icon="@drawable/logo">
