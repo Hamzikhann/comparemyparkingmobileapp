@@ -40,6 +40,7 @@ import 'package:parkingapp/pages/BookingConfirmationScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/providers/ThemeChanger.dart';
+import 'package:parkingapp/services/notification_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -71,6 +72,9 @@ void main() async {
 
   // Notification setup
   await setupNotifications();
+
+  // Initialize download notification service
+  await NotificationService().initialize();
 
   runApp(
     MultiProvider(

@@ -39,6 +39,7 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.1
   webview_flutter: ^4.13.1
+  open_file: ^3.5.8
 
 dev_dependencies:
   flutter_test:

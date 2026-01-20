@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/airport_service_config.dart';
@@ -11,6 +12,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
+import 'package:parkingapp/services/notification_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Map<String, dynamic>? bookingResult;
@@ -39,6 +42,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         }
       }
 
+      // Load logo image
+      final ByteData logoData = await rootBundle.load('assets/images/logo.png');
+      final Uint8List logoBytes = logoData.buffer.asUint8List();
+      final pw.ImageProvider logoImage = pw.MemoryImage(logoBytes);
+
       // Create PDF
       final pdf = pw.Document();
 
@@ -49,6 +57,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
+                // Logo at the top
+                pw.Center(
+                  child: pw.Image(logoImage, width: 150, height: 50),
+                ),
+                pw.SizedBox(height: 20),
+
                 // Header
                 pw.Container(
                   padding: const pw.EdgeInsets.all(20),
@@ -173,17 +187,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           File('${directory!.path}/booking_confirmation_$timestamp.pdf');
       await file.writeAsBytes(await pdf.save());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF downloaded to: ${file.path}'),
-          duration: const Duration(seconds: 3),
-        ),
+      // Show notification
+      await NotificationService().showDownloadNotification(
+        filePath: file.path,
+        title: 'Receipt Downloaded',
+        body: 'Receipt downloaded successfully',
       );
+
+      // Auto-open the PDF
+      await OpenFile.open(file.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF downloaded to: ${file.path}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Error downloading PDF: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to download PDF: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to download PDF: $e")),
+        );
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
@@ -12,6 +13,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
+import 'package:parkingapp/services/notification_service.dart';
 
 class ReceiptScreen extends StatefulWidget {
   final Payment payment;
@@ -59,10 +62,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              RepaintBoundary(
-                key: _receiptKey,
-                child: _buildReceiptCard(),
-              ),
+              RepaintBoundary(key: _receiptKey, child: _buildReceiptCard()),
               SizedBox(height: 30.h),
               _buildActionButtons(context),
             ],
@@ -87,6 +87,12 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       ),
       child: Column(
         children: [
+          // Logo at the top
+          Container(
+            padding: EdgeInsets.all(16.w),
+            child: Image.asset('assets/images/logo.png', height: 40.h),
+          ),
+
           // Top Section: status and Amount
           Container(
             padding: EdgeInsets.all(24.w),
@@ -117,7 +123,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                 SizedBox(height: 8.h),
                 Text(
                   _formatDate(
-                      widget.payment.createdAt), // Use payment creation date
+                    widget.payment.createdAt,
+                  ), // Use payment creation date
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 14.sp,
@@ -152,8 +159,10 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                 Divider(height: 32.h, color: Colors.grey[200]),
                 _buildInfoRow("Service", "Car Parking"),
                 _buildInfoRow("Airport", widget.payment.booking.airport),
-                _buildInfoRow("Vehicle",
-                    "N/A"), // Payment model doesn't have vehicle info
+                _buildInfoRow(
+                  "Vehicle",
+                  "N/A",
+                ), // Payment model doesn't have vehicle info
                 _buildInfoRow("Duration", _getDurationString()),
               ],
             ),
@@ -164,8 +173,9 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             padding: EdgeInsets.all(24.w),
             decoration: BoxDecoration(
               color: Color(0xFFF8F9FA),
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(20.r)),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20.r),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -336,11 +346,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
   Future<void> _captureAndSharePng() async {
     try {
-      RenderRepaintBoundary boundary = _receiptKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary =
+          _receiptKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
       final directory = await getTemporaryDirectory();
@@ -353,8 +365,9 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         [XFile(file.path)],
         text: 'Parking Receipt',
         subject: 'Parking Receipt',
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        sharePositionOrigin: box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : null,
       );
     } catch (e) {
       debugPrint("Error sharing image: $e");
@@ -376,9 +389,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   String _getDurationString() {
     try {
       final start = DateTime.parse(
-          "${widget.payment.booking.startDate} ${widget.payment.booking.startTime}");
+        "${widget.payment.booking.startDate} ${widget.payment.booking.startTime}",
+      );
       final end = DateTime.parse(
-          "${widget.payment.booking.endDate} ${widget.payment.booking.endTime}");
+        "${widget.payment.booking.endDate} ${widget.payment.booking.endTime}",
+      );
       final days = end.difference(start).inDays;
       if (days == 0) return "1 Day";
       return "$days Days";
@@ -400,6 +415,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         }
       }
 
+      // Load logo image
+      final ByteData logoData = await rootBundle.load('assets/images/logo.png');
+      final Uint8List logoBytes = logoData.buffer.asUint8List();
+      final pw.ImageProvider logoImage = pw.MemoryImage(logoBytes);
+
       // Create PDF
       final pdf = pw.Document();
 
@@ -410,6 +430,10 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
+                // Logo at the top
+                pw.Center(child: pw.Image(logoImage, width: 150, height: 50)),
+                pw.SizedBox(height: 20),
+
                 // Header
                 pw.Container(
                   padding: const pw.EdgeInsets.all(20),
@@ -528,17 +552,31 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       final file = File('${directory!.path}/receipt_$timestamp.pdf');
       await file.writeAsBytes(await pdf.save());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF downloaded to: ${file.path}'),
-          duration: const Duration(seconds: 3),
-        ),
+      // Show notification
+      await NotificationService().showDownloadNotification(
+        filePath: file.path,
+        title: 'Receipt Downloaded',
+        body: 'Receipt downloaded successfully',
       );
+
+      // Auto-open the PDF
+      await OpenFile.open(file.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF downloaded to: ${file.path}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Error downloading PDF: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to download PDF: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to download PDF: $e")));
+      }
     }
   }
 
