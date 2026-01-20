@@ -78,11 +78,6 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
 
   void _handleVehicleLookup() async {
     String regNo = vehicleLookupController.text.trim();
-    if (regNo.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Please enter a registration number")));
-      return;
-    }
 
     try {
       final response = await GeneralRepository().lookupVehicle(regNo);
