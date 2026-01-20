@@ -19,6 +19,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   // We can track selected method if we implement multiple real gateways.
   // For now, only Card (Stripe) is functional based on existing code.
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -37,8 +39,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Flight
         outboundTerminal: Globals.booking_info_model?.outBoundTerminal ?? "",
         inboundTerminal: Globals.booking_info_model?.inBoundTerminal ?? "",
-        outboundFlightNo: "00000",
-        inboundFlightNo: "00000",
+        outboundFlightNo: Globals.booking_info_model?.returnFlight ?? "",
+        inboundFlightNo: Globals.booking_info_model?.departureFlight ?? "",
 
         // Customer
         title: Globals.booking_info_model?.title ?? "",
@@ -90,6 +92,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> startStripePayment() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
     try {
       final rawAmount =
           (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
@@ -123,6 +127,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       await _handlePayment(paymentId);
     } on StripeException catch (e) {
+      setState(() => _isLoading = false);
       if (e.error.code == FailureCode.Canceled) {
         // User cancelled, do nothing
       } else {
@@ -130,6 +135,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             content: Text("Payment error: ${e.error.localizedMessage}")));
       }
     } catch (e) {
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Payment failed: ${e.toString()}")));
     }
@@ -139,51 +145,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            TopBar(
-              greeting: 'Payment',
-              showBackButton: true,
-              onBackPressed: () => Navigator.pop(context),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                TopBar(
+                  greeting: 'Payment',
+                  showBackButton: true,
+                  onBackPressed: () => Navigator.pop(context),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Booking Summary Wrapper
+                        _buildBookingSummaryCard(),
+
+                        SizedBox(height: 24.h),
+
+                        Text("Payment Method",
+                            style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo')),
+                        SizedBox(height: 12.h),
+
+                        _buildPaymentMethodsSection(),
+
+                        SizedBox(height: 24.h),
+
+                        _buildOrderSummaryCard(),
+
+                        SizedBox(height: 40.h),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Booking Summary Wrapper
-                    _buildBookingSummaryCard(),
-
-                    SizedBox(height: 24.h),
-
-                    Text("Payment Method",
-                        style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Archivo')),
-                    SizedBox(height: 12.h),
-
-                    // Layout: Row with Payment Methods (Left) and Order Summary (Right) for Tablet/Web?
-                    // But for Mobile, usually stacked. Design shows possibly side-by-side or stacked.
-                    // Given standard mobile width, I will stack them but style them distinctively.
-                    // Actually design shows separate "Choose Payment Method" box and "Order Summary" box side-by-side?
-                    // If it's mobile, they should be stacked. Let's stack them nicely.
-
-                    _buildPaymentMethodsSection(),
-
-                    SizedBox(height: 24.h),
-
-                    _buildOrderSummaryCard(),
-
-                    SizedBox(height: 40.h),
-                  ],
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF4A6F56),
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

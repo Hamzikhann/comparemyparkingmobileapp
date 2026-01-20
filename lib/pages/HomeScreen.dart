@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
@@ -170,23 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (initialDate.isBefore(firstDate)) initialDate = firstDate;
 
-    final DateTime? date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: colors.secondarynew,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final DateTime? date = await _showDatePickerBottomSheet(
+      context,
+      initialDate,
+      firstDate,
     );
 
     if (date == null) return;
@@ -201,11 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
         parsedStartTime!.hour,
         parsedStartTime!.minute,
       );
-      // If selected date is same as start date (or the forced next day), suggest appropriate time
-      // Actually, just suggest Start + 2h as a baseline if we are on the tightest possible day
       final targetDateTime = startDateTime.add(const Duration(hours: 2));
 
-      // If the user picked the date that corresponds to the minimum valid date
       if (date.year == targetDateTime.year &&
           date.month == targetDateTime.month &&
           date.day == targetDateTime.day) {
@@ -214,21 +199,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: colors.secondarynew,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final TimeOfDay? time = await _showTimePickerBottomSheet(
+      context,
+      initialTime,
     );
 
     if (time == null) return;
@@ -659,6 +632,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showBookingDetails(BuildContext context, Parking booking) {
+    final packageType = Globals.option?.type ?? 'meet and greet';
+    final serviceInfo = getAirportServiceInfo(
+      booking.airport,
+      packageType,
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -806,7 +785,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     Text(
+                                      "Outbound Flight: ${booking.registrations.first.outboundFlightNo}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
                                       "Inbound Terminal: ${booking.registrations.first.inboundTerminal}",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    Text(
+                                      "Inbound Flight: ${booking.registrations.first.inboundFlightNo}",
                                       style: TextStyle(
                                         fontSize: 13.sp,
                                         fontFamily: 'Archivo',
@@ -817,106 +813,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ],
-                          ),
-                          // Add service-specific contact and location if available
-                          Builder(
-                            builder: (context) {
-                              // Use the selected package type from Globals as fallback
-                              final packageType =
-                                  Globals.option?.type ?? 'meet and greet';
-                              final serviceInfo = getAirportServiceInfo(
-                                booking.airport,
-                                packageType,
-                              );
-
-                              if (serviceInfo == null) return SizedBox.shrink();
-
-                              return Column(
-                                children: [
-                                  SizedBox(height: 16.h),
-                                  Divider(color: Colors.grey[300]),
-                                  SizedBox(height: 12.h),
-                                  if (serviceInfo['contact']?['number'] != null)
-                                    Row(
-                                      children: [
-                                        Icon(Icons.phone,
-                                            color: colors.primaryNew,
-                                            size: 18.sp),
-                                        SizedBox(width: 12.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "Contact Number",
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  fontFamily: 'Archivo',
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                              SizedBox(height: 2.h),
-                                              Text(
-                                                serviceInfo['contact']
-                                                    ['number'],
-                                                style: TextStyle(
-                                                  fontSize: 14.sp,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontFamily: 'Archivo',
-                                                  color: Color(0xFF1A1A2E),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  if (serviceInfo['location']?['address'] !=
-                                      null)
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 12.h),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Icon(Icons.location_on,
-                                              color: colors.primaryNew,
-                                              size: 18.sp),
-                                          SizedBox(width: 12.w),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  "Service Location",
-                                                  style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    fontFamily: 'Archivo',
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2.h),
-                                                Text(
-                                                  serviceInfo['location']
-                                                      ['address'],
-                                                  style: TextStyle(
-                                                    fontSize: 14.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontFamily: 'Archivo',
-                                                    color: Color(0xFF1A1A2E),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
                           ),
                         ],
                       ),
@@ -1004,6 +900,147 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                    SizedBox(height: 24.h),
+
+                    // Service Information Section
+                    if (serviceInfo != null) ...[
+                      _buildSectionHeader(
+                          "Service Information", Icons.info_outline),
+                      SizedBox(height: 16.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF8F9FA),
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (serviceInfo['contact']?['number'] != null) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.phone,
+                                      color: colors.primaryNew, size: 18.sp),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Contact Number",
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontFamily: 'Archivo',
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Text(
+                                          serviceInfo['contact']!['number'],
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Archivo',
+                                            color: Color(0xFF1A1A2E),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16.h),
+                            ],
+                            if (serviceInfo['location']?['address'] !=
+                                null) ...[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.location_on,
+                                      color: colors.primaryNew, size: 18.sp),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Service Location",
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontFamily: 'Archivo',
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        SizedBox(height: 2.h),
+                                        Text(
+                                          serviceInfo['location']!['address'],
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Archivo',
+                                            color: Color(0xFF1A1A2E),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20.h),
+                              Divider(color: Colors.grey[200]),
+                              SizedBox(height: 20.h),
+                            ],
+                            if (serviceInfo['arrival_procedure'] != null) ...[
+                              Text(
+                                "Arrival Procedure",
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Archivo',
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                serviceInfo['arrival_procedure'],
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontFamily: 'Archivo',
+                                  color: Colors.grey[700],
+                                  height: 1.4,
+                                ),
+                              ),
+                              SizedBox(height: 20.h),
+                            ],
+                            if (serviceInfo['departure_procedure'] != null) ...[
+                              Text(
+                                "Departure Procedure",
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Archivo',
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                serviceInfo['departure_procedure'],
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontFamily: 'Archivo',
+                                  color: Colors.grey[700],
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 40.h),
                   ],
                 ),
@@ -1484,11 +1521,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final originalStart = DateTime.parse(booking.startDate);
       final originalEnd = DateTime.parse(booking.endDate);
-      final originalDays = originalEnd.difference(originalStart).inDays + 1;
 
-      final newDays = updateEndDate!.difference(updateStartDate!).inDays + 1;
+      // Compare pure dates to avoid time-of-day math issues
+      final oStart =
+          DateTime(originalStart.year, originalStart.month, originalStart.day);
+      final oEnd =
+          DateTime(originalEnd.year, originalEnd.month, originalEnd.day);
+      final uStart = DateTime(
+          updateStartDate!.year, updateStartDate!.month, updateStartDate!.day);
+      final uEnd = DateTime(
+          updateEndDate!.year, updateEndDate!.month, updateEndDate!.day);
 
-      return (newDays - originalDays).clamp(0, 100);
+      int daysBefore = oStart.difference(uStart).inDays;
+      int daysAfter = uEnd.difference(oEnd).inDays;
+
+      int extraDays =
+          (daysBefore > 0 ? daysBefore : 0) + (daysAfter > 0 ? daysAfter : 0);
+
+      return extraDays.clamp(0, 100);
     }
 
     double _calculateTotalCost() {
@@ -1671,24 +1721,49 @@ class _HomeScreenState extends State<HomeScreen> {
                           updateStartDate,
                           updateStartTime,
                           () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: (updateStartDate != null &&
+                            final date = await _showDatePickerBottomSheet(
+                              context,
+                              (updateStartDate != null &&
                                       !updateStartDate!.isBefore(today))
                                   ? updateStartDate!
                                   : today,
-                              firstDate: today,
-                              lastDate: today.add(Duration(days: 365)),
+                              today,
                             );
                             if (date != null) {
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: updateStartTime,
+                              final time = await _showTimePickerBottomSheet(
+                                context,
+                                updateStartTime,
                               );
                               if (time != null) {
                                 setState(() {
                                   updateStartDate = date;
                                   updateStartTime = time;
+
+                                  // If new start is after current end, adjust end to be start + 2 hours
+                                  if (updateEndDate != null) {
+                                    DateTime newStartDT = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute);
+                                    DateTime currentEndDT = DateTime(
+                                        updateEndDate!.year,
+                                        updateEndDate!.month,
+                                        updateEndDate!.day,
+                                        updateEndTime.hour,
+                                        updateEndTime.minute);
+
+                                    if (!newStartDT.isBefore(currentEndDT)) {
+                                      DateTime newEndDT = newStartDT
+                                          .add(const Duration(hours: 2));
+                                      updateEndDate = DateTime(newEndDT.year,
+                                          newEndDT.month, newEndDT.day);
+                                      updateEndTime = TimeOfDay(
+                                          hour: newEndDT.hour,
+                                          minute: newEndDT.minute);
+                                    }
+                                  }
                                 });
                               }
                             }
@@ -1709,30 +1784,43 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                               return;
                             }
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: (updateEndDate != null &&
+                            final date = await _showDatePickerBottomSheet(
+                              context,
+                              (updateEndDate != null &&
                                       !updateEndDate!
                                           .isBefore(updateStartDate!))
                                   ? updateEndDate!
                                   : updateStartDate!,
-                              firstDate: updateStartDate!,
-                              lastDate: today.add(Duration(days: 365)),
+                              updateStartDate!,
                             );
                             if (date != null) {
-                              if (date.isBefore(updateStartDate!)) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'End date cannot be before start date')),
-                                );
-                                return;
-                              }
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: updateEndTime,
+                              final time = await _showTimePickerBottomSheet(
+                                context,
+                                updateEndTime,
                               );
                               if (time != null) {
+                                // Validation: End must be at least 2 hours after start
+                                DateTime startDT = DateTime(
+                                    updateStartDate!.year,
+                                    updateStartDate!.month,
+                                    updateStartDate!.day,
+                                    updateStartTime.hour,
+                                    updateStartTime.minute);
+                                DateTime endDT = DateTime(date.year, date.month,
+                                    date.day, time.hour, time.minute);
+
+                                if (endDT.isBefore(
+                                    startDT.add(Duration(hours: 2)))) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'End time must be at least 2 hours after start time')),
+                                    );
+                                  }
+                                  return;
+                                }
+
                                 setState(() {
                                   updateEndDate = date;
                                   updateEndTime = time;
@@ -1893,5 +1981,82 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  Future<DateTime?> _showDatePickerBottomSheet(
+      BuildContext context, DateTime initialDate, DateTime firstDate) {
+    return showModalBottomSheet<DateTime>(
+      context: context,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r))),
+      builder: (context) => Container(
+        height: 450.h,
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Column(
+          children: [
+            Text("Select Date",
+                style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Archivo')),
+            Expanded(
+              child: CalendarDatePicker(
+                initialDate: initialDate,
+                firstDate: firstDate,
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+                onDateChanged: (date) => Navigator.pop(context, date),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<TimeOfDay?> _showTimePickerBottomSheet(
+      BuildContext context, TimeOfDay initialTime) async {
+    TimeOfDay? selectedTime = initialTime;
+    await showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25.r))),
+      builder: (context) => Container(
+        height: 300.h,
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Cancel", style: TextStyle(color: Colors.red))),
+                Text("Select Time",
+                    style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Archivo')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, selectedTime),
+                    child: Text("Done",
+                        style: TextStyle(color: colors.secondarynew))),
+              ],
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime:
+                    DateTime(2024, 1, 1, initialTime.hour, initialTime.minute),
+                onDateTimeChanged: (dateTime) {
+                  selectedTime =
+                      TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return selectedTime;
   }
 }

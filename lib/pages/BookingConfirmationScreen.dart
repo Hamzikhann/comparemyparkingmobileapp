@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/airport_service_config.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -396,12 +397,115 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           child: _buildInfoCard(
                             "Flight Details",
                             [
-                              "Outbound Flight:\n${Globals.booking_info_model?.outBoundTerminal}",
-                              "Inbound Flight:\n${Globals.booking_info_model?.inBoundTerminal}",
+                              "Outbound Terminal:\n${Globals.booking_info_model?.outBoundTerminal}",
+                              "Outbound Flight:\n${Globals.booking_info_model?.departureFlight}",
+                              "Inbound Terminal:\n${Globals.booking_info_model?.inBoundTerminal}",
+                              "Inbound Flight:\n${Globals.booking_info_model?.returnFlight}",
                             ],
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 12.h),
+                    Builder(
+                      builder: (context) {
+                        final packageType =
+                            Globals.option?.type ?? 'meet and greet';
+                        final serviceInfo = getAirportServiceInfo(
+                          Globals.selectedAirport,
+                          packageType,
+                        );
+
+                        if (serviceInfo == null) return const SizedBox.shrink();
+
+                        return Column(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(16.w),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade100),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Service Information",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF2E5B5B),
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  if (serviceInfo['contact']?['number'] !=
+                                      null) ...[
+                                    _buildLabelValueRow(
+                                        "Service Contact",
+                                        serviceInfo['contact']?['number'],
+                                        Icons.phone),
+                                    SizedBox(height: 8.h),
+                                  ],
+                                  if (serviceInfo['location']?['address'] !=
+                                      null) ...[
+                                    _buildLabelValueRow(
+                                        "Service Location",
+                                        serviceInfo['location']!['address'],
+                                        Icons.location_on),
+                                    SizedBox(height: 16.h),
+                                    const Divider(),
+                                    SizedBox(height: 16.h),
+                                  ],
+                                  if (serviceInfo['arrival_procedure'] !=
+                                      null) ...[
+                                    Text(
+                                      "Arrival Procedure",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1A1A2E),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      serviceInfo['arrival_procedure'],
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: Colors.grey[700],
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16.h),
+                                  ],
+                                  if (serviceInfo['departure_procedure'] !=
+                                      null) ...[
+                                    Text(
+                                      "Departure Procedure",
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1A1A2E),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      serviceInfo['departure_procedure'],
+                                      style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: Colors.grey[700],
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                          ],
+                        );
+                      },
                     ),
                     SizedBox(height: 12.h),
                     Row(
@@ -613,6 +717,35 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLabelValueRow(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14.sp, color: const Color(0xFF2E5B5B)),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 10.sp, color: Colors.grey[600]),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

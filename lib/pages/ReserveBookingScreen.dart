@@ -42,6 +42,10 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final TextEditingController numPassengersController = TextEditingController();
   String transmissionType = 'Auto';
 
+  final _formKey1 = GlobalKey<FormState>();
+  final _formKey2 = GlobalKey<FormState>();
+  final _formKey3 = GlobalKey<FormState>();
+
   bool agreedToTerms = false;
 
   @override
@@ -120,275 +124,268 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   // --- Step Content Builders ---
 
   Widget _buildStep1() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel("Title"),
-        Container(
-          height: 50.h,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          decoration: BoxDecoration(
-            color: Color(0xFFEFF1F3),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: selectedTitle,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-              items: ["Mr", "Mrs", "Miss", "Ms", "Other"].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value,
-                      style: TextStyle(
-                          fontSize: 14.sp,
-                          fontFamily: 'Archivo',
-                          color: Colors.black87)),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  selectedTitle = newValue!;
-                });
-              },
+    return Form(
+      key: _formKey1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLabel("Title"),
+          Container(
+            height: 50.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              color: Color(0xFFEFF1F3),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedTitle,
+                isExpanded: true,
+                icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                items: ["Mr", "Mrs", "Miss", "Ms", "Other"].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value,
+                        style: TextStyle(
+                            fontSize: 14.sp,
+                            fontFamily: 'Archivo',
+                            color: Colors.black87)),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    selectedTitle = newValue!;
+                  });
+                },
+              ),
             ),
           ),
-        ),
-        SizedBox(height: 16.h),
-
-        _buildLabel("Full Name"),
-        _buildTextField(
-            controller: fullNameController,
-            hint: "Enter Full Name",
-            validator: (v) => validateRequired(v, "Full Name")),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Phone Number"),
-        _buildTextField(
-            controller: phoneController,
-            hint: "Enter Phone Number",
-            keyboardType: TextInputType.phone,
-            validator: (v) => validateRequired(v, "Phone Number")),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Email"),
-        _buildTextField(
-            controller: emailController,
-            hint: "Enter Email",
-            keyboardType: TextInputType.emailAddress,
-            validator: validateEmail),
-
-        SizedBox(height: 100.h), // Spacing for button
-        Align(
-          alignment: Alignment.centerRight,
-          child: _buildButton("Continue", () {
-            // Validate step 1
-            if (fullNameController.text.isNotEmpty &&
-                phoneController.text.isNotEmpty &&
-                validateEmail(emailController.text) == null) {
-              setState(() => _currentStep = 1);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Please fill all fields correctly")));
-            }
-          }),
-        )
-      ],
+          SizedBox(height: 16.h),
+          _buildLabel("Full Name"),
+          _buildTextField(
+              controller: fullNameController,
+              hint: "Enter Full Name",
+              validator: (v) => validateRequired(v, "Full Name")),
+          SizedBox(height: 16.h),
+          _buildLabel("Phone Number"),
+          _buildTextField(
+              controller: phoneController,
+              hint: "Enter Phone Number",
+              keyboardType: TextInputType.phone,
+              validator: (v) => validateRequired(v, "Phone Number")),
+          SizedBox(height: 16.h),
+          _buildLabel("Email"),
+          _buildTextField(
+              controller: emailController,
+              hint: "Enter Email",
+              keyboardType: TextInputType.emailAddress,
+              validator: validateEmail),
+          SizedBox(height: 100.h), // Spacing for button
+          Align(
+            alignment: Alignment.centerRight,
+            child: _buildButton("Continue", () {
+              if (_formKey1.currentState!.validate()) {
+                setState(() => _currentStep = 1);
+              }
+            }),
+          )
+        ],
+      ),
     );
   }
 
   Widget _buildStep2() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel("Outbound Terminal"),
-        _buildTextField(
-            controller: outBoundController,
-            hint: "Enter Outbound Terminal",
-            validator: (v) => validateRequired(v, "Outbound Terminal")),
-        SizedBox(height: 16.h),
-        _buildLabel("Inbound Terminal"),
-        _buildTextField(
-            controller: inBoundController,
-            hint: "Enter Inbound Terminal",
-            validator: (v) => validateRequired(v, "Inbound Terminal")),
-        SizedBox(height: 16.h),
-        _buildLabel("Departure Flight"),
-        _buildTextField(
-            controller: departureFlightController,
-            hint: "Enter Departure Flight",
-            validator: (v) => validateRequired(v, "Departure Flight")),
-        SizedBox(height: 16.h),
-        _buildLabel("Return Flight"),
-        _buildTextField(
-            controller: returnFlightController,
-            hint: "Enter Return Flight",
-            validator: (v) => validateRequired(v, "Return Flight")),
-        SizedBox(height: 60.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildButton("Back", _onBackPressed, isSecondary: true),
-            _buildButton("Continue", () {
-              if (outBoundController.text.isNotEmpty &&
-                  inBoundController.text.isNotEmpty &&
-                  departureFlightController.text.isNotEmpty &&
-                  returnFlightController.text.isNotEmpty) {
-                setState(() => _currentStep = 2);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Please fill all flight details")));
-              }
-            }),
-          ],
-        )
-      ],
+    return Form(
+      key: _formKey2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLabel("Outbound Terminal"),
+          _buildTextField(
+              controller: outBoundController,
+              hint: "Enter Outbound Terminal",
+              validator: (v) => validateRequired(v, "Outbound Terminal")),
+          SizedBox(height: 16.h),
+          _buildLabel("Inbound Terminal"),
+          _buildTextField(
+              controller: inBoundController,
+              hint: "Enter Inbound Terminal",
+              validator: (v) => validateRequired(v, "Inbound Terminal")),
+          SizedBox(height: 16.h),
+          _buildLabel("Departure Flight"),
+          _buildTextField(
+              controller: departureFlightController,
+              hint: "Enter Departure Flight",
+              validator: (v) => validateRequired(v, "Departure Flight")),
+          SizedBox(height: 16.h),
+          _buildLabel("Return Flight"),
+          _buildTextField(
+              controller: returnFlightController,
+              hint: "Enter Return Flight",
+              validator: (v) => validateRequired(v, "Return Flight")),
+          SizedBox(height: 60.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildButton("Back", _onBackPressed, isSecondary: true),
+              _buildButton("Continue", () {
+                if (_formKey2.currentState!.validate()) {
+                  setState(() => _currentStep = 2);
+                }
+              }),
+            ],
+          )
+        ],
+      ),
     );
   }
 
   Widget _buildStep3() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Vehicle Lookup Header
-        Text("Vehicle Lookup",
+    return Form(
+      key: _formKey3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Vehicle Lookup Header
+          Text("Vehicle Lookup",
+              style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Archivo')),
+          Text(
+            "Enter your vehicle registration number to auto-fill vehicle details",
             style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Archivo')),
-        Text(
-          "Enter your vehicle registration number to auto-fill vehicle details",
-          style: TextStyle(
-              fontSize: 12.sp, color: Colors.grey, fontFamily: 'Archivo'),
-        ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
-            Expanded(
-                child: _buildTextField(
-                    controller: vehicleLookupController,
-                    hint: "Enter register number")),
-            SizedBox(width: 8.w),
-            InkWell(
-              onTap: _handleVehicleLookup,
-              child: Container(
-                height: 50.h,
-                width: 50.w,
-                decoration: BoxDecoration(
-                    color: Color(0xFF2E5B5B), // primary dark green
-                    borderRadius: BorderRadius.circular(8.r)),
-                child: Icon(Icons.search, color: Colors.white),
+                fontSize: 12.sp, color: Colors.grey, fontFamily: 'Archivo'),
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                  child: _buildTextField(
+                      controller: vehicleLookupController,
+                      hint: "Enter register number",
+                      validator: (v) =>
+                          validateRequired(v, "Registration No"))),
+              SizedBox(width: 8.w),
+              InkWell(
+                onTap: _handleVehicleLookup,
+                child: Container(
+                  height: 50.h,
+                  width: 50.w,
+                  decoration: BoxDecoration(
+                      color: Color(0xFF2E5B5B), // primary dark green
+                      borderRadius: BorderRadius.circular(8.r)),
+                  child: Icon(Icons.search, color: Colors.white),
+                ),
+              )
+            ],
+          ),
+          SizedBox(height: 24.h),
+          _buildLabel("Vehicle Registration No"),
+          _buildTextField(
+              controller: vehicleRegNoController,
+              hint: "Enter Registration No",
+              validator: (v) => validateRequired(v, "Registration No")),
+          SizedBox(height: 16.h),
+          _buildLabel("Car Manufacturer"),
+          _buildTextField(
+              controller: carMakerController,
+              hint: "Enter Manufacturer",
+              validator: (v) => validateRequired(v, "Manufacturer")),
+          SizedBox(height: 16.h),
+          _buildLabel("Car Year"),
+          _buildTextField(
+              controller: carYearController,
+              hint: "Enter Year",
+              keyboardType: TextInputType.number,
+              validator: (v) => validateRequired(v, "Year")),
+          SizedBox(height: 16.h),
+          _buildLabel("Car Model"),
+          _buildTextField(
+              controller: carModelController,
+              hint: "Enter Model",
+              validator: (v) => validateRequired(v, "Model")),
+          SizedBox(height: 16.h),
+          _buildLabel("Car Color"),
+          _buildTextField(
+              controller: carColorController,
+              hint: "Enter Color",
+              validator: (v) => validateRequired(v, "Color")),
+          SizedBox(height: 16.h),
+          _buildLabel("Transmission"),
+          Container(
+            height: 50.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              color: Color(0xFFEFF1F3),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: transmissionType,
+                isExpanded: true,
+                icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                items: ["Auto", "Manual"].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value,
+                        style: TextStyle(
+                            fontSize: 14.sp,
+                            fontFamily: 'Archivo',
+                            color: Colors.black87)),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    transmissionType = newValue!;
+                  });
+                },
               ),
-            )
-          ],
-        ),
-        SizedBox(height: 24.h),
-
-        _buildLabel("Vehicle Registration No"),
-        _buildTextField(
-            controller: vehicleRegNoController,
-            hint: "Enter Registration No",
-            validator: (v) => validateRequired(v, "Registration No")),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Car Manufacturer"),
-        _buildTextField(
-            controller: carMakerController,
-            hint: "Enter Manufacturer",
-            validator: (v) => validateRequired(v, "Manufacturer")),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Car Year"),
-        _buildTextField(
-            controller: carYearController,
-            hint: "Enter Year",
-            keyboardType: TextInputType.number),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Car Model"),
-        _buildTextField(controller: carModelController, hint: "Enter Model"),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Car Color"),
-        _buildTextField(controller: carColorController, hint: "Enter Color"),
-
-        SizedBox(height: 16.h),
-        _buildLabel("Transmission"),
-        Container(
-          height: 50.h,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          decoration: BoxDecoration(
-            color: Color(0xFFEFF1F3),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: transmissionType,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-              items: ["Auto", "Manual"].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value,
-                      style: TextStyle(
-                          fontSize: 14.sp,
-                          fontFamily: 'Archivo',
-                          color: Colors.black87)),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  transmissionType = newValue!;
-                });
-              },
             ),
           ),
-        ),
-
-        SizedBox(height: 16.h),
-        _buildLabel("No of Passengers"),
-        _buildTextField(
-            controller: numPassengersController,
-            hint: "Enter No of Passengers",
-            keyboardType: TextInputType.number),
-
-        SizedBox(height: 20.h),
-        Row(
-          children: [
-            Checkbox(
-              value: agreedToTerms,
-              onChanged: (val) => setState(() => agreedToTerms = val ?? false),
-              activeColor: Color(0xFF2E5B5B),
-            ),
-            Expanded(
-                child: Text("I agree to terms & conditions",
-                    style: TextStyle(fontFamily: 'Archivo', fontSize: 13.sp))),
-          ],
-        ),
-
-        SizedBox(height: 30.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildButton("Back", _onBackPressed, isSecondary: true),
-            _buildButton("Complete Reservation", _submitForm),
-          ],
-        )
-      ],
+          SizedBox(height: 16.h),
+          _buildLabel("No of Passengers"),
+          _buildTextField(
+              controller: numPassengersController,
+              hint: "Enter No of Passengers",
+              keyboardType: TextInputType.number,
+              validator: (v) => validateRequired(v, "No of Passengers")),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              Checkbox(
+                value: agreedToTerms,
+                onChanged: (val) =>
+                    setState(() => agreedToTerms = val ?? false),
+                activeColor: Color(0xFF2E5B5B),
+              ),
+              Expanded(
+                  child: Text("I agree to terms & conditions",
+                      style:
+                          TextStyle(fontFamily: 'Archivo', fontSize: 13.sp))),
+            ],
+          ),
+          SizedBox(height: 30.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildButton("Back", _onBackPressed, isSecondary: true),
+              _buildButton("Complete Reservation", _submitForm),
+            ],
+          )
+        ],
+      ),
     );
   }
 
   void _submitForm() async {
-    if (!agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please accept terms & conditions')));
+    if (!_formKey3.currentState!.validate()) {
       return;
     }
 
-    if (vehicleRegNoController.text.isEmpty ||
-        carMakerController.text.isEmpty) {
+    if (!agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Please fill required vehicle details")));
+          SnackBar(content: Text('Please accept terms & conditions')));
       return;
     }
 
@@ -455,6 +452,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       style: TextStyle(fontFamily: 'Archivo', fontSize: 14.sp),
       decoration: InputDecoration(
         hintText: hint,
@@ -466,6 +464,23 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
           borderRadius: BorderRadius.circular(6.r),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.r),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.r),
+          borderSide: BorderSide(color: Color(0xFF2E5B5B), width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.r),
+          borderSide: BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6.r),
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+        ),
+        errorStyle: TextStyle(fontSize: 11.sp, height: 0.8),
       ),
     );
   }

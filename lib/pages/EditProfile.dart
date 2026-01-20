@@ -76,7 +76,7 @@ class _EditprofileState extends State<Editprofile> {
         if (newImageUrl != null && newImageUrl.isNotEmpty) {
           // Prepend base URL if relative (and not a local path)
           if (!newImageUrl.startsWith('http') && !newImageUrl.startsWith('/')) {
-            newImageUrl = "http://test.thefutureinno.com$newImageUrl";
+            newImageUrl = "http://test.thefutureinno.com/$newImageUrl";
           }
 
           // Force a cache-breaker to ensure image refreshes if URL is the same

@@ -45,17 +45,6 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: 24.h),
-                  _buildSectionTitle("Notifications"),
-                  _buildSwitchItem(
-                    "Turn on",
-                    Icons.notifications_outlined,
-                    true,
-                    onChanged: (value) {
-                      // Handle notification toggle
-                      // You might want to save this preference to SharedPreferences
-                    },
-                  ),
-                  SizedBox(height: 24.h),
                   _buildSectionTitle("Term and Support"),
                   _buildSettingItem(
                     "Terms and conditions",
@@ -63,14 +52,6 @@ class SettingsScreen extends StatelessWidget {
                     onTap: () {
                       // Navigate to terms screen
                       Navigator.pushNamed(context, MyRoutes.termsAndCondition);
-                    },
-                  ),
-                  _buildSettingItem(
-                    "Privacy Policy",
-                    Icons.privacy_tip_outlined,
-                    onTap: () {
-                      // Navigate to privacy policy screen
-                      Navigator.pushNamed(context, MyRoutes.privacyPolicy);
                     },
                   ),
                   _buildSettingItem(

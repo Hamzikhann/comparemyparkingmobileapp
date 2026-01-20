@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
+import 'package:parkingapp/data/airport_service_config.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
