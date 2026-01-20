@@ -346,9 +346,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
   Future<void> _captureAndSharePng() async {
     try {
-      RenderRepaintBoundary boundary =
-          _receiptKey.currentContext!.findRenderObject()
-              as RenderRepaintBoundary;
+      RenderRepaintBoundary boundary = _receiptKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
@@ -365,9 +364,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         [XFile(file.path)],
         text: 'Parking Receipt',
         subject: 'Parking Receipt',
-        sharePositionOrigin: box != null
-            ? box.localToGlobal(Offset.zero) & box.size
-            : null,
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
     } catch (e) {
       debugPrint("Error sharing image: $e");
@@ -404,15 +402,25 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
   Future<void> _downloadPdf(BuildContext context) async {
     try {
-      // Request storage permission
+      // Request storage permission (only for Android 12 and below)
       if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Storage permission denied")),
-          );
-          return;
+        // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for Downloads folder
+
+        // Only request permission for Android 12 and below
+        final sdkInt = int.tryParse(Platform.version.split(' ').first) ?? 0;
+        if (sdkInt < 33) {
+          // Android 12 and below - request storage permission
+          final status = await Permission.storage.request();
+          if (!status.isGranted) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Storage permission denied")),
+              );
+            }
+            return;
+          }
         }
+        // Android 13+ (API 33+) - no permission needed for Downloads folder
       }
 
       // Load logo image

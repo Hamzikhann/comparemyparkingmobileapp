@@ -78,6 +78,11 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
 
   void _handleVehicleLookup() async {
     String regNo = vehicleLookupController.text.trim();
+    if (regNo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Please enter a registration number")));
+      return;
+    }
 
     try {
       final response = await GeneralRepository().lookupVehicle(regNo);
@@ -257,10 +262,9 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
             children: [
               Expanded(
                   child: _buildTextField(
-                      controller: vehicleLookupController,
-                      hint: "Enter register number",
-                      validator: (v) =>
-                          validateRequired(v, "Registration No"))),
+                controller: vehicleLookupController,
+                hint: "Enter register number",
+              )),
               SizedBox(width: 8.w),
               InkWell(
                 onTap: _handleVehicleLookup,

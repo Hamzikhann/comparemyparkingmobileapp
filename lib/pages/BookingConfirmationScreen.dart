@@ -31,14 +31,27 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   Future<void> _downloadPdf() async {
     try {
-      // Request storage permission
+      // Request storage permission (only for Android 12 and below)
       if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Storage permission denied")),
-          );
-          return;
+        // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for Downloads folder
+        // We'll use the public Downloads directory which doesn't require permission
+
+        // Only request permission for Android 12 and below
+        if (Platform.isAndroid) {
+          final sdkInt = int.tryParse(Platform.version.split(' ').first) ?? 0;
+          if (sdkInt < 33) {
+            // Android 12 and below - request storage permission
+            final status = await Permission.storage.request();
+            if (!status.isGranted) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Storage permission denied")),
+                );
+              }
+              return;
+            }
+          }
+          // Android 13+ (API 33+) - no permission needed for Downloads folder
         }
       }
 
@@ -583,23 +596,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: 1.4,
+                      childAspectRatio: 0.85,
                       children: [
                         _buildStepCard(
                             "Check Your Email",
-                            "Your payment has been successfully done.",
+                            "A detailed confirmation email with your booking voucher, directions, and contact information has been sent to ${Globals.booking_info_model?.email ?? 'your email'}. Please check your spam folder if you don't see it within 15 minutes.",
                             const Color(0xFFF1F8F6)),
                         _buildStepCard(
                             "Bring Your Documents",
-                            "Your payment has been successfully done.",
+                            "Please bring a printed copy of your booking confirmation and your driving license. Your vehicle registration number must match the one provided in this booking.",
                             const Color(0xFFE8F5F9)),
                         _buildStepCard(
                             "Security & Safety",
-                            "Your payment has been successfully done.",
+                            "Your vehicle will be secured in our monitored facility with 24/7 CCTV coverage. Please remove all valuables from your vehicle before arrival.",
                             const Color(0xFFF7F2FA)),
                         _buildStepCard(
                             "Arrival Instructions",
-                            "Your payment has been successfully done.",
+                            "Arrive at least 30 minutes before your recommended airport check-in time. Follow the signs for \"Pre-booked Parking\" and present your booking confirmation at the barrier.",
                             const Color(0xFFFEFBEA)),
                       ],
                     ),
@@ -738,7 +751,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           SizedBox(height: 4.h),
           Text(
             subtitle,
-            maxLines: 3,
+            maxLines: 6,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
                 fontSize: 10.sp, color: Colors.grey[700], height: 1.3),
