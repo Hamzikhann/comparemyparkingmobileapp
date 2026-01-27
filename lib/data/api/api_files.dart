@@ -24,4 +24,5 @@ class ApiFiles {
   static String updateProfileImage = "/users/update/image";
   static String updateProfileInfo = "/users/update";
   static String searchStatus = "/search/status";
+  static String verifyPayment = "/stripe/verify-payment";
 }

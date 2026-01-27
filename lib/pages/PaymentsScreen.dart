@@ -26,7 +26,90 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.initState();
   }
 
-  Future<void> _handlePayment(String paymentIntentId) async {
+  Future<void> startStripePayment({String method = 'card'}) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      final rawAmount =
+          (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
+      final amountInPence = (double.tryParse(rawAmount)!).toInt().toString();
+
+      debugPrint(
+          'Creating payment intent ($method) for amount: $amountInPence pence');
+
+      // Create Intent with specific method type
+      final response = await GeneralRepository().createPaymentIntent(
+          amount: amountInPence,
+          currency: "gbp",
+          startDate: Globals.startDate,
+          endDate: Globals.endDate,
+          // If apple_pay, stripe usually expects 'card' or automatic.
+          // We can just pass 'card' if method is apple_pay, or rely on backend handling.
+          // Safest to send 'card' to Stripe API if not configured otherwise.
+          paymentMethodType: method == 'apple_pay' ? 'card' : method);
+
+      final clientSecret = response['paymentIntent']?['client_secret'] ??
+          response['clientSecret'];
+      if (clientSecret == null)
+        throw Exception('Missing client secret in response');
+
+      Stripe.merchantIdentifier = 'merchant.com.stn00.parkingapp2';
+
+      // Init Payment Sheet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Parking Pilot',
+          style: ThemeMode.system,
+          // Enable delayed methods for Klarna
+          allowsDelayedPaymentMethods: true,
+          // If we want to force/prefer the selected method, we rely on the Intent config.
+          // PaymentSheet will show available methods.
+          applePay: const PaymentSheetApplePay(
+            merchantCountryCode: 'GB',
+            buttonType: PlatformButtonType.pay,
+          ),
+        ),
+      );
+
+      // Present Sheet
+      await Stripe.instance.presentPaymentSheet();
+      final paymentId =
+          response['paymentIntent']?['id'] ?? response['paymentId'];
+
+      // Verify Payment - as requested
+      debugPrint("Verifying payment locally for $paymentId");
+      final verifyRes = await GeneralRepository().verifyPayment(paymentId);
+
+      // Check status (adjusting for likely API response structure)
+      // User Logic: if (response.data.status === "succeeded")
+      final status = verifyRes['data'] is Map
+          ? verifyRes['data']['status']
+          : verifyRes['status']; // Fallback check
+
+      if (status == 'succeeded') {
+        await _handlePayment(paymentId, method);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Payment status: $status. Please try again.")));
+      }
+    } on StripeException catch (e) {
+      setState(() => _isLoading = false);
+      if (e.error.code == FailureCode.Canceled) {
+        // User cancelled
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Payment error: ${e.error.localizedMessage}")));
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment failed: ${e.toString()}")));
+    }
+  }
+
+  // Updated _handlePayment signature to include method
+  Future<void> _handlePayment(String paymentIntentId, String method) async {
     try {
       final result = await GeneralRepository().bookParking(
         // Booking
@@ -71,8 +154,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // Payment
         referenceNo: "STRIPE-$paymentIntentId",
-        paymentMethod: "card",
-        paymentMethodDisplay: "Credit / Debit Card",
+        paymentMethod: method, // Dynamic
+        paymentMethodDisplay:
+            method == 'klarna' ? "Klarna" : "Credit / Debit Card",
         paymentStatus: "completed",
         paymentDate: DateTime.now().toIso8601String(),
         transactionId: paymentIntentId,
@@ -88,56 +172,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Booking failed: $e")),
       );
-    }
-  }
-
-  Future<void> startStripePayment() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-    try {
-      final rawAmount =
-          (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
-      final amountInPence = (double.tryParse(rawAmount)!).toInt().toString();
-
-      debugPrint('Creating payment intent for amount: $amountInPence pence');
-
-      final response = await GeneralRepository().createPaymentIntent(
-          amount: amountInPence,
-          currency: "gbp",
-          startDate: Globals.startDate,
-          endDate: Globals.endDate);
-
-      final clientSecret = response['paymentIntent']?['client_secret'] ??
-          response['clientSecret'];
-      if (clientSecret == null)
-        throw Exception('Missing client secret in response');
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'Parking Pilot',
-          style: ThemeMode.system,
-          allowsDelayedPaymentMethods: false,
-        ),
-      );
-
-      await Stripe.instance.presentPaymentSheet();
-      final paymentId =
-          response['paymentIntent']?['id'] ?? response['paymentId'];
-
-      await _handlePayment(paymentId);
-    } on StripeException catch (e) {
-      setState(() => _isLoading = false);
-      if (e.error.code == FailureCode.Canceled) {
-        // User cancelled, do nothing
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Payment error: ${e.error.localizedMessage}")));
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Payment failed: ${e.toString()}")));
     }
   }
 
@@ -295,7 +329,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               value: 'apple_pay',
               color: Colors.black,
               textColor: Colors.white,
-              isComingSoon: true),
+              isComingSoon: false),
           SizedBox(height: 12.h),
           _buildPaymentOption(
               icon: Icons.money,
@@ -304,7 +338,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               value: 'klarna',
               color: Color(0xFFFFB3C7),
               textColor: Colors.black,
-              isComingSoon: true),
+              isComingSoon: false), // Enabled!
         ],
       ),
     );
@@ -318,11 +352,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       required Color color,
       required Color textColor,
       bool isComingSoon = false}) {
-    // Only 'card' is interactive for now
     return GestureDetector(
       onTap: () {
         if (!isComingSoon) {
-          startStripePayment(); // Directly trigger stripe for card
+          startStripePayment(method: value);
         }
       },
       child: Container(

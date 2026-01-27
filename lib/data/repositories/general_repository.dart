@@ -1052,6 +1052,7 @@ class GeneralRepository {
     required String currency,
     required String startDate,
     required String endDate,
+    String paymentMethodType = 'card',
   }) async {
     final url = Uri.parse(
       'http://test.thefutureinno.com/stripe/create-payment-intent',
@@ -1078,7 +1079,7 @@ class GeneralRepository {
       final body = jsonEncode({
         "amount": amountInt, // e.g. 3869
         "currency": currency.toLowerCase(), // gbp
-        "payment_method": "card",
+        "payment_method": paymentMethodType,
         "test_mode": false,
 
         "startDate": startDate,
@@ -1111,6 +1112,29 @@ class GeneralRepository {
     } catch (e) {
       throw Exception('Payment Intent Error: $e');
     }
+  }
+
+  Future<Map<String, dynamic>> verifyPayment(String paymentIntentId) async {
+    Completer<Map<String, dynamic>> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.verifyPayment,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "paymentIntentId": paymentIntentId,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Verifying payment...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete(res);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
   }
 
   Future<String> postLocation(

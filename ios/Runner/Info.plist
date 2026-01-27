@@ -90,7 +90,7 @@
 	</array>
 	<key>com.apple.developer.applepay</key>
 	<array>
-		<string>merchant.com.your.app</string>
+		<string>merchant.com.stn00.parkingapp2</string>
 	</array>
 </dict>
 </plist>
