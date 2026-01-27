@@ -40,6 +40,7 @@ dependencies:
   pdf: ^3.11.1
   webview_flutter: ^4.13.1
   open_file: ^3.5.8
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:

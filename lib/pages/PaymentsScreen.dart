@@ -1,5 +1,6 @@
 // ignore_for_file: unused_catch_stack
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -65,10 +66,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
           allowsDelayedPaymentMethods: true,
           // If we want to force/prefer the selected method, we rely on the Intent config.
           // PaymentSheet will show available methods.
-          applePay: const PaymentSheetApplePay(
-            merchantCountryCode: 'GB',
-            buttonType: PlatformButtonType.pay,
-          ),
+          applePay: Platform.isIOS
+              ? const PaymentSheetApplePay(
+                  merchantCountryCode: 'GB',
+                  buttonType: PlatformButtonType.pay,
+                )
+              : null,
         ),
       );
 
@@ -322,15 +325,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
               color: Color(0xFF4285F4),
               textColor: Colors.white),
           SizedBox(height: 12.h),
-          _buildPaymentOption(
-              icon: Icons.phone_iphone,
-              label: "Apple Pay",
-              subLabel: "Pay securely with Apple Pay",
-              value: 'apple_pay',
-              color: Colors.black,
-              textColor: Colors.white,
-              isComingSoon: false),
-          SizedBox(height: 12.h),
+          if (Platform.isIOS) ...[
+            _buildPaymentOption(
+                icon: Icons.phone_iphone,
+                label: "Apple Pay",
+                subLabel: "Pay securely with Apple Pay",
+                value: 'apple_pay',
+                color: Colors.black,
+                textColor: Colors.white,
+                isComingSoon: false),
+            SizedBox(height: 12.h),
+          ],
           _buildPaymentOption(
               icon: Icons.money,
               label: "Klarna",

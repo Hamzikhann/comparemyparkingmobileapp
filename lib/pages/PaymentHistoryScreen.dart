@@ -14,6 +14,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({Key? key}) : super(key: key);
@@ -324,13 +325,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Future<void> _downloadPaymentPdf(Payment payment) async {
     try {
       // Request storage permission (only for Android 12 and below)
+      // Request storage permission
       if (Platform.isAndroid) {
-        // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for Downloads folder
+        final deviceInfo = DeviceInfoPlugin();
+        final androidInfo = await deviceInfo.androidInfo;
 
-        // Only request permission for Android 12 and below
-        final sdkInt = int.tryParse(Platform.version.split(' ').first) ?? 0;
-        if (sdkInt < 33) {
-          // Android 12 and below - request storage permission
+        if (androidInfo.version.sdkInt < 33) {
           final status = await Permission.storage.request();
           if (!status.isGranted) {
             if (mounted) {
@@ -341,7 +341,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             return;
           }
         }
-        // Android 13+ (API 33+) - no permission needed for Downloads folder
       }
 
       // Load logo image

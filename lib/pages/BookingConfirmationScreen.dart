@@ -14,6 +14,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Map<String, dynamic>? bookingResult;
@@ -31,27 +32,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   Future<void> _downloadPdf() async {
     try {
-      // Request storage permission (only for Android 12 and below)
+      // Request storage permission
       if (Platform.isAndroid) {
-        // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for Downloads folder
-        // We'll use the public Downloads directory which doesn't require permission
+        final deviceInfo = DeviceInfoPlugin();
+        final androidInfo = await deviceInfo.androidInfo;
 
-        // Only request permission for Android 12 and below
-        if (Platform.isAndroid) {
-          final sdkInt = int.tryParse(Platform.version.split(' ').first) ?? 0;
-          if (sdkInt < 33) {
-            // Android 12 and below - request storage permission
-            final status = await Permission.storage.request();
-            if (!status.isGranted) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Storage permission denied")),
-                );
-              }
-              return;
+        if (androidInfo.version.sdkInt < 33) {
+          final status = await Permission.storage.request();
+          if (!status.isGranted) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Storage permission denied")),
+              );
             }
+            return;
           }
-          // Android 13+ (API 33+) - no permission needed for Downloads folder
         }
       }
 
