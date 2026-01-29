@@ -28,6 +28,8 @@ import 'package:parkingapp/data/models/VehicleLookupModel.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
+import 'package:parkingapp/data/models/DashboardDataModel.dart';
+import 'package:parkingapp/data/models/AdminDashboardModel.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 
 class GeneralRepository {
@@ -1353,6 +1355,42 @@ class GeneralRepository {
       },
     );
 
+    return completer.future;
+  }
+
+  Future<DashboardDataResponse> getDashboardData(String filter) async {
+    Completer<DashboardDataResponse> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: "${ApiFiles.dashboardData}?filter=$filter",
+      requestMethod: RequestMethod.get,
+      onLoad: () {
+        EasyLoading.show(status: "Loading dashboard data...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete(DashboardDataResponse.fromJson(res));
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
+  }
+
+  Future<AdminDashboardResponse> getMainDashboardData() async {
+    Completer<AdminDashboardResponse> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.mainDashboardData,
+      requestMethod: RequestMethod.post,
+      onLoad: () {}, // Handled by AdminHome locally
+      onSuccess: (Map<String, dynamic> res) {
+        completer.complete(AdminDashboardResponse.fromJson(res));
+      },
+      onError: (String errorMessage) {
+        completer.completeError(errorMessage);
+      },
+    );
     return completer.future;
   }
 }

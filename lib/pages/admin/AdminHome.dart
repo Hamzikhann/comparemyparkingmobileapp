@@ -7,12 +7,11 @@ import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
-import 'package:parkingapp/pages/admin/DriverListScreen.dart';
 import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
-import 'package:parkingapp/pages/admin/ViewAllScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
-import 'package:parkingapp/utils/colors.dart';
-import 'package:parkingapp/widgets/BookingCard.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:parkingapp/data/models/DashboardDataModel.dart';
+import 'package:parkingapp/data/models/AdminDashboardModel.dart';
 import 'package:parkingapp/pages/admin/TopBar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -29,6 +28,10 @@ class _ReserveBookingScreenState extends State<Adminhome> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  String _filter = 'weekly';
+  DashboardDataResponse? _dashboardData;
+  AdminDashboardResponse? _mainDashboardData;
+
   @override
   void initState() {
     super.initState();
@@ -44,11 +47,31 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     try {
       _bookingsFuture = _repository.getBookingsForAdmin();
       await _bookingsFuture;
-      await fetchDrivers();
+
+      // Fetch dashboard data
+      _dashboardData = await _repository.getDashboardData(_filter);
+      _mainDashboardData = await _repository.getMainDashboardData();
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to load data: ${e.toString()}";
       });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateDashboard() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      _dashboardData = await _repository.getDashboardData(_filter);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update dashboard: $e")),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -84,7 +107,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
             children: [
               TopBar(
                 title: '',
-                leftSideText: "AirPort Parking",
+                leftSideText: "Compare My Parking",
                 showBackButton: false,
                 showPayments: true,
                 onPaymentPressed: () {
@@ -141,14 +164,17 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                 );
                               } else if (snapshot.hasData) {
                                 final pending = snapshot.data!.pendingParkings;
-                                final reserved = snapshot.data!.reservedParkings;
-                                final completed = snapshot.data!.completedParkings;
+                                final reserved =
+                                    snapshot.data!.reservedParkings;
+                                final completed =
+                                    snapshot.data!.completedParkings;
 
                                 // Move bookings with empty assignments from reserved to pending
                                 for (var booking in List.from(reserved)) {
                                   if (booking.bookingAssignments.isEmpty) {
                                     pending.add(booking);
-                                    reserved.remove(booking); // Remove from reserved
+                                    reserved.remove(
+                                        booking); // Remove from reserved
                                   }
                                 }
 
@@ -159,141 +185,60 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "Assigned Driver",
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Archivo',
-                                        ),
-                                      ),
-                                      SizedBox(height: 16.h),
-
-                                      // First card (Total Booking)
-                                      BookingCard(
-                                        title: "Total Booking",
-                                        available: reserved.length +
-                                            pending.length +
-                                            completed
-                                                .length, // or your total count
-                                        isHighlighted: true,
-                                        onTap: () {
-                                          // navigate to Total Booking details
-                                        },
-                                      ),
-                                      SizedBox(height: 12.h),
-
-                                      // Accept Booking
-                                      BookingCard(
-                                        title: "Assigned Booking",
-                                        available:
-                                            reserved.length,
-                                        onTap: () {
-                                          // navigate to Accept Booking details
-                                          _viewAll("Accept Booking", reserved);
-                                        },
-                                      ),
-                                      SizedBox(height: 12.h),
-
-                                      // Pending Booking
-                                      BookingCard(
-                                        title: "Un-Assigned Booking",
-                                        available: pending.length,
-                                        onTap: () {
-                                          // navigate to Pending Booking details
-                                          _viewAll("Pending Booking", pending);
-                                        },
-                                      ),
-                                      SizedBox(height: 12.h),
-
-                                      // Reserved Booking
-                                      BookingCard(
-                                        title: "Completed Booking",
-                                        available: completed.length,
-                                        onTap: () {
-                                          // navigate to Reserved Booking details
-                                          _viewAll(
-                                              "Completed Booking", completed);
-                                        },
-                                      ),
-
-                                      SizedBox(height: 16.h),
-
-                                      /// 🔄 TASK LIST ROW WITH REFRESH
+                                      // Top Cards Row 1
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "Task List",
-                                            style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Archivo',
+                                          Expanded(
+                                            child: _buildStatCard(
+                                              "Users",
+                                              _mainDashboardData
+                                                      ?.data.stats.totalUsers
+                                                      .toString() ??
+                                                  "0",
+                                              Icons.people_outline,
+                                              Colors.green,
                                             ),
                                           ),
-                                          GestureDetector(
-                                            onTap: _loadData,
-                                            child: Text(
-                                              "Refresh",
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w500,
-                                                color: colors.primary,
-                                                decoration:
-                                                    TextDecoration.underline,
-                                              ),
+                                          SizedBox(width: 16.w),
+                                          Expanded(
+                                            child: _buildStatCard(
+                                              "Total Bookings",
+                                              _mainDashboardData
+                                                      ?.data.stats.totalBookings
+                                                      .toString() ??
+                                                  "0",
+                                              Icons.arrow_circle_down,
+                                              Colors.redAccent,
                                             ),
                                           ),
                                         ],
                                       ),
+                                      SizedBox(height: 16.h),
+                                      // Top Cards Row 2
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildStatCard(
+                                              "Total Payments",
+                                              "£${_mainDashboardData?.data.stats.totalPayments.toString() ?? "0"}",
+                                              Icons.notifications_none,
+                                              Colors.orange,
+                                            ),
+                                          ),
+                                          const Expanded(child: SizedBox()),
+                                        ],
+                                      ),
                                       SizedBox(height: 24.h),
-                                      buildSection(
-                                        "Un-Assigned Session",
-                                        pending,
-                                        Icons.schedule,
-                                        "Not Assigned",
-                                      ),
-                                      buildSection(
-                                        "Assigned Session",
-                                        reserved,
-                                        Icons.schedule,
-                                        reserved.isNotEmpty &&
-                                                reserved
-                                                    .first
-                                                    .bookingAssignments
-                                                    .isNotEmpty &&
-                                                reserved
-                                                        .first
-                                                        .bookingAssignments
-                                                        .first
-                                                        .employee
-                                                        ?.firstName !=
-                                                    null
-                                            ? reserved.first.bookingAssignments
-                                                .first.employee!.firstName
-                                            : 'Assigned',
-                                      ),
-                                      buildSection(
-                                        "Completed Sessions",
-                                        completed,
-                                        Icons.check_circle,
-                                        completed.isNotEmpty &&
-                                                completed
-                                                    .first
-                                                    .bookingAssignments
-                                                    .isNotEmpty &&
-                                                completed
-                                                        .first
-                                                        .bookingAssignments
-                                                        .first
-                                                        .employee
-                                                        ?.firstName !=
-                                                    null
-                                            ? completed.first.bookingAssignments
-                                                .first.employee!.firstName
-                                            : 'Assigned',
-                                      ),
+
+                                      // Revenue & Users Chart Card
+                                      _buildChartCard(),
+
+                                      SizedBox(height: 32.h),
+
+                                      // Circular Progress Section
+                                      _buildCircularProgressCard(),
+
+                                      SizedBox(height: 48.h),
                                     ],
                                   ),
                                 );
@@ -307,326 +252,6 @@ class _ReserveBookingScreenState extends State<Adminhome> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget buildSection(
-      String title, List<Parking> parkings, IconData icon, String assigned) {
-    if (parkings.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: colors.textFieldBorder,
-              fontSize: 16.sp,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            "No ${title.toLowerCase()} available",
-            style: TextStyle(fontSize: 14.sp),
-          ),
-          SizedBox(height: 16.h),
-        ],
-      );
-    }
-
-    bool isUnAssigned = title.contains('Un-Assigned');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: colors.textFieldBorder,
-            fontSize: 16.sp,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          padding: EdgeInsets.all(12.w),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: Colors.grey.shade300),
-            color: Colors.white,
-          ),
-          child: Column(
-            children: [
-              _buildInfoRow(
-                  Icons.person,
-                  parkings.first.registrations.first.firstName,
-                  Icons.directions_car,
-                  parkings.first.vehicles.first.vehicleManufacturer),
-              SizedBox(height: 12.h),
-              _buildInfoRow(Icons.flight_takeoff, parkings.first.airport,
-                  Icons.home, "Delivery Address"),
-              SizedBox(height: 12.h),
-              _buildInfoRow(Icons.access_time, parkings.first.startTime,
-                  Icons.calendar_today, parkings.first.startDate),
-              SizedBox(height: 12.h),
-              _buildInfoRow(Icons.assignment_ind, assigned, Icons.pending,
-                  parkings.first.status),
-              if (isUnAssigned) ...[
-                SizedBox(height: 16.h),
-                GestureDetector(
-                  onTap: () {
-                    _openAssignDriverBottomSheet(parkings.first);
-                  },
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Assigned Driver",
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Icon(Icons.arrow_drop_down, color: Colors.black),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(IconData leftIcon, String leftText, IconData rightIcon,
-      String? rightText) {
-    return Row(
-      children: [
-        Expanded(
-          child: Row(
-            children: [
-              Icon(leftIcon, size: 18.sp, color: Colors.black),
-              SizedBox(width: 6.w),
-              Expanded(
-                child: Text(
-                  leftText,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Icon(rightIcon, size: 18.sp, color: Colors.black),
-              SizedBox(width: 6.w),
-              Expanded(
-                child: Text(
-                  rightText ?? "",
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _openAssignDriverBottomSheet(Parking parkings) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      isScrollControlled: true,
-      builder: (context) {
-        String? selectedDriverId;
-        bool isLoading = false; // Changed to store driver ID instead of name
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 5.h,
-                    width: 50.w,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    "Assign Driver",
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Select Driver",
-                    ),
-                    value: selectedDriverId,
-                    items: Globals.drivers
-                        .map((driver) => DropdownMenuItem(
-                              value: driver.id,
-                              child: Text(driver
-                                  .name), // Using driver.name from your Driver model
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedDriverId = value;
-                      });
-                    },
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // New Driver Text
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => DriverListScreen()),
-                      ).then((_) {
-                        // Refresh drivers list after returning from AddEdit screen
-                        if (mounted) {
-                          setState(() {});
-                        }
-                      });
-                    },
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "+ Add New Driver",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 24.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade300,
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed:
-                              isLoading ? null : () => Navigator.pop(context),
-                          child: Text("Cancel"),
-                        ),
-                      ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isLoading ? Colors.grey : colors.primary,
-                          ),
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  if (selectedDriverId != null) {
-                                    setState(() => isLoading = true);
-                                    try {
-                                      // Call the API to assign driver
-                                      await assignDriver(
-                                        parkings.registrations.first.bookingId,
-                                        selectedDriverId!,
-                                      );
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              "Failed to assign driver: ${e.toString()}"),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    } finally {
-                                      if (mounted) {
-                                        setState(() => isLoading = false);
-                                      }
-                                    }
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text("Please select a driver"),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                          child: isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
-                              : Text(
-                                  "Apply",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> assignDriver(String bookingID, String userID) async {
-    GeneralRepository().assignDriver(bookingID, userID).then((value) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Driver Assign Successfull!")),
-      );
-      Navigator.pop(context);
-      _loadData();
-    });
-  }
-
-  void _viewAll(String type, List<Parking> parkings) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ViewAllScreen(title: type, parkings: parkings),
       ),
     );
   }
@@ -705,5 +330,353 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     } catch (e) {
       print("Error: $e");
     }
+  }
+
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(icon, color: color, size: 20.sp),
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Center(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 28.sp,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          const Divider(),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Updated just now",
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartCard() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Revenue & Users",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              _buildFilterToggle(),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              _buildLegendItem("Deposits", Colors.green.shade300),
+              SizedBox(width: 12.w),
+              _buildLegendItem("Withdrawals", Colors.teal),
+            ],
+          ),
+          SizedBox(height: 20.h),
+          SizedBox(
+            height: 200.h,
+            child: _buildLineChart(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        SizedBox(width: 4.w),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10.sp, color: Colors.black),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterToggle() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _filter,
+          isDense: true,
+          style: TextStyle(fontSize: 10.sp, color: Colors.black),
+          items: ['weekly', 'monthly'].map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value.toUpperCase()),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            if (newValue != null) {
+              setState(() {
+                _filter = newValue;
+              });
+              _updateDashboard();
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLineChart() {
+    if (_dashboardData == null || _dashboardData!.data.isEmpty) {
+      return const Center(child: Text("No data available"));
+    }
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.black,
+            strokeWidth: 1,
+            dashArray: [5, 5],
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                int index = value.toInt();
+                if (index >= 0 && index < _dashboardData!.data.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _dashboardData!.data[index].name,
+                      style: TextStyle(fontSize: 8.sp, color: Colors.black),
+                    ),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
+          ),
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: _dashboardData!.data.asMap().entries.map((e) {
+              return FlSpot(e.key.toDouble(), e.value.currentRevenue);
+            }).toList(),
+            isCurved: true,
+            color: Colors.green.shade300,
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
+          ),
+          LineChartBarData(
+            spots: _dashboardData!.data.asMap().entries.map((e) {
+              return FlSpot(
+                  e.key.toDouble(), e.value.currentUsers.toDouble() * 10);
+            }).toList(),
+            isCurved: true,
+            color: Colors.teal,
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
+          ),
+        ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            tooltipBgColor: Colors.green.shade400,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                return LineTooltipItem(
+                  '${spot.y.toStringAsFixed(0)}',
+                  const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                );
+              }).toList();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularProgressCard() {
+    if (_mainDashboardData == null) {
+      return const SizedBox.shrink();
+    }
+
+    final dist = _mainDashboardData!.data.userDistribution;
+    final total = dist.active + dist.inactive + dist.newUsers;
+    final activePercentage =
+        total > 0 ? (dist.active / total * 100).toInt() : 0;
+
+    return Column(
+      children: [
+        Center(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 200.w,
+                height: 200.w,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 10,
+                    centerSpaceRadius: 70.r,
+                    startDegreeOffset: -90,
+                    sections: [
+                      PieChartSectionData(
+                        value: dist.active.toDouble(),
+                        color: const Color(0xFFF770A1), // Pinkish
+                        radius: 20.w,
+                        showTitle: false,
+                        badgePositionPercentageOffset: 0,
+                      ),
+                      PieChartSectionData(
+                        value: dist.newUsers.toDouble(),
+                        color: const Color(0xFF6CF3C6), // Mint
+                        radius: 20.w,
+                        showTitle: false,
+                        badgePositionPercentageOffset: 0,
+                      ),
+                      PieChartSectionData(
+                        value: dist.inactive.toDouble() > 0
+                            ? dist.inactive.toDouble()
+                            : 0.0,
+                        color: const Color(0xFFB0A6F2), // Purple/Blue
+                        radius: 20.w,
+                        showTitle: false,
+                        badgePositionPercentageOffset: 0,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "$activePercentage%",
+                    style: TextStyle(
+                      fontSize: 32.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2D3142),
+                    ),
+                  ),
+                  Text(
+                    "Active Users",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 24.h),
+        _buildUserDistributionLegend(dist),
+      ],
+    );
+  }
+
+  Widget _buildUserDistributionLegend(UserDistribution dist) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildLegendItem("Active: ${dist.active}", const Color(0xFFF770A1)),
+        _buildLegendItem("New: ${dist.newUsers}", const Color(0xFF6CF3C6)),
+        _buildLegendItem("Inactive: ${dist.inactive}", const Color(0xFFB0A6F2)),
+      ],
+    );
   }
 }

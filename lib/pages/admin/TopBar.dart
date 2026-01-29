@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/utils/colors.dart';
 
 class TopBar extends StatelessWidget {
   final String title;
@@ -26,7 +27,7 @@ class TopBar extends StatelessWidget {
     return Container(
       height: 80.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF201A56),
+        color: colors.secondarynew,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24.r),
           bottomRight: Radius.circular(24.r),
@@ -63,7 +64,8 @@ class TopBar extends StatelessWidget {
                   ),
                 )
               else
-                SizedBox(width: 48.w), // Empty space when no back button or text
+                SizedBox(
+                    width: 48.w), // Empty space when no back button or text
 
               // Center - Title
               Expanded(
@@ -85,24 +87,16 @@ class TopBar extends StatelessWidget {
                 children: [
                   // Payment icon
                   if (showPayments)
+
+                    // Logout button
                     IconButton(
                       icon: Icon(
-                        Icons.payment,
+                        Icons.logout,
                         color: Colors.white,
                         size: 24.sp,
                       ),
-                      onPressed: onPaymentPressed,
+                      onPressed: onLogoutPressed,
                     ),
-                  
-                  // Logout button
-                  IconButton(
-                    icon: Icon(
-                      Icons.logout,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
-                    onPressed: onLogoutPressed,
-                  ),
                 ],
               ),
             ],

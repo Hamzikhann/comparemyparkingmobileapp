@@ -25,4 +25,6 @@ class ApiFiles {
   static String updateProfileInfo = "/users/update";
   static String searchStatus = "/search/status";
   static String verifyPayment = "/stripe/verify-payment";
+  static String dashboardData = "/dashboard/monthly-data";
+  static String mainDashboardData = "/dashboard";
 }

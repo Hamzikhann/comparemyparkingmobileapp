@@ -41,6 +41,7 @@ dependencies:
   webview_flutter: ^4.13.1
   open_file: ^3.5.8
   device_info_plus: ^12.3.0
+  fl_chart: ^0.66.2
 
 dev_dependencies:
   flutter_test:
