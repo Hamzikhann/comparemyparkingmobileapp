@@ -438,9 +438,9 @@ class _ReserveBookingScreenState extends State<Adminhome> {
           SizedBox(height: 8.h),
           Row(
             children: [
-              _buildLegendItem("Deposits", Colors.green.shade300),
+              _buildLegendItem("Revenue", Colors.green.shade300),
               SizedBox(width: 12.w),
-              _buildLegendItem("Withdrawals", Colors.teal),
+              _buildLegendItem("Users", Colors.teal),
             ],
           ),
           SizedBox(height: 20.h),
