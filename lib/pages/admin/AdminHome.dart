@@ -98,7 +98,7 @@ class _ReserveBookingScreenState extends State<Adminhome> {
       onWillPop: () async {
         // Show exit confirmation dialog
         bool shouldExit = await _showExitConfirmationDialog(context);
-        return shouldExit; // If true, allow back navigation; if false, prevent it
+        return shouldExit; // If true, allow back navigation; if false, puet it
       },
       child: Scaffold(
         backgroundColor: Colors.white,

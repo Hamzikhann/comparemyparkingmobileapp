@@ -251,7 +251,7 @@ void navigateBasedOnRole() async {
       if (Globals.roleTitle == "Employee") {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
       } else if (Globals.roleTitle == "Administrator") {
-        nav.pushReplacement(MaterialPageRoute(builder: (_) => Adminhome()));
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
       } else {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
       }
@@ -259,7 +259,7 @@ void navigateBasedOnRole() async {
       if (Globals.roleTitle == "Employee") {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
       } else if (Globals.roleTitle == "Administrator") {
-        nav.pushReplacement(MaterialPageRoute(builder: (_) => Adminhome()));
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
       } else {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => IntroScreen()));
       }

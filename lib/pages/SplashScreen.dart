@@ -71,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
         } else if (Globals.roleTitle == "Administrator") {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Adminhome()),
+            MaterialPageRoute(builder: (context) => MainScreen()),
           );
         } else {
           Navigator.pushReplacement(
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
         } else if (Globals.roleTitle == "Administrator") {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Adminhome()),
+            MaterialPageRoute(builder: (context) => MainScreen()),
           );
         } else {
           Navigator.pushReplacement(

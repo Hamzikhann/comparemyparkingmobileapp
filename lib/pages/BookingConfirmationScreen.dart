@@ -15,6 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:parkingapp/widgets/TopBar.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Map<String, dynamic>? bookingResult;
@@ -37,7 +38,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         final deviceInfo = DeviceInfoPlugin();
         final androidInfo = await deviceInfo.androidInfo;
 
-        if (androidInfo.version.sdkInt < 33) {
+        if (androidInfo.version.sdkInt >= 33) {
+          // Android 13+ (API 33, 34, 35+)
+          // For saving to public Download folder, manageExternalStorage might be needed if using File API directly.
+          // Alternatively, we can request storage which might trigger media permissions.
+          if (!await Permission.manageExternalStorage.isGranted) {
+            await Permission.manageExternalStorage.request();
+          }
+        } else {
+          // Android 12 and below
           final status = await Permission.storage.request();
           if (!status.isGranted) {
             if (mounted) {
@@ -254,421 +263,468 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-            child: RepaintBoundary(
-              key: _receiptKey,
-              child: Container(
-                color: Colors.white, // Ensure background is captured
-                child: Column(
-                  children: [
-                    // Success Icon
-                    Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        shape: BoxShape.circle,
-                      ),
-                      child:
-                          Icon(Icons.check, color: Colors.green, size: 40.sp),
-                    ),
-                    SizedBox(height: 20.h),
-
-                    // Title
-                    Text(
-                      "Booking Confirmed!",
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-
-                    // Subtitle
-                    Text(
-                      "Your payment has been successfully done. These rules and regulations for the use of ${Globals.selectedAirport} Parking Area.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: 30.h),
-
-                    // Booking Logo & Confirmation Header
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.shade100),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
-                      ),
+          child: Column(
+            children: [
+              // Add TopBar with back logic
+              TopBar(
+                greeting: "Booking Confirmed",
+                showBackButton: true,
+                onBackPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context, MyRoutes.mainPage, (_) => false),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                  child: RepaintBoundary(
+                    key: _receiptKey,
+                    child: Container(
+                      color: Colors.white, // Ensure background is captured
                       child: Column(
                         children: [
-                          Image.asset('assets/images/logo.png', height: 40.h),
-                          SizedBox(height: 16.h),
+                          // Success Icon
+                          Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.check,
+                                color: Colors.green, size: 40.sp),
+                          ),
+                          SizedBox(height: 20.h),
+
+                          // Title
                           Text(
-                            "Booking Confirmation",
+                            "Booking Confirmed!",
                             style: TextStyle(
-                              fontSize: 18.sp,
+                              fontSize: 24.sp,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF2E5B5B),
+                              color: Colors.black,
                             ),
                           ),
-                          SizedBox(height: 8.h),
-                          Text.rich(
-                            TextSpan(
+                          SizedBox(height: 12.h),
+
+                          // Subtitle
+                          Text(
+                            "Your payment has been successfully done. These rules and regulations for the use of ${Globals.selectedAirport} Parking Area.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                              height: 1.5,
+                            ),
+                          ),
+                          SizedBox(height: 30.h),
+
+                          // Booking Header
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(20.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.grey.shade100),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
+                            ),
+                            child: Column(
                               children: [
-                                TextSpan(
-                                  text: "Reference: ",
+                                Image.asset('assets/images/logo.png',
+                                    height: 40.h),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  "Booking Confirmation",
                                   style: TextStyle(
-                                      color: Colors.grey[600], fontSize: 13.sp),
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF2E5B5B),
+                                  ),
                                 ),
-                                TextSpan(
-                                  text: bookingData?['referenceNo'] ??
-                                      "No Reference Number",
+                                SizedBox(height: 8.h),
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: "Reference: ",
+                                        style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 13.sp),
+                                      ),
+                                      TextSpan(
+                                        text: bookingData?['referenceNo'] ??
+                                            "No Reference Number",
+                                        style: TextStyle(
+                                            color: Colors.grey[800],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13.sp),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  "Status: Confirmed",
                                   style: TextStyle(
-                                      color: Colors.grey[800],
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13.sp),
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            "Status: Confirmed",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
+                          SizedBox(height: 16.h),
+                          // Payment Summary
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(20.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B4D4D), // Dark teal
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    // Payment Summary
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20.w),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D4D), // Dark teal
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "Payment Summary",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            "Total payment Paid",
-                            style: TextStyle(
-                                color: Colors.white70, fontSize: 12.sp),
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            "${Globals.option?.price ?? '0.00'}",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Text(
-                            "Payment Method",
-                            style: TextStyle(
-                                color: Colors.white70, fontSize: 12.sp),
-                          ),
-                          Text(
-                            "Credit Card",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.sp),
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            "Reference: ${bookingData?['referenceNo'] ?? 'No Reference Number'}",
-                            style: TextStyle(
-                                color: Colors.white54, fontSize: 11.sp),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-
-                    // Info Rows
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Customer Information",
-                            [
-                              "Full Name:\n${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}",
-                              "Email Address:\n${Globals.booking_info_model?.email}",
-                              "Phone:\n${Globals.booking_info_model?.phone}",
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Flight Details",
-                            [
-                              "Outbound Terminal:\n${Globals.booking_info_model?.outBoundTerminal}",
-                              "Outbound Flight:\n${Globals.booking_info_model?.departureFlight}",
-                              "Inbound Terminal:\n${Globals.booking_info_model?.inBoundTerminal}",
-                              "Inbound Flight:\n${Globals.booking_info_model?.returnFlight}",
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-                    Builder(
-                      builder: (context) {
-                        final packageType =
-                            Globals.option?.type ?? 'meet and greet';
-                        final serviceInfo = getAirportServiceInfo(
-                          Globals.selectedAirport,
-                          packageType,
-                        );
-
-                        if (serviceInfo == null) return const SizedBox.shrink();
-
-                        return Column(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(16.w),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F9FA),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(color: Colors.grey.shade100),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Service Information",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF2E5B5B),
-                                    ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  "Payment Summary",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  SizedBox(height: 12.h),
-                                  if (serviceInfo['contact']?['number'] !=
-                                      null) ...[
-                                    _buildLabelValueRow(
-                                        "Service Contact",
-                                        serviceInfo['contact']?['number'],
-                                        Icons.phone),
-                                    SizedBox(height: 8.h),
-                                  ],
-                                  if (serviceInfo['location']?['address'] !=
-                                      null) ...[
-                                    _buildLabelValueRow(
-                                        "Service Location",
-                                        serviceInfo['location']!['address'],
-                                        Icons.location_on),
-                                    SizedBox(height: 16.h),
-                                    const Divider(),
-                                    SizedBox(height: 16.h),
-                                  ],
-                                  if (serviceInfo['arrival_procedure'] !=
-                                      null) ...[
-                                    Text(
-                                      "Arrival Procedure",
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF1A1A2E),
-                                      ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      serviceInfo['arrival_procedure'],
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: Colors.grey[700],
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.h),
-                                  ],
-                                  if (serviceInfo['departure_procedure'] !=
-                                      null) ...[
-                                    Text(
-                                      "Departure Procedure",
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF1A1A2E),
-                                      ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      serviceInfo['departure_procedure'],
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: Colors.grey[700],
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  "Total payment Paid",
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12.sp),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  "${Globals.option?.price ?? '0.00'}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  "Payment Method",
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12.sp),
+                                ),
+                                Text(
+                                  "Credit Card",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  "Reference: ${bookingData?['referenceNo'] ?? 'No Reference Number'}",
+                                  style: TextStyle(
+                                      color: Colors.white54, fontSize: 11.sp),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 12.h),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Vehicle Details",
-                            [
-                              "Registration:\n${Globals.booking_info_model?.vehicleRegNo}",
-                              "Make & Model:\n${Globals.booking_info_model?.carMaker}, ${Globals.booking_info_model?.carModel}",
-                              "Color:\n${Globals.booking_info_model?.carColor}",
-                            ],
                           ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Booking Period",
-                            [
-                              "Start Date:\n${Globals.startDate}",
-                              "End Date:\n${Globals.endDate}",
-                              "Airport:\n${Globals.selectedAirport}",
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
+                          SizedBox(height: 24.h),
 
-                    // Important Info Section
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Important information & Next Steps",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Next Steps Grid
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                      children: [
-                        _buildStepCard(
-                            "Check Your Email",
-                            "A detailed confirmation email with your booking voucher, directions, and contact information has been sent to ${Globals.booking_info_model?.email ?? 'your email'}. Please check your spam folder if you don't see it within 15 minutes.",
-                            const Color(0xFFF1F8F6)),
-                        _buildStepCard(
-                            "Bring Your Documents",
-                            "Please bring a printed copy of your booking confirmation and your driving license. Your vehicle registration number must match the one provided in this booking.",
-                            const Color(0xFFE8F5F9)),
-                        _buildStepCard(
-                            "Security & Safety",
-                            "Your vehicle will be secured in our monitored facility with 24/7 CCTV coverage. Please remove all valuables from your vehicle before arrival.",
-                            const Color(0xFFF7F2FA)),
-                        _buildStepCard(
-                            "Arrival Instructions",
-                            "Arrive at least 30 minutes before your recommended airport check-in time. Follow the signs for \"Pre-booked Parking\" and present your booking confirmation at the barrier.",
-                            const Color(0xFFFEFBEA)),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-
-                    // Download Document Card
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.shade100),
-                      ),
-                      child: Column(
-                        children: [
+                          // Info Rows
                           Row(
                             children: [
-                              Icon(Icons.download_for_offline_outlined,
-                                  color: Colors.teal, size: 24.sp),
+                              Expanded(
+                                child: _buildInfoCard(
+                                  "Customer Information",
+                                  [
+                                    "Full Name:\n${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}",
+                                    "Email Address:\n${Globals.booking_info_model?.email}",
+                                    "Phone:\n${Globals.booking_info_model?.phone}",
+                                  ],
+                                ),
+                              ),
                               SizedBox(width: 12.w),
-                              Text(
-                                "Download Document",
-                                style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF2E5B5B),
+                              Expanded(
+                                child: _buildInfoCard(
+                                  "Flight Details",
+                                  [
+                                    "Outbound Terminal:\n${Globals.booking_info_model?.outBoundTerminal}",
+                                    "Outbound Flight:\n${Globals.booking_info_model?.departureFlight}",
+                                    "Inbound Terminal:\n${Globals.booking_info_model?.inBoundTerminal}",
+                                    "Inbound Flight:\n${Globals.booking_info_model?.returnFlight}",
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(
-                                left: 36.w, top: 4.h, bottom: 16.h),
+                          SizedBox(height: 12.h),
+                          Builder(
+                            builder: (context) {
+                              final packageType =
+                                  Globals.option?.type ?? 'meet and greet';
+                              final serviceInfo = getAirportServiceInfo(
+                                Globals.selectedAirport,
+                                packageType,
+                              );
+
+                              if (serviceInfo == null)
+                                return const SizedBox.shrink();
+
+                              return Column(
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(16.w),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8F9FA),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                          color: Colors.grey.shade100),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Service Information",
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: const Color(0xFF2E5B5B),
+                                          ),
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        if (serviceInfo['contact']?['number'] !=
+                                            null) ...[
+                                          _buildLabelValueRow(
+                                              "Service Contact",
+                                              serviceInfo['contact']?['number'],
+                                              Icons.phone),
+                                          SizedBox(height: 8.h),
+                                        ],
+                                        if (serviceInfo['location']
+                                                ?['address'] !=
+                                            null) ...[
+                                          _buildLabelValueRow(
+                                              "Service Location",
+                                              serviceInfo['location']![
+                                                  'address'],
+                                              Icons.location_on),
+                                          SizedBox(height: 16.h),
+                                          const Divider(),
+                                          SizedBox(height: 16.h),
+                                        ],
+                                        if (serviceInfo['arrival_procedure'] !=
+                                            null) ...[
+                                          Text(
+                                            "Arrival Procedure",
+                                            style: TextStyle(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color(0xFF1A1A2E),
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            serviceInfo['arrival_procedure'],
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: Colors.grey[700],
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          SizedBox(height: 16.h),
+                                        ],
+                                        if (serviceInfo[
+                                                'departure_procedure'] !=
+                                            null) ...[
+                                          Text(
+                                            "Departure Procedure",
+                                            style: TextStyle(
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color(0xFF1A1A2E),
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            serviceInfo['departure_procedure'],
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: Colors.grey[700],
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                ],
+                              );
+                            },
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildInfoCard(
+                                  "Vehicle Details",
+                                  [
+                                    "Registration:\n${Globals.booking_info_model?.vehicleRegNo}",
+                                    "Make & Model:\n${Globals.booking_info_model?.carMaker}, ${Globals.booking_info_model?.carModel}",
+                                    "Color:\n${Globals.booking_info_model?.carColor}",
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: _buildInfoCard(
+                                  "Booking Period",
+                                  [
+                                    "Start Date:\n${Globals.startDate}",
+                                    "End Date:\n${Globals.endDate}",
+                                    "Airport:\n${Globals.selectedAirport}",
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20.h),
+
+                          // Important Info Section
+                          Align(
+                            alignment: Alignment.centerLeft,
                             child: Text(
-                              "Your payment has been successfully done. These rules and regulations.",
+                              "Important information & Next Steps",
                               style: TextStyle(
-                                  fontSize: 12.sp, color: Colors.grey[600]),
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          ElevatedButton.icon(
-                            onPressed: _downloadPdf,
-                            icon:
-                                const Icon(Icons.download, color: Colors.white),
-                            label: const Text("Download PDF Receipt",
-                                style: TextStyle(color: Colors.white)),
+                          SizedBox(height: 16.h),
+
+                          // Next Steps Grid
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.85,
+                            children: [
+                              _buildStepCard(
+                                  "Check Your Email",
+                                  "A detailed confirmation email with your booking voucher, directions, and contact information has been sent to ${Globals.booking_info_model?.email ?? 'your email'}. Please check your spam folder if you don't see it within 15 minutes.",
+                                  const Color(0xFFF1F8F6)),
+                              _buildStepCard(
+                                  "Bring Your Documents",
+                                  "Please bring a printed copy of your booking confirmation and your driving license. Your vehicle registration number must match the one provided in this booking.",
+                                  const Color(0xFFE8F5F9)),
+                              _buildStepCard(
+                                  "Security & Safety",
+                                  "Your vehicle will be secured in our monitored facility with 24/7 CCTV coverage. Please remove all valuables from your vehicle before arrival.",
+                                  const Color(0xFFF7F2FA)),
+                              _buildStepCard(
+                                  "Arrival Instructions",
+                                  "Arrive at least 30 minutes before your recommended airport check-in time. Follow the signs for \"Pre-booked Parking\" and present your booking confirmation at the barrier.",
+                                  const Color(0xFFFEFBEA)),
+                            ],
+                          ),
+                          SizedBox(height: 24.h),
+
+                          // Download Document Card
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(20.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.download_for_offline_outlined,
+                                        color: Colors.teal, size: 24.sp),
+                                    SizedBox(width: 12.w),
+                                    Text(
+                                      "Download Document",
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF2E5B5B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                      left: 36.w, top: 4.h, bottom: 16.h),
+                                  child: Text(
+                                    "Your payment has been successfully done. These rules and regulations.",
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey[600]),
+                                  ),
+                                ),
+                                ElevatedButton.icon(
+                                  onPressed: _downloadPdf,
+                                  icon: const Icon(Icons.download,
+                                      color: Colors.white),
+                                  label: const Text("Download PDF Receipt",
+                                      style: TextStyle(color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF234D4D),
+                                    minimumSize: Size(double.infinity, 50.h),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.r)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 24.h),
+
+                          // Go to Home Page Button
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                  context, MyRoutes.mainPage, (_) => false);
+                            },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF234D4D),
+                              backgroundColor: const Color(0xFF2E5B5B),
+                              foregroundColor: Colors.white,
                               minimumSize: Size(double.infinity, 50.h),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r)),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "Go to Home Page",
+                              style: TextStyle(
+                                  fontSize: 16.sp, fontWeight: FontWeight.bold),
                             ),
                           ),
+                          SizedBox(height: 30.h),
                         ],
                       ),
                     ),
-                    SizedBox(height: 20.h),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/pages/BookingsScreen.dart';
 import 'package:parkingapp/pages/HomeScreen.dart';
 import 'package:parkingapp/pages/PaymentHistoryScreen.dart';
 import 'package:parkingapp/pages/SettingsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminHome.dart';
 import 'package:parkingapp/widgets/CustomBottomNavBar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,8 +17,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  bool get _isAdmin => Globals.user?.roleTitle.toLowerCase() == 'administrator';
+
   List<Widget> get _screens => [
-        HomeScreen(),
+        _isAdmin ? const Adminhome() : HomeScreen(),
         BookingsScreen(),
         PaymentHistoryScreen(),
         SettingsScreen(),

@@ -62,7 +62,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'Parking Pilot',
           style: ThemeMode.system,
-          returnURL: 'parkingpilot://stripe-redirect',
+          returnURL: 'com.stn00.parkingapp22://stripe-redirect',
           // Enable delayed methods for Klarna
           allowsDelayedPaymentMethods: true,
           // If we want to force/prefer the selected method, we rely on the Intent config.

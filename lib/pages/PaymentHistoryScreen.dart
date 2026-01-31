@@ -324,13 +324,18 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   Future<void> _downloadPaymentPdf(Payment payment) async {
     try {
-      // Request storage permission (only for Android 12 and below)
       // Request storage permission
       if (Platform.isAndroid) {
         final deviceInfo = DeviceInfoPlugin();
         final androidInfo = await deviceInfo.androidInfo;
 
-        if (androidInfo.version.sdkInt < 33) {
+        if (androidInfo.version.sdkInt >= 33) {
+          // Android 13+ (API 33, 34, 35+)
+          if (!await Permission.manageExternalStorage.isGranted) {
+            await Permission.manageExternalStorage.request();
+          }
+        } else {
+          // Android 12 and below
           final status = await Permission.storage.request();
           if (!status.isGranted) {
             if (mounted) {

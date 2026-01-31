@@ -166,45 +166,47 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             ),
                           ],
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            color: booking.status.toLowerCase() == 'completed'
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              _showUpdateBooking(context, booking);
-                            },
-                            child: Row(
-                              children: [
-                                Text(
-                                  "EDIT",
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Archivo',
-                                    color: booking.status.toLowerCase() ==
-                                            'completed'
-                                        ? Colors.green
-                                        : Colors.orange,
+                        if (Globals.user?.roleTitle.toLowerCase() !=
+                            'administrator')
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12.w, vertical: 6.h),
+                            decoration: BoxDecoration(
+                              color: booking.status.toLowerCase() == 'completed'
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                _showUpdateBooking(context, booking);
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "EDIT",
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Archivo',
+                                      color: booking.status.toLowerCase() ==
+                                              'completed'
+                                          ? Colors.green
+                                          : Colors.orange,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 4.w),
-                                Icon(Icons.edit,
-                                    color: booking.status.toLowerCase() ==
-                                            'completed'
-                                        ? Colors.green
-                                        : Colors.orange,
-                                    size: 16.sp),
-                              ],
+                                  SizedBox(width: 4.w),
+                                  Icon(Icons.edit,
+                                      color: booking.status.toLowerCase() ==
+                                              'completed'
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      size: 16.sp),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
 
