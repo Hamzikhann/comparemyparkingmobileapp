@@ -526,8 +526,13 @@ class _ReserveBookingScreenState extends State<Adminhome> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              interval:
+                  1, // Fix: Ensure titles are shown only for integer indices
               getTitlesWidget: (value, meta) {
                 int index = value.toInt();
+                // Check if value is essentially an integer
+                if (value % 1 != 0) return const SizedBox();
+
                 if (index >= 0 && index < _dashboardData!.data.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8.0),
