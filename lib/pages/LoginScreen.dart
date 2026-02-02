@@ -225,7 +225,7 @@ class _LoginPageState extends State<LoginScreen> {
           if (Globals.user?.roleTitle == "Employee") {
             Navigator.pushReplacementNamed(context, MyRoutes.driverhome);
           } else if (Globals.user?.roleTitle == "Administrator") {
-            Navigator.pushReplacementNamed(context, MyRoutes.adminHome);
+            Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
           } else {
             Navigator.pushReplacementNamed(context, MyRoutes.mainPage);
           }
