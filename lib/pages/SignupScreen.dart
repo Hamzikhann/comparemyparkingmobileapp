@@ -26,7 +26,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -126,15 +127,33 @@ class _SignupScreenState extends State<SignupScreen> {
                   SizedBox(height: 12.h),
 
                   // Full Name
+                  // First Name
                   CustomTextField(
-                    labelText: 'Full Name',
-                    hintText: "Enter your full name",
-                    controller: fullNameController,
+                    labelText: 'First Name',
+                    hintText: "Enter your first name",
+                    controller: firstNameController,
                     keyboardType: TextInputType.name,
                     useLightBackground: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your full name';
+                        return 'Please enter your first name';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // Last Name
+                  CustomTextField(
+                    labelText: 'Last Name',
+                    hintText: "Enter your last name",
+                    controller: lastNameController,
+                    keyboardType: TextInputType.name,
+                    useLightBackground: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your last name';
                       }
                       return null;
                     },
@@ -395,20 +414,11 @@ class _SignupScreenState extends State<SignupScreen> {
                               return;
                             }
 
-                            // Split full name into first and last name
-                            List<String> nameParts =
-                                fullNameController.text.trim().split(' ');
-                            String firstName =
-                                nameParts.isNotEmpty ? nameParts[0] : '';
-                            String lastName = nameParts.length > 1
-                                ? nameParts.sublist(1).join(' ')
-                                : '';
-
                             // Call register API directly
                             registerUser(
                               selectedTitle!,
-                              firstName,
-                              lastName,
+                              firstNameController.text.trim(),
+                              lastNameController.text.trim(),
                               emailController.text.trim(),
                               completePhoneNumber,
                               passwordController.text.trim(),
