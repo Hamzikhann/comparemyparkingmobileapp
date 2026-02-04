@@ -24,8 +24,8 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
   }
 
   Future<void> _launchWhatsApp() async {
-    final phoneNumber = GlobalsBookingDetail
-        .bookingdetailuser?.bookingAssignments.first.employee!.phoneNo;
+    final phoneNumber = "+44 7508 866707";
+    print("phoneNumber: $phoneNumber");
     final message = Uri.encodeComponent("Hello, I need help with my booking.");
     final url = Uri.parse(
         "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");

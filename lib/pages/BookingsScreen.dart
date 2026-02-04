@@ -39,6 +39,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
   TimeOfDay? _filterStartTime;
   DateTime? _filterEndDate;
   TimeOfDay? _filterEndTime;
+  DateTime? _filterCreatedAtStartDate;
+  DateTime? _filterCreatedAtEndDate;
 
   @override
   void initState() {
@@ -1683,6 +1685,48 @@ class _BookingsScreenState extends State<BookingsScreen> {
         }
       }
 
+      // 4. Created At Date Filter
+      if (_filterCreatedAtStartDate != null ||
+          _filterCreatedAtEndDate != null) {
+        try {
+          if (booking.createdAt != null) {
+            // Parse the createdAt timestamp
+            final createdAt = DateTime.parse(booking.createdAt!);
+
+            // Check if createdAt is after or equal to start date
+            if (_filterCreatedAtStartDate != null) {
+              final startDateTime = DateTime(
+                _filterCreatedAtStartDate!.year,
+                _filterCreatedAtStartDate!.month,
+                _filterCreatedAtStartDate!.day,
+                0,
+                0,
+              );
+              if (createdAt.isBefore(startDateTime)) return false;
+            }
+
+            // Check if createdAt is before or equal to end date
+            if (_filterCreatedAtEndDate != null) {
+              final endDateTime = DateTime(
+                _filterCreatedAtEndDate!.year,
+                _filterCreatedAtEndDate!.month,
+                _filterCreatedAtEndDate!.day,
+                23,
+                59,
+                59,
+              );
+              if (createdAt.isAfter(endDateTime)) return false;
+            }
+          } else {
+            // If booking doesn't have createdAt and filter is set, exclude it
+            return false;
+          }
+        } catch (e) {
+          // If parsing fails, exclude this booking
+          return false;
+        }
+      }
+
       return true;
     }).toList();
   }
@@ -1711,13 +1755,18 @@ class _BookingsScreenState extends State<BookingsScreen> {
             initialStartTime: _filterStartTime,
             initialEndDate: _filterEndDate,
             initialEndTime: _filterEndTime,
-            onApply: (airport, sDate, sTime, eDate, eTime) {
+            initialCreatedAtStartDate: _filterCreatedAtStartDate,
+            initialCreatedAtEndDate: _filterCreatedAtEndDate,
+            onApply: (airport, sDate, sTime, eDate, eTime, createdStart,
+                createdEnd) {
               setState(() {
                 _selectedAirport = airport;
                 _filterStartDate = sDate;
                 _filterStartTime = sTime;
                 _filterEndDate = eDate;
                 _filterEndTime = eTime;
+                _filterCreatedAtStartDate = createdStart;
+                _filterCreatedAtEndDate = createdEnd;
               });
               Navigator.pop(sheetContext);
             },
@@ -1843,7 +1892,10 @@ class _FilterSheetContent extends StatefulWidget {
   final TimeOfDay? initialStartTime;
   final DateTime? initialEndDate;
   final TimeOfDay? initialEndTime;
-  final Function(String?, DateTime?, TimeOfDay?, DateTime?, TimeOfDay?) onApply;
+  final DateTime? initialCreatedAtStartDate;
+  final DateTime? initialCreatedAtEndDate;
+  final Function(String?, DateTime?, TimeOfDay?, DateTime?, TimeOfDay?,
+      DateTime?, DateTime?) onApply;
 
   const _FilterSheetContent({
     required this.airports,
@@ -1852,6 +1904,8 @@ class _FilterSheetContent extends StatefulWidget {
     this.initialStartTime,
     this.initialEndDate,
     this.initialEndTime,
+    this.initialCreatedAtStartDate,
+    this.initialCreatedAtEndDate,
     required this.onApply,
   });
 
@@ -1865,6 +1919,8 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
   TimeOfDay? _startTime;
   DateTime? _endDate;
   TimeOfDay? _endTime;
+  DateTime? _createdAtStartDate;
+  DateTime? _createdAtEndDate;
 
   @override
   void initState() {
@@ -1874,6 +1930,8 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     _startTime = widget.initialStartTime;
     _endDate = widget.initialEndDate;
     _endTime = widget.initialEndTime;
+    _createdAtStartDate = widget.initialCreatedAtStartDate;
+    _createdAtEndDate = widget.initialCreatedAtEndDate;
   }
 
   Future<void> _pickDate(bool isStart) async {
@@ -1898,6 +1956,33 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
           _startDate = picked;
         else
           _endDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickCreatedAtDate(bool isStart) async {
+    final initial = isStart
+        ? (_createdAtStartDate ?? DateTime.now())
+        : (_createdAtEndDate ?? DateTime.now());
+    final picked = await showModalBottomSheet<DateTime>(
+      context: context,
+      builder: (ctx) => SizedBox(
+        height: 400,
+        child: CalendarDatePicker(
+          initialDate: initial,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          onDateChanged: (val) => Navigator.pop(ctx, val),
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart)
+          _createdAtStartDate = picked;
+        else
+          _createdAtEndDate = picked;
       });
     }
   }
@@ -1969,6 +2054,8 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                       _startTime = null;
                       _endDate = null;
                       _endTime = null;
+                      _createdAtStartDate = null;
+                      _createdAtEndDate = null;
                     });
                   },
                   child: Text("Clear All",
@@ -2064,6 +2151,28 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                       ),
                     ],
                   ),
+                  SizedBox(height: 24.h),
+                  Divider(color: Colors.grey[300], thickness: 1),
+                  SizedBox(height: 24.h),
+                  Text("Created At Date",
+                      style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700])),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildPickerBox(
+                            _createdAtStartDate != null
+                                ? DateFormat('dd MMM yyyy')
+                                    .format(_createdAtStartDate!)
+                                : "Start Date",
+                            Icons.calendar_today,
+                            () => _pickCreatedAtDate(true)),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -2082,8 +2191,14 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => widget.onApply(_selectedAirport, _startDate,
-                    _startTime, _endDate, _endTime),
+                onPressed: () => widget.onApply(
+                    _selectedAirport,
+                    _startDate,
+                    _startTime,
+                    _endDate,
+                    _endTime,
+                    _createdAtStartDate,
+                    _createdAtEndDate),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4B725D),
                   padding: EdgeInsets.symmetric(vertical: 16.h),

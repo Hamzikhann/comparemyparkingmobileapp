@@ -126,34 +126,22 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                 },
               ),
               Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _errorMessage != null
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(_errorMessage!),
-                                SizedBox(height: 16.h),
-                                ElevatedButton(
-                                  onPressed: _loadData,
-                                  child: const Text("Retry"),
-                                ),
-                              ],
-                            ),
-                          )
-                        : FutureBuilder<BookingAdminResponse>(
-                            future: _bookingsFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center();
-                              } else if (snapshot.hasError) {
-                                return Center(
+                child: RefreshIndicator(
+                  onRefresh: _loadData,
+                  color: const Color(0xFF4B725D),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorMessage != null
+                          ? SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.7,
+                                child: Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text("Error: ${snapshot.error}"),
+                                      Text(_errorMessage!),
                                       SizedBox(height: 16.h),
                                       ElevatedButton(
                                         onPressed: _loadData,
@@ -161,93 +149,139 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                       ),
                                     ],
                                   ),
-                                );
-                              } else if (snapshot.hasData) {
-                                final pending = snapshot.data!.pendingParkings;
-                                final reserved =
-                                    snapshot.data!.reservedParkings;
-                                final completed =
-                                    snapshot.data!.completedParkings;
+                                ),
+                              ),
+                            )
+                          : FutureBuilder<BookingAdminResponse>(
+                              future: _bookingsFuture,
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center();
+                                } else if (snapshot.hasError) {
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    child: SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.7,
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text("Error: ${snapshot.error}"),
+                                            SizedBox(height: 16.h),
+                                            ElevatedButton(
+                                              onPressed: _loadData,
+                                              child: const Text("Retry"),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                } else if (snapshot.hasData) {
+                                  final pending =
+                                      snapshot.data!.pendingParkings;
+                                  final reserved =
+                                      snapshot.data!.reservedParkings;
+                                  final completed =
+                                      snapshot.data!.completedParkings;
 
-                                // Move bookings with empty assignments from reserved to pending
-                                for (var booking in List.from(reserved)) {
-                                  if (booking.bookingAssignments.isEmpty) {
-                                    pending.add(booking);
-                                    reserved.remove(
-                                        booking); // Remove from reserved
+                                  // Move bookings with empty assignments from reserved to pending
+                                  for (var booking in List.from(reserved)) {
+                                    if (booking.bookingAssignments.isEmpty) {
+                                      pending.add(booking);
+                                      reserved.remove(
+                                          booking); // Remove from reserved
+                                    }
                                   }
+
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20.w, vertical: 16.h),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Top Cards Row 1
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                "Users",
+                                                _mainDashboardData
+                                                        ?.data.stats.totalUsers
+                                                        .toString() ??
+                                                    "0",
+                                                Icons.people_outline,
+                                                Colors.green,
+                                              ),
+                                            ),
+                                            SizedBox(width: 16.w),
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                "Total Bookings",
+                                                _mainDashboardData?.data.stats
+                                                        .totalBookings
+                                                        .toString() ??
+                                                    "0",
+                                                Icons.arrow_circle_down,
+                                                Colors.redAccent,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 16.h),
+                                        // Top Cards Row 2
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildStatCard(
+                                                "Total Payments",
+                                                "£${_mainDashboardData?.data.stats.totalPayments.toString() ?? "0"}",
+                                                Icons.notifications_none,
+                                                Colors.orange,
+                                              ),
+                                            ),
+                                            const Expanded(child: SizedBox()),
+                                          ],
+                                        ),
+                                        SizedBox(height: 24.h),
+
+                                        // Revenue & Users Chart Card
+                                        _buildChartCard(),
+
+                                        SizedBox(height: 32.h),
+
+                                        // Circular Progress Section
+                                        _buildCircularProgressCard(),
+
+                                        SizedBox(height: 48.h),
+                                      ],
+                                    ),
+                                  );
+                                } else {
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    child: SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.7,
+                                      child: const Center(
+                                        child: Text("No data available."),
+                                      ),
+                                    ),
+                                  );
                                 }
-
-                                return SingleChildScrollView(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 20.w, vertical: 16.h),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Top Cards Row 1
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildStatCard(
-                                              "Users",
-                                              _mainDashboardData
-                                                      ?.data.stats.totalUsers
-                                                      .toString() ??
-                                                  "0",
-                                              Icons.people_outline,
-                                              Colors.green,
-                                            ),
-                                          ),
-                                          SizedBox(width: 16.w),
-                                          Expanded(
-                                            child: _buildStatCard(
-                                              "Total Bookings",
-                                              _mainDashboardData
-                                                      ?.data.stats.totalBookings
-                                                      .toString() ??
-                                                  "0",
-                                              Icons.arrow_circle_down,
-                                              Colors.redAccent,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      // Top Cards Row 2
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildStatCard(
-                                              "Total Payments",
-                                              "£${_mainDashboardData?.data.stats.totalPayments.toString() ?? "0"}",
-                                              Icons.notifications_none,
-                                              Colors.orange,
-                                            ),
-                                          ),
-                                          const Expanded(child: SizedBox()),
-                                        ],
-                                      ),
-                                      SizedBox(height: 24.h),
-
-                                      // Revenue & Users Chart Card
-                                      _buildChartCard(),
-
-                                      SizedBox(height: 32.h),
-
-                                      // Circular Progress Section
-                                      _buildCircularProgressCard(),
-
-                                      SizedBox(height: 48.h),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                return const Center(
-                                    child: Text("No data available."));
-                              }
-                            },
-                          ),
+                              },
+                            ),
+                ),
               ),
             ],
           ),

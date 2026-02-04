@@ -130,7 +130,7 @@ class _SupportScreenState extends State<SupportScreen>
   }
 
   void _openWhatsAppChat() async {
-    final phoneNumber = "+923114554242";
+    final phoneNumber = "+44 7508 866707";
     final message = Uri.encodeComponent("Hello, I need help with my booking.");
     final url = Uri.parse(
         "https://api.whatsapp.com/send?phone=$phoneNumber&text=$message");

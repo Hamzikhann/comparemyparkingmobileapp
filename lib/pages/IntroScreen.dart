@@ -18,13 +18,13 @@ class _IntroScreenState extends State<IntroScreen> {
       "image": "assets/images/car.png",
       "title": "Real-Time Parking Solutions at your fingertips",
       "description":
-          "These rules and regulations for the use of Dummy University Parking Area. In these Rules, unless the context otherwise requires"
+          "Join thousands of travelers who rely on us for secure airport parking. All locations are vetted for safety, with clear pricing and no hidden fees—so you can book with total confidence."
     },
     {
       "image": "assets/images/flight.png",
       "title": "Real-Time Parking Solutions at your fingertips",
       "description":
-          "These rules and regulations for the use of Dummy University Parking Area. In these Rules, unless the context otherwise requires"
+          "Welcome to Compare My Airport Parking, where smart travelers find the best parking options. In just a few clicks, compare trusted airport parking providers, review safety features, and reserve your spot instantly."
     }
   ];
 
