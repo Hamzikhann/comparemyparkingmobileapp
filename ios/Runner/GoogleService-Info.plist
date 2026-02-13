@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCSy61GzF9lFIwXzXbSiBFxENlCLgq_F-U</string>
+	<string>AIzaSyDcTGwQKVGtLRiaLN0DPt3rllQG8-4nK1g</string>
 	<key>GCM_SENDER_ID</key>
-	<string>207573484516</string>
+	<string>622665792809</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.stn00.parkingapp2</string>
+	<string>com.comparemyparking</string>
 	<key>PROJECT_ID</key>
-	<string>fir-project-ac10e</string>
+	<string>stanstedroadparking</string>
 	<key>STORAGE_BUCKET</key>
-	<string>fir-project-ac10e.firebasestorage.app</string>
+	<string>stanstedroadparking.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:207573484516:ios:756d9a0a8b567435657df1</string>
+	<string>1:622665792809:ios:d96fc8ecebf3364ce6cb38</string>
 </dict>
 </plist>

@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/airport_service_config.dart';
-import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Bookingdetailuser extends StatefulWidget {
@@ -287,7 +283,7 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                         SizedBox(height: 24.h),
                       ],
 
-                      /// ✅ WhatsApp + Location Button for Reserved bookings
+                      /// ✅ WhatsApp Button for Reserved bookings
                       if (Globals.detailType == "reserved") ...[
                         GestureDetector(
                           onTap: _launchWhatsApp,
@@ -305,84 +301,6 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 16.h),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                LocationPermission permission =
-                                    await Geolocator.checkPermission();
-
-                                if (permission == LocationPermission.denied) {
-                                  permission =
-                                      await Geolocator.requestPermission();
-                                }
-
-                                if (permission ==
-                                    LocationPermission.deniedForever) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          "Location permission is permanently denied. Please enable it in settings."),
-                                      action: SnackBarAction(
-                                        label: "Open Settings",
-                                        onPressed: () {
-                                          openAppSettings();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                if (permission == LocationPermission.always ||
-                                    permission ==
-                                        LocationPermission.whileInUse) {
-                                  bool isLocationEnabled = await Geolocator
-                                      .isLocationServiceEnabled();
-                                  if (!isLocationEnabled) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              "Please enable location services.")),
-                                    );
-                                    return;
-                                  }
-
-                                  Position position =
-                                      await Geolocator.getCurrentPosition(
-                                          desiredAccuracy:
-                                              LocationAccuracy.high);
-                                  postLocation(
-                                      GlobalsBookingDetail.bookingdetailuser!
-                                          .registrations.first.bookingId,
-                                      position.latitude.toString(),
-                                      position.longitude.toString());
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            "Location permission is required.")),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 14.h),
-                                backgroundColor: colors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                              ),
-                              child: Text(
-                                "Share Location",
-                                style: TextStyle(
-                                    fontSize: 16.sp, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        )
                       ],
                     ],
                   ),
@@ -393,18 +311,5 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
         ),
       ),
     );
-  }
-
-  Future<void> postLocation(
-      String bookingID, String latitude, String longitude) async {
-    GeneralRepository()
-        .postLocation(bookingID, latitude, longitude)
-        .then((value) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                "Location shared. The driver will reach the location soon.")),
-      );
-    });
   }
 }
