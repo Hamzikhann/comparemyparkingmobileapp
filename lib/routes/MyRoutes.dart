@@ -21,4 +21,6 @@ class MyRoutes {
   static String notificationsDriver = '/notificationsDriver';
   static String packageDetail = '/packageDetail';
   static String bookingConfirmation = '/bookingConfirmation';
+  static String homeRoute = '/home';
+  static String selectionRoute = '/selection';
 }

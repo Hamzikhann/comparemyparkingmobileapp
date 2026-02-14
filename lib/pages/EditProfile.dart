@@ -76,7 +76,7 @@ class _EditprofileState extends State<Editprofile> {
         if (newImageUrl != null && newImageUrl.isNotEmpty) {
           // Prepend base URL if relative (and not a local path)
           if (!newImageUrl.startsWith('http') && !newImageUrl.startsWith('/')) {
-            newImageUrl = "http://test.thefutureinno.com/$newImageUrl";
+            newImageUrl = "https://test.thefutureinno.com/$newImageUrl";
           }
 
           // Force a cache-breaker to ensure image refreshes if URL is the same
@@ -182,10 +182,16 @@ class _EditprofileState extends State<Editprofile> {
   @override
   void initState() {
     super.initState();
-    fullNameController.text =
-        "${Globals.user!.firstName} ${Globals.user!.lastName}".trim();
-    emailController.text = Globals.user!.email;
-    phoneController.text = Globals.user!.phoneNo;
+    if (Globals.user != null) {
+      fullNameController.text =
+          "${Globals.user!.firstName} ${Globals.user!.lastName}".trim();
+      emailController.text = Globals.user!.email;
+      phoneController.text = Globals.user!.phoneNo;
+    } else {
+      fullNameController.text = "Guest User";
+      emailController.text = "guest@example.com";
+      phoneController.text = "";
+    }
   }
 
   @override
@@ -256,31 +262,33 @@ class _EditprofileState extends State<Editprofile> {
                                 ),
                               ),
                               // Edit Icon
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: _showImageSourceBottomSheet,
-                                  child: Container(
-                                    padding: EdgeInsets.all(4.w),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 4,
-                                        )
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.edit_outlined,
-                                      size: 16.sp,
-                                      color: Colors.grey,
+                              if (Globals.user != null)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _showImageSourceBottomSheet,
+                                    child: Container(
+                                      padding: EdgeInsets.all(4.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 4,
+                                          )
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.edit_outlined,
+                                        size: 16.sp,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -300,10 +308,11 @@ class _EditprofileState extends State<Editprofile> {
                         const CustomAlert(alertKey: 'editProfile'),
 
                         // Save Button
-                        PrimaryButton(
-                          text: "Save",
-                          onPressed: _handleSave,
-                        ),
+                        if (Globals.user != null)
+                          PrimaryButton(
+                            text: "Save",
+                            onPressed: _handleSave,
+                          ),
                         SizedBox(height: 20.h),
                       ],
                     ),
@@ -342,6 +351,7 @@ class _EditprofileState extends State<Editprofile> {
             color: const Color(0xFF1A1A2E), // Darker color for value
             fontWeight: FontWeight.w500,
           ),
+          readOnly: Globals.user == null,
           decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.symmetric(vertical: 8),

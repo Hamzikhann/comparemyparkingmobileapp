@@ -27,6 +27,9 @@ class _LoginPageState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
+        if (Navigator.of(context).canPop()) {
+          return true;
+        }
         return await showDialog(
               context: context,
               builder: (context) => AlertDialog(

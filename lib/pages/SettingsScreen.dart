@@ -1,3 +1,4 @@
+import 'package:parkingapp/data/Globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
@@ -121,6 +122,20 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildLogoutItem(BuildContext context) {
+    if (Globals.user == null) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.login, size: 24.sp, color: colors.primaryNew),
+        title: Text(
+          "Login",
+          style: TextStyle(fontSize: 16.sp, color: colors.primaryNew),
+        ),
+        onTap: () {
+          Navigator.pushNamedAndRemoveUntil(
+              context, MyRoutes.selectionRoute, (route) => false);
+        },
+      );
+    }
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.logout, size: 24.sp, color: Colors.red),
@@ -151,8 +166,8 @@ class SettingsScreen extends StatelessWidget {
 
         if (shouldLogout == true) {
           await SharedStorage.removeFromSharedPreferences();
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              MyRoutes.selectionRoute, (route) => false);
         }
       },
     );

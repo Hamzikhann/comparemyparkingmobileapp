@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingInfoModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 
 class ReserveBookingScreen extends StatefulWidget {
@@ -21,7 +22,12 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   String selectedTitle = "Mr";
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   // Step 2
   final TextEditingController outBoundController = TextEditingController();
@@ -180,14 +186,66 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
               hint: "Enter Email",
               keyboardType: TextInputType.emailAddress,
               validator: validateEmail),
-          SizedBox(height: 100.h), // Spacing for button
+          if (Globals.user == null) ...[
+            SizedBox(height: 16.h),
+            _buildLabel("Password"),
+            _buildTextField(
+              controller: passwordController,
+              hint: "Enter Password",
+              obscureText: !_isPasswordVisible,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: Colors.grey,
+                  size: 20.sp,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Password is required';
+                if (v.length < 8)
+                  return 'Password must be at least 8 characters';
+                return null;
+              },
+            ),
+            SizedBox(height: 16.h),
+            _buildLabel("Confirm Password"),
+            _buildTextField(
+              controller: confirmPasswordController,
+              hint: "Confirm Password",
+              obscureText: !_isConfirmPasswordVisible,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isConfirmPasswordVisible
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: Colors.grey,
+                  size: 20.sp,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                  });
+                },
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Please confirm password';
+                if (v != passwordController.text)
+                  return 'Passwords do not match';
+                return null;
+              },
+            ),
+          ],
+          SizedBox(height: 40.h), // Spacing for button
           Align(
             alignment: Alignment.centerRight,
-            child: _buildButton("Continue", () {
-              if (_formKey1.currentState!.validate()) {
-                setState(() => _currentStep = 1);
-              }
-            }),
+            child: _buildButton("Continue", _handleStep1Continue),
           )
         ],
       ),
@@ -377,6 +435,55 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
     );
   }
 
+  void _handleStep1Continue() async {
+    if (!_formKey1.currentState!.validate()) return;
+
+    if (Globals.user == null) {
+      try {
+        // Split name properly
+        String fullName = fullNameController.text.trim();
+        String firstName = "";
+        String lastName = "";
+        if (fullName.isNotEmpty) {
+          List<String> parts = fullName.split(" ");
+          firstName = parts.first;
+          if (parts.length > 1) {
+            lastName = parts.sublist(1).join(" ");
+          }
+        }
+
+        // Show loading
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Creating account...')));
+
+        final value = await GeneralRepository().signup(
+          title: selectedTitle,
+          firstName: firstName,
+          lastName: lastName,
+          email: emailController.text.trim(),
+          phoneNo: phoneController.text.trim(),
+          password: passwordController.text.trim(),
+          confirmPassword: confirmPasswordController.text.trim(),
+        );
+
+        // Set global user like in SignupScreen
+        Globals.user = value;
+        Globals.roleTitle = value.roleTitle;
+        await SharedStorage.saveUser(value);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully')));
+
+        setState(() => _currentStep = 1);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Signup failed: ${e.toString()}')));
+      }
+    } else {
+      setState(() => _currentStep = 1);
+    }
+  }
+
   void _submitForm() async {
     if (!_formKey3.currentState!.validate()) {
       return;
@@ -446,10 +553,13 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       {required TextEditingController controller,
       required String hint,
       TextInputType keyboardType = TextInputType.text,
+      bool obscureText = false,
+      Widget? suffixIcon,
       FormFieldValidator<String>? validator}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      obscureText: obscureText,
       validator: validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       style: TextStyle(fontFamily: 'Archivo', fontSize: 14.sp),
@@ -458,6 +568,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13.sp),
         filled: true,
         fillColor: Color(0xFFEFF1F3),
+        suffixIcon: suffixIcon,
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6.r),

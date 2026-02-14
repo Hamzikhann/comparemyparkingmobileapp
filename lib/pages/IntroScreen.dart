@@ -35,7 +35,7 @@ class _IntroScreenState extends State<IntroScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, MyRoutes.loginRoute);
+      Navigator.pushReplacementNamed(context, MyRoutes.selectionRoute);
     }
   }
 
@@ -140,7 +140,7 @@ class _IntroScreenState extends State<IntroScreen> {
                 GestureDetector(
                   onTap: () {
                     Navigator.pushReplacementNamed(
-                        context, MyRoutes.loginRoute);
+                        context, MyRoutes.selectionRoute);
                   },
                   child: Text(
                     "Skip",

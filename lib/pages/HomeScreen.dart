@@ -51,6 +51,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadBookings() {
+    if (Globals.user == null) {
+      setState(() {
+        _bookingsFuture = Future.value(BookingResponse(
+          reservedParkings: [],
+          pendingParkings: [],
+          completedParkings: [],
+        ));
+      });
+      return;
+    }
     try {
       setState(() {
         _bookingsFuture = _repository.getBookings().then((value) {
@@ -337,20 +347,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             : const AssetImage('assets/images/profilee.png'),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await Navigator.pushNamed(
-                            context, MyRoutes.notifications);
-                        if (context.mounted) {
-                          (context as Element).markNeedsBuild();
-                        }
-                      },
-                      icon: Icon(
-                        Icons.notifications,
-                        color: colors.primaryNew,
-                        size: 28.sp,
+                    if (Globals.user != null)
+                      IconButton(
+                        onPressed: () async {
+                          await Navigator.pushNamed(
+                              context, MyRoutes.notifications);
+                          if (context.mounted) {
+                            (context as Element).markNeedsBuild();
+                          }
+                        },
+                        icon: Icon(
+                          Icons.notifications,
+                          color: colors.primaryNew,
+                          size: 28.sp,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -1405,7 +1416,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 16.h),
             Text(
-              "No current bookings",
+              "No Booking History",
               style: TextStyle(
                 color: Color(0xFF1A1A2E),
                 fontSize: 16.sp,

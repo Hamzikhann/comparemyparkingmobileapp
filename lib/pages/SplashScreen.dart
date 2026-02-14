@@ -5,7 +5,6 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
-import 'package:parkingapp/pages/admin/AdminHome.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:parkingapp/utils/colors.dart';
 // Import the MainScreen

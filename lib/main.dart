@@ -12,6 +12,7 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/BookingDetailUser.dart';
 import 'package:parkingapp/pages/EditProfile.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
+import 'package:parkingapp/pages/HomeScreen.dart';
 import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
@@ -33,6 +34,7 @@ import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
 import 'package:parkingapp/pages/driver/DriverHome.dart';
 import 'package:parkingapp/pages/driver/NotificationsScreenDriver.dart';
 import 'package:parkingapp/pages/resetOtp/OtpScreen2.dart';
+import 'package:parkingapp/pages/LoginSelectionScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:parkingapp/pages/PaymentsScreen.dart';
 import 'package:parkingapp/pages/SplashScreen.dart';
@@ -142,6 +144,8 @@ class MyApp extends StatelessWidget {
             '/notificationsDriver': (context) => NotificationsScreenDriver(),
             '/packageDetail': (context) => PackageDetailScreen(),
             '/bookingConfirmation': (context) => BookingConfirmationScreen(),
+            '/home': (context) => HomeScreen(),
+            '/selection': (context) => const LoginSelectionScreen(),
           },
         );
       },

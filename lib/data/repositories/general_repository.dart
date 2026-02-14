@@ -1057,7 +1057,7 @@ class GeneralRepository {
     String paymentMethodType = 'card',
   }) async {
     final url = Uri.parse(
-      'http://test.thefutureinno.com/stripe/create-payment-intent',
+      'https://test.thefutureinno.com/stripe/create-payment-intent',
     );
 
     final token = Globals.user?.token ?? '';
@@ -1107,6 +1107,9 @@ class GeneralRepository {
       if (response.statusCode == 200) {
         return jsonDecode(responseBody) as Map<String, dynamic>;
       } else {
+        print(
+          'Failed to create payment intent: ${response.statusCode} $responseBody',
+        );
         throw Exception(
           'Failed to create payment intent: ${response.statusCode} $responseBody',
         );

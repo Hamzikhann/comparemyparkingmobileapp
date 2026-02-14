@@ -57,7 +57,7 @@ class UserModel {
           if (!imgUrl.startsWith('/')) {
             imgUrl = "/$imgUrl";
           }
-          imgUrl = "http://test.thefutureinno.com$imgUrl";
+          imgUrl = "https://test.thefutureinno.com$imgUrl";
         }
       }
     } else {
