@@ -5,7 +5,7 @@ class UserModel {
   String email;
   String phoneNo;
   String roleId;
-  String? imageUrl;
+  String? imageURL;
   String roleTitle;
   String token;
 
@@ -16,7 +16,7 @@ class UserModel {
     required this.email,
     required this.phoneNo,
     required this.roleId,
-    required this.imageUrl,
+    required this.imageURL,
     required this.roleTitle,
     required this.token,
   });
@@ -31,6 +31,7 @@ class UserModel {
     if (userMap['userProfile'] != null) {
       if (userMap['userProfile'] is Map) {
         imgUrl = userMap['userProfile']['imageUrl'] ??
+            userMap['userProfile']['imageURL'] ??
             userMap['userProfile']['image'] ??
             userMap['userProfile']['profileImage'];
       } else if (userMap['userProfile'] is String) {
@@ -40,6 +41,7 @@ class UserModel {
 
     // fallback to top level or common keys
     imgUrl ??= userMap['imageUrl'] ??
+        userMap['imageURL'] ??
         userMap['image'] ??
         userMap['imageurl'] ??
         userMap['profileImage'] ??
@@ -87,7 +89,7 @@ class UserModel {
       email: userMap['email']?.toString() ?? '',
       phoneNo: userMap['phoneNo']?.toString() ?? '',
       roleId: userMap['roleId']?.toString() ?? '',
-      imageUrl: imgUrl,
+      imageURL: imgUrl,
       roleTitle: userMap['role'] is Map
           ? (userMap['role']['title']?.toString() ?? '')
           : (userMap['roleTitle']?.toString() ?? ''),
@@ -103,8 +105,9 @@ class UserModel {
       'email': email,
       'phoneNo': phoneNo,
       'roleId': roleId,
-      'imageUrl': imageUrl, // Ensure direct access at root
-      'userProfile': {'imageUrl': imageUrl}, // Keep existing structure
+      'imageUrl': imageURL, // Ensure direct access at root
+      'imageURL': imageURL, // Also offer imageURL
+      'userProfile': {'imageUrl': imageURL}, // Keep existing structure
       'role': {'title': roleTitle},
       'roleTitle': roleTitle,
       'token': token,

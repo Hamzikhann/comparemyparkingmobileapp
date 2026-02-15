@@ -358,6 +358,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       ),
                                       TextSpan(
                                         text: bookingData?['referenceNo'] ??
+                                            bookingData?['booking']
+                                                ?['referenceNo'] ??
+                                            bookingData?['data']?['booking']
+                                                ?['referenceNo'] ??
                                             "No Reference Number",
                                         style: TextStyle(
                                             color: Colors.grey[800],
@@ -428,7 +432,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 ),
                                 SizedBox(height: 8.h),
                                 Text(
-                                  "Reference: ${bookingData?['referenceNo'] ?? 'No Reference Number'}",
+                                  "Reference: ${bookingData?['referenceNo'] ?? bookingData?['booking']?['referenceNo'] ?? bookingData?['data']?['booking']?['referenceNo'] ?? 'No Reference Number'}",
                                   style: TextStyle(
                                       color: Colors.white54, fontSize: 11.sp),
                                 ),
@@ -474,8 +478,104 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 packageType,
                               );
 
-                              if (serviceInfo == null)
+                              // Helper to get nested value from bookingData safely
+                              String? getBookingValue(List<String> keys) {
+                                dynamic current = bookingData;
+                                for (var key in keys) {
+                                  if (current is Map &&
+                                      current.containsKey(key)) {
+                                    current = current[key];
+                                  } else {
+                                    return null;
+                                  }
+                                }
+                                return current?.toString();
+                              }
+
+                              // 1. Contact Number
+                              String? contactNumber = getBookingValue(
+                                      ['contactNumber']) ??
+                                  getBookingValue(
+                                      ['booking', 'contactNumber']) ??
+                                  getBookingValue(
+                                      ['data', 'booking', 'contactNumber']) ??
+                                  getBookingValue([
+                                    'contact',
+                                    'number'
+                                  ]) ?? // Some APIs return nested object
+                                  getBookingValue(
+                                      ['booking', 'contact', 'number']);
+
+                              if (contactNumber == null ||
+                                  contactNumber.isEmpty) {
+                                contactNumber =
+                                    serviceInfo?['contact']?['number'];
+                              }
+
+                              // 2. Location Address
+                              String? locationAddress = getBookingValue(
+                                      ['location']) ??
+                                  getBookingValue(['booking', 'location']) ??
+                                  getBookingValue(
+                                      ['data', 'booking', 'location']) ??
+                                  getBookingValue(['location', 'address']) ??
+                                  getBookingValue(
+                                      ['booking', 'location', 'address']);
+
+                              // Handle if location is a Map in API response (e.g. {'address': '...'})
+                              if (locationAddress != null &&
+                                  locationAddress.startsWith('{')) {
+                                // Simple fallback if it's a map string, or real parsing if needed.
+                                // Since we expect string values mostly, we can try to rely on logic above to fetch nested address if structured.
+                                // If the API returned a map for 'location' key, the `getBookingValue(['location'])` would return the map.toString().
+                                // Better to check specific nested keys first (like we did with location -> address).
+                              }
+
+                              if (locationAddress == null ||
+                                  locationAddress.isEmpty ||
+                                  locationAddress.startsWith('{')) {
+                                locationAddress =
+                                    serviceInfo?['location']?['address'];
+                              }
+
+                              // 3. Arrival Procedure
+                              String? arrivalProcedure = getBookingValue(
+                                      ['arrivalProcedure']) ??
+                                  getBookingValue(
+                                      ['booking', 'arrivalProcedure']) ??
+                                  getBookingValue(
+                                      ['data', 'booking', 'arrivalProcedure']);
+
+                              if (arrivalProcedure == null ||
+                                  arrivalProcedure.isEmpty) {
+                                arrivalProcedure =
+                                    serviceInfo?['arrival_procedure'];
+                              }
+
+                              // 4. Departure Procedure
+                              String? departureProcedure =
+                                  getBookingValue(['departureProcedure']) ??
+                                      getBookingValue(
+                                          ['booking', 'departureProcedure']) ??
+                                      getBookingValue([
+                                        'data',
+                                        'booking',
+                                        'departureProcedure'
+                                      ]);
+
+                              if (departureProcedure == null ||
+                                  departureProcedure.isEmpty) {
+                                departureProcedure =
+                                    serviceInfo?['departure_procedure'];
+                              }
+
+                              // If absolutely nothing is available, hide section
+                              if (contactNumber == null &&
+                                  locationAddress == null &&
+                                  arrivalProcedure == null &&
+                                  departureProcedure == null) {
                                 return const SizedBox.shrink();
+                              }
 
                               return Column(
                                 children: [
@@ -501,28 +601,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                           ),
                                         ),
                                         SizedBox(height: 12.h),
-                                        if (serviceInfo['contact']?['number'] !=
-                                            null) ...[
-                                          _buildLabelValueRow(
-                                              "Service Contact",
-                                              serviceInfo['contact']?['number'],
-                                              Icons.phone),
+                                        if (contactNumber != null &&
+                                            contactNumber.isNotEmpty) ...[
+                                          _buildLabelValueRow("Service Contact",
+                                              contactNumber, Icons.phone),
                                           SizedBox(height: 8.h),
                                         ],
-                                        if (serviceInfo['location']
-                                                ?['address'] !=
-                                            null) ...[
+                                        if (locationAddress != null &&
+                                            locationAddress.isNotEmpty) ...[
                                           _buildLabelValueRow(
                                               "Service Location",
-                                              serviceInfo['location']![
-                                                  'address'],
+                                              locationAddress,
                                               Icons.location_on),
                                           SizedBox(height: 16.h),
                                           const Divider(),
                                           SizedBox(height: 16.h),
                                         ],
-                                        if (serviceInfo['arrival_procedure'] !=
-                                            null) ...[
+                                        if (arrivalProcedure != null &&
+                                            arrivalProcedure.isNotEmpty) ...[
                                           Text(
                                             "Arrival Procedure",
                                             style: TextStyle(
@@ -533,7 +629,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                           ),
                                           SizedBox(height: 4.h),
                                           Text(
-                                            serviceInfo['arrival_procedure'],
+                                            arrivalProcedure,
                                             style: TextStyle(
                                               fontSize: 11.sp,
                                               color: Colors.grey[700],
@@ -542,9 +638,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                           ),
                                           SizedBox(height: 16.h),
                                         ],
-                                        if (serviceInfo[
-                                                'departure_procedure'] !=
-                                            null) ...[
+                                        if (departureProcedure != null &&
+                                            departureProcedure.isNotEmpty) ...[
                                           Text(
                                             "Departure Procedure",
                                             style: TextStyle(
@@ -555,7 +650,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                           ),
                                           SizedBox(height: 4.h),
                                           Text(
-                                            serviceInfo['departure_procedure'],
+                                            departureProcedure,
                                             style: TextStyle(
                                               fontSize: 11.sp,
                                               color: Colors.grey[700],

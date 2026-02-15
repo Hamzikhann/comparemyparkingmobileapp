@@ -16,7 +16,6 @@ class Custombottomnavbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 70.h,
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -29,13 +28,22 @@ class Custombottomnavbar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          _buildNavItem(0, "assets/images/home.svg", "Home"),
-          _buildNavItem(1, "assets/images/bookings.svg", "Bookings"),
-          _buildNavItem(2, "assets/images/wallets.svg", "Payments"),
-          _buildNavItem(3, "assets/images/settings.svg", "Settings"),
-        ],
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 70.h,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom > 0 ? 0 : 8.h,
+          ),
+          child: Row(
+            children: [
+              _buildNavItem(0, "assets/images/home.svg", "Home"),
+              _buildNavItem(1, "assets/images/bookings.svg", "Bookings"),
+              _buildNavItem(2, "assets/images/wallets.svg", "Payments"),
+              _buildNavItem(3, "assets/images/settings.svg", "Settings"),
+            ],
+          ),
+        ),
       ),
     );
   }

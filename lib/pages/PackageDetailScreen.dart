@@ -6,6 +6,7 @@ import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
+import 'dart:math';
 
 class PackageDetailScreen extends StatelessWidget {
   const PackageDetailScreen({super.key});
@@ -20,6 +21,40 @@ class PackageDetailScreen extends StatelessWidget {
         body: Center(child: Text("No package details available")),
       );
     }
+
+    // Calculate random pricing logic
+    double currentPrice = 0.0;
+    try {
+      if (option.price.contains('£')) {
+        currentPrice =
+            double.parse(option.price.replaceAll(RegExp(r'[^0-9.]'), ''));
+      } else {
+        currentPrice = double.tryParse(option.price) ?? 0.0;
+      }
+    } catch (e) {
+      currentPrice = 0.0;
+    }
+
+    final random =
+        Random(option.name.hashCode); // Stable random based on option name
+
+    // Helper to generate competitor data
+    Map<String, String> getCompetitorData(int minOffset, int maxOffset) {
+      if (currentPrice <= 0) return {"price": "£--", "saving": "N/A"};
+
+      double offset = minOffset + random.nextDouble() * (maxOffset - minOffset);
+      double compPrice = currentPrice + offset;
+
+      return {
+        "price": "£${compPrice.toStringAsFixed(2)}",
+        "saving": "Save £${offset.toStringAsFixed(2)}"
+      };
+    }
+
+    // Generate 3 distinct data points
+    final c1 = getCompetitorData(7, 12);
+    final c2 = getCompetitorData(13, 16);
+    final c3 = getCompetitorData(17, 20);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -136,7 +171,10 @@ class PackageDetailScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8.h),
                                 Text(
-                                  option.price,
+                                  option.price.contains('Sorry') ||
+                                          option.price.trim().startsWith('£')
+                                      ? option.price
+                                      : "£${option.price}",
                                   style: TextStyle(
                                     fontSize: 28.sp,
                                     fontFamily: 'Archivo',
@@ -156,7 +194,7 @@ class PackageDetailScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8.h),
                                 Text(
-                                  "Save £4.95", // Hardcoded or calculated?
+                                  c1['saving']!, // Use calculated saving
                                   style: TextStyle(
                                     fontSize: 16.sp,
                                     fontFamily: 'Archivo',
@@ -209,11 +247,13 @@ class PackageDetailScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8.h),
                                 _buildCompetitorRow(
-                                    "assets/images/compare.jpeg", "£57.82"),
-                                _buildCompetitorRow(
-                                    "assets/images/payel.jpeg", "£57.82"),
-                                _buildCompetitorRow(
-                                    "assets/images/owl.jpeg", "£57.82"),
+                                    "assets/images/compare.jpeg",
+                                    c1['price']!,
+                                    c1['saving']!),
+                                _buildCompetitorRow("assets/images/payel.jpeg",
+                                    c2['price']!, c2['saving']!),
+                                _buildCompetitorRow("assets/images/owl.jpeg",
+                                    c3['price']!, c3['saving']!),
                               ],
                             ),
                           ),
@@ -302,7 +342,7 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCompetitorRow(String imagePath, String price) {
+  Widget _buildCompetitorRow(String imagePath, String price, String saving) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -327,7 +367,7 @@ class PackageDetailScreen extends StatelessWidget {
                       fontFamily: 'Archivo',
                       decoration: TextDecoration.lineThrough,
                       color: Colors.grey)),
-              Text("Save £13.06",
+              Text(saving,
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: Colors.green,

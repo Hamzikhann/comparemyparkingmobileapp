@@ -29,6 +29,7 @@ class BookingResponse {
 
 class Parking {
   final String id;
+  final String? referenceNo;
   final String startDate;
   final String endDate;
   final String startTime;
@@ -46,9 +47,14 @@ class Parking {
   final List<Vehicle> vehicles;
   final List<BookingAssignment> bookingAssignments;
   final List<BookingCheckPoint> bookingCheckPoints;
+  final String? location;
+  final String? contactNumber;
+  final String? arrivalProcedure;
+  final String? departureProcedure;
 
   Parking({
     required this.id,
+    this.referenceNo,
     required this.startDate,
     required this.endDate,
     required this.startTime,
@@ -66,11 +72,16 @@ class Parking {
     required this.vehicles,
     required this.bookingAssignments,
     required this.bookingCheckPoints,
+    this.location,
+    this.contactNumber,
+    this.arrivalProcedure,
+    this.departureProcedure,
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
     return Parking(
       id: json['id'] ?? '',
+      referenceNo: json['referenceNo'],
       startDate: json['startDate'] ?? '',
       endDate: json['endDate'] ?? '',
       startTime: json['startTime'] ?? '',
@@ -84,6 +95,14 @@ class Parking {
       userId: json['userId'] ?? '',
       guestUserId: json['guestUserId'],
       packageId: json['packageId'] ?? '',
+      location: json['location'] is Map
+          ? json['location']['address']
+          : json['location'],
+      contactNumber: json['contact'] is Map
+          ? json['contact']['number']
+          : (json['contact'] ?? json['contactNumber']),
+      arrivalProcedure: json['arrivalProcedure'],
+      departureProcedure: json['departureProcedure'],
       registrations: (json['registrations'] as List?)
               ?.map((e) => Registration.fromJson(e))
               .toList() ??
@@ -213,9 +232,8 @@ class BookingAssignment {
       status: json['status'] ?? '',
       bookingId: json['bookingId'] ?? '',
       employeeId: json['employeeId'] ?? '',
-      employee: json['employee'] != null
-          ? Employee.fromJson(json['employee'])
-          : null,
+      employee:
+          json['employee'] != null ? Employee.fromJson(json['employee']) : null,
     );
   }
 }

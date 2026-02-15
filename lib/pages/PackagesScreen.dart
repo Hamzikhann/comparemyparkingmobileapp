@@ -735,7 +735,10 @@ class _PackagesScreenState extends State<PackagesScreen> {
                             ),
                           ),
                           Text(
-                            option.price,
+                            option.price.contains('Sorry') ||
+                                    option.price.trim().startsWith('£')
+                                ? option.price
+                                : "£${option.price}",
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.bold,

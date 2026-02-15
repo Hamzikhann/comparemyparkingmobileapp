@@ -65,10 +65,14 @@ class _EditprofileState extends State<Editprofile> {
                   : null);
 
           // Fallback to CamelCase matches
-          newImageUrl ??= response['data']['imageUrl'] ??
+          newImageUrl ??= response['data']['imageURL'] ??
+              response['data']['imageUrl'] ??
+              response['data']['userProfile']?['imageURL'] ??
               response['data']['userProfile']?['imageUrl'] ??
               (response['data']['user'] is Map
-                  ? (response['data']['user']['userProfile']?['imageUrl'] ??
+                  ? (response['data']['user']['userProfile']?['imageURL'] ??
+                      response['data']['user']['userProfile']?['imageUrl'] ??
+                      response['data']['user']['imageURL'] ??
                       response['data']['user']['imageUrl'])
                   : null);
         }
@@ -90,7 +94,7 @@ class _EditprofileState extends State<Editprofile> {
 
           setState(() {
             print("newImageUrl: $newImageUrl");
-            Globals.user!.imageUrl = newImageUrl;
+            Globals.user!.imageURL = newImageUrl;
           });
 
           // Save updated user to persistent storage
@@ -102,7 +106,7 @@ class _EditprofileState extends State<Editprofile> {
           setState(() {
             print(
                 "Fallback: Using locally picked image path: ${imageFile.path}");
-            Globals.user!.imageUrl = imageFile.path;
+            Globals.user!.imageURL = imageFile.path;
           });
           await SharedStorage.saveUser(Globals.user!);
           EasyLoading.showSuccess('Image updated');
@@ -229,18 +233,18 @@ class _EditprofileState extends State<Editprofile> {
                                   image: DecorationImage(
                                     image: _pickedImage != null
                                         ? FileImage(File(_pickedImage!.path))
-                                        : (Globals.user?.imageUrl != null &&
+                                        : (Globals.user?.imageURL != null &&
                                                 Globals
-                                                    .user!.imageUrl!.isNotEmpty)
-                                            ? (Globals.user!.imageUrl!
+                                                    .user!.imageURL!.isNotEmpty)
+                                            ? (Globals.user!.imageURL!
                                                     .startsWith('http')
                                                 ? NetworkImage(
-                                                    Globals.user!.imageUrl!)
+                                                    Globals.user!.imageURL!)
                                                 : FileImage(File(Globals
-                                                        .user!.imageUrl!))
+                                                        .user!.imageURL!))
                                                     as ImageProvider)
                                             : const AssetImage(
-                                                'assets/images/profilee.png'),
+                                                'assets/images/user.png'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),

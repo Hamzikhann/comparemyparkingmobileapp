@@ -337,13 +337,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       child: CircleAvatar(
                         radius: 22.r,
-                        backgroundImage: (Globals.user?.imageUrl != null &&
-                                Globals.user!.imageUrl!.isNotEmpty)
-                            ? (Globals.user!.imageUrl!.startsWith('http')
-                                ? NetworkImage(Globals.user!.imageUrl!)
-                                : FileImage(File(Globals.user!.imageUrl!))
+                        backgroundImage: (Globals.user?.imageURL != null &&
+                                Globals.user!.imageURL!.isNotEmpty)
+                            ? (Globals.user!.imageURL!.startsWith('http')
+                                ? NetworkImage(Globals.user!.imageURL!)
+                                : FileImage(File(Globals.user!.imageURL!))
                                     as ImageProvider)
-                            : const AssetImage('assets/images/profilee.png'),
+                            : const AssetImage('assets/images/user.png'),
                       ),
                     ),
                     if (Globals.user != null)
@@ -696,7 +696,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             SizedBox(height: 4.h),
                             Text(
-                              "ID: ${booking.id.toUpperCase()}",
+                              "ID: ${booking.referenceNo?.toUpperCase()}",
                               style: TextStyle(
                                 fontSize: 10.sp,
                                 fontFamily: 'Archivo',
@@ -913,7 +913,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: 24.h),
 
                     // Service Information Section
-                    if (serviceInfo != null) ...[
+                    if (serviceInfo != null ||
+                        (booking.location != null &&
+                            booking.location!.isNotEmpty) ||
+                        (booking.contactNumber != null &&
+                            booking.contactNumber!.isNotEmpty) ||
+                        (booking.arrivalProcedure != null &&
+                            booking.arrivalProcedure!.isNotEmpty) ||
+                        (booking.departureProcedure != null &&
+                            booking.departureProcedure!.isNotEmpty)) ...[
                       _buildSectionHeader(
                           "Service Information", Icons.info_outline),
                       SizedBox(height: 16.h),
@@ -928,125 +936,208 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (serviceInfo['contact']?['number'] != null) ...[
-                              Row(
-                                children: [
-                                  Icon(Icons.phone,
-                                      color: colors.primaryNew, size: 18.sp),
-                                  SizedBox(width: 12.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                            // Contact Number Logic
+                            Builder(builder: (context) {
+                              String? contactNumber = booking.contactNumber;
+                              if (contactNumber == null ||
+                                  contactNumber.isEmpty) {
+                                if (serviceInfo != null &&
+                                    serviceInfo['contact'] != null) {
+                                  contactNumber =
+                                      serviceInfo['contact']['number'];
+                                }
+                              }
+
+                              if (contactNumber != null &&
+                                  contactNumber.isNotEmpty) {
+                                return Column(
+                                  children: [
+                                    Row(
                                       children: [
-                                        Text(
-                                          "Contact Number",
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontFamily: 'Archivo',
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        SizedBox(height: 2.h),
-                                        Text(
-                                          serviceInfo['contact']!['number'],
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Archivo',
-                                            color: Color(0xFF1A1A2E),
+                                        Icon(Icons.phone,
+                                            color: colors.primaryNew,
+                                            size: 18.sp),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Contact Number",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontFamily: 'Archivo',
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                              SizedBox(height: 2.h),
+                                              Text(
+                                                contactNumber,
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: 'Archivo',
+                                                  color: Color(0xFF1A1A2E),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16.h),
-                            ],
-                            if (serviceInfo['location']?['address'] !=
-                                null) ...[
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.location_on,
-                                      color: colors.primaryNew, size: 18.sp),
-                                  SizedBox(width: 12.w),
-                                  Expanded(
-                                    child: Column(
+                                    SizedBox(height: 16.h),
+                                  ],
+                                );
+                              }
+                              return SizedBox.shrink();
+                            }),
+
+                            // Location Logic
+                            Builder(builder: (context) {
+                              String? locationAddress = booking.location;
+                              if (locationAddress == null ||
+                                  locationAddress.isEmpty) {
+                                if (serviceInfo != null &&
+                                    serviceInfo['location'] != null) {
+                                  locationAddress =
+                                      serviceInfo['location']['address'];
+                                }
+                              }
+
+                              if (locationAddress != null &&
+                                  locationAddress.isNotEmpty) {
+                                return Column(
+                                  children: [
+                                    Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          "Service Location",
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontFamily: 'Archivo',
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        SizedBox(height: 2.h),
-                                        Text(
-                                          serviceInfo['location']!['address'],
-                                          style: TextStyle(
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Archivo',
-                                            color: Color(0xFF1A1A2E),
+                                        Icon(Icons.location_on,
+                                            color: colors.primaryNew,
+                                            size: 18.sp),
+                                        SizedBox(width: 12.w),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Service Location",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontFamily: 'Archivo',
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                              SizedBox(height: 2.h),
+                                              Text(
+                                                locationAddress,
+                                                style: TextStyle(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: 'Archivo',
+                                                  color: Color(0xFF1A1A2E),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 20.h),
-                              Divider(color: Colors.grey[200]),
-                              SizedBox(height: 20.h),
-                            ],
-                            if (serviceInfo['arrival_procedure'] != null) ...[
-                              Text(
-                                "Arrival Procedure",
-                                style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Archivo',
-                                  color: Color(0xFF1A1A2E),
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                serviceInfo['arrival_procedure'],
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontFamily: 'Archivo',
-                                  color: Colors.grey[700],
-                                  height: 1.4,
-                                ),
-                              ),
-                              SizedBox(height: 20.h),
-                            ],
-                            if (serviceInfo['departure_procedure'] != null) ...[
-                              Text(
-                                "Departure Procedure",
-                                style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Archivo',
-                                  color: Color(0xFF1A1A2E),
-                                ),
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                serviceInfo['departure_procedure'],
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontFamily: 'Archivo',
-                                  color: Colors.grey[700],
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
+                                    SizedBox(height: 20.h),
+                                    Divider(color: Colors.grey[200]),
+                                    SizedBox(height: 20.h),
+                                  ],
+                                );
+                              }
+                              return SizedBox.shrink();
+                            }),
+
+                            // Arrival Procedure Logic
+                            Builder(builder: (context) {
+                              String? arrivalProcedure =
+                                  booking.arrivalProcedure;
+                              if (arrivalProcedure == null ||
+                                  arrivalProcedure.isEmpty) {
+                                if (serviceInfo != null) {
+                                  arrivalProcedure =
+                                      serviceInfo['arrival_procedure'];
+                                }
+                              }
+
+                              if (arrivalProcedure != null &&
+                                  arrivalProcedure.isNotEmpty) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Arrival Procedure",
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Archivo',
+                                        color: Color(0xFF1A1A2E),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      arrivalProcedure,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[700],
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    SizedBox(height: 20.h),
+                                  ],
+                                );
+                              }
+                              return SizedBox.shrink();
+                            }),
+
+                            // Departure Procedure Logic
+                            Builder(builder: (context) {
+                              String? departureProcedure =
+                                  booking.departureProcedure;
+                              if (departureProcedure == null ||
+                                  departureProcedure.isEmpty) {
+                                if (serviceInfo != null) {
+                                  departureProcedure =
+                                      serviceInfo['departure_procedure'];
+                                }
+                              }
+
+                              if (departureProcedure != null &&
+                                  departureProcedure.isNotEmpty) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Departure Procedure",
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Archivo',
+                                        color: Color(0xFF1A1A2E),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      departureProcedure,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontFamily: 'Archivo',
+                                        color: Colors.grey[700],
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                              return SizedBox.shrink();
+                            }),
                           ],
                         ),
                       ),

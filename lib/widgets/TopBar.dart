@@ -7,6 +7,7 @@ class TopBar extends StatelessWidget {
   final VoidCallback onBackPressed;
   final bool showBackButton;
   final Color? textColor;
+  final Widget? trailing;
 
   const TopBar({
     super.key,
@@ -14,6 +15,7 @@ class TopBar extends StatelessWidget {
     required this.onBackPressed,
     this.showBackButton = true,
     this.textColor,
+    this.trailing,
   });
 
   @override
@@ -61,6 +63,13 @@ class TopBar extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // Trailing widget (right-aligned)
+              if (trailing != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: trailing!,
+                ),
             ],
           ),
         ],

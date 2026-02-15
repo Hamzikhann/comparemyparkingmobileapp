@@ -15,6 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class ReceiptScreen extends StatefulWidget {
   final Payment payment;
@@ -58,13 +59,19 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(20.w),
+          padding: EdgeInsets.fromLTRB(
+            20.w,
+            20.h,
+            20.w,
+            20.h + MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               RepaintBoundary(key: _receiptKey, child: _buildReceiptCard()),
               SizedBox(height: 30.h),
               _buildActionButtons(context),
+              SizedBox(height: 20.h), // Extra spacing for small screens
             ],
           ),
         ),
@@ -402,14 +409,20 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
   Future<void> _downloadPdf(BuildContext context) async {
     try {
-      // Request storage permission (only for Android 12 and below)
+      // Request storage permission
       if (Platform.isAndroid) {
-        // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for Downloads folder
+        final deviceInfo = DeviceInfoPlugin();
+        final androidInfo = await deviceInfo.androidInfo;
 
-        // Only request permission for Android 12 and below
-        final sdkInt = int.tryParse(Platform.version.split(' ').first) ?? 0;
-        if (sdkInt < 33) {
-          // Android 12 and below - request storage permission
+        if (androidInfo.version.sdkInt >= 33) {
+          // Android 13+ (API 33, 34, 35+)
+          // For saving to public Download folder, manageExternalStorage might be needed if using File API directly.
+          // Alternatively, we can request storage which might trigger media permissions.
+          if (!await Permission.manageExternalStorage.isGranted) {
+            await Permission.manageExternalStorage.request();
+          }
+        } else {
+          // Android 12 and below
           final status = await Permission.storage.request();
           if (!status.isGranted) {
             if (mounted) {
@@ -420,7 +433,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             return;
           }
         }
-        // Android 13+ (API 33+) - no permission needed for Downloads folder
       }
 
       // Load logo image

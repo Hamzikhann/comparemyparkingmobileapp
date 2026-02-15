@@ -149,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        'Shuttle Included',
+                        'Trusted seller',
                         style: TextStyle(
                           fontFamily: 'Archivo',
                           fontSize: 16.sp,
@@ -159,7 +159,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        'Free Cancellation',
+                        'Over 2m+ satisfied users',
                         style: TextStyle(
                           fontFamily: 'Archivo',
                           fontSize: 16.sp,

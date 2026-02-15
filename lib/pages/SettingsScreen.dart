@@ -1,5 +1,6 @@
 import 'package:parkingapp/data/Globals.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
@@ -20,6 +21,22 @@ class SettingsScreen extends StatelessWidget {
               greeting: "Settings",
               showBackButton: false,
               onBackPressed: () => Navigator.pop(context),
+              trailing: (Globals.user?.imageURL != null &&
+                      Globals.user!.imageURL!.isNotEmpty)
+                  ? GestureDetector(
+                      onTap: () {
+                        // Optional: Navigate to profile edit or show larger image
+                      },
+                      child: CircleAvatar(
+                        radius: 20.r,
+                        backgroundImage:
+                            (Globals.user!.imageURL!.startsWith('http'))
+                                ? NetworkImage(Globals.user!.imageURL!)
+                                : FileImage(File(Globals.user!.imageURL!))
+                                    as ImageProvider,
+                      ),
+                    )
+                  : null,
             ),
             Expanded(
               child: ListView(
