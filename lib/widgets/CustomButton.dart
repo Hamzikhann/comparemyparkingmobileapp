@@ -4,7 +4,7 @@ import 'package:parkingapp/utils/colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isSmall;
   final Color? backgroundColor;
   final Color? textColor;
@@ -12,7 +12,7 @@ class CustomButton extends StatelessWidget {
   const CustomButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isSmall = false,
     this.backgroundColor,
     this.textColor,

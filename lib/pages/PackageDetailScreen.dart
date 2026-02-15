@@ -208,9 +208,12 @@ class PackageDetailScreen extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
-                                _buildCompetitorRow("Compare", "£57.82"),
-                                _buildCompetitorRow("Pye", "£57.82"),
-                                _buildCompetitorRow("Owl", "£57.82"),
+                                _buildCompetitorRow(
+                                    "assets/images/compare.jpeg", "£57.82"),
+                                _buildCompetitorRow(
+                                    "assets/images/payel.jpeg", "£57.82"),
+                                _buildCompetitorRow(
+                                    "assets/images/owl.jpeg", "£57.82"),
                               ],
                             ),
                           ),
@@ -237,11 +240,15 @@ class PackageDetailScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: CustomButton(
-                            text: "Reserve This Parking",
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, MyRoutes.reserveBooking);
-                            },
+                            text: option.isFullyBooked
+                                ? "Fully Booked"
+                                : "Reserve This Parking",
+                            onPressed: option.isFullyBooked
+                                ? null
+                                : () {
+                                    Navigator.pushNamed(
+                                        context, MyRoutes.reserveBooking);
+                                  },
                             // Add color customization if CustomButton supports it
                             // style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF1B3D38)),
                           ),
@@ -264,7 +271,38 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCompetitorRow(String name, String price) {
+  Widget _buildFollowUpSection(String title, String content) {
+    if (content.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Archivo',
+              color: const Color(0xFF1A1A2E), // Dark theme color
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: const Color(0xFF6B6B6B),
+              fontFamily: 'Archivo',
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompetitorRow(String imagePath, String price) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -272,10 +310,12 @@ class PackageDetailScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.circle,
-                  size: 16, color: Colors.blue), // Placeholder icon
-              SizedBox(width: 4.w),
-              Text(name, style: TextStyle(fontSize: 10.sp)),
+              Image.asset(
+                imagePath,
+                width: 40.w,
+                height: 20.h,
+                fit: BoxFit.contain,
+              ),
             ],
           ),
           Column(
@@ -313,9 +353,11 @@ class PackageDetailScreen extends StatelessWidget {
   }
 
   double _parsePrice(String price) {
-    if (price.toLowerCase().contains("sorry")) return 999999.0;
+    if (price.toLowerCase().contains("sorry") ||
+        price.toLowerCase().contains("booked")) return 999999.0;
     String clean = price.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(clean) ?? 0.0;
+    if (clean.isEmpty) return 999999.0;
+    return double.tryParse(clean) ?? 999999.0;
   }
 
   Widget _buildOtherGreatOptions(
@@ -325,7 +367,9 @@ class PackageDetailScreen extends StatelessWidget {
     // 1. Get all candidates: Exclude self and unavailable items
     List<ParkingOption> candidates = Globals.searchResults.where((opt) {
       if (opt.name == currentOption.name) return false;
-      if (opt.price.toLowerCase().contains("sorry")) return false;
+      if (opt.isFullyBooked) return false;
+      if (opt.price.toLowerCase().contains("booked") ||
+          opt.price.toLowerCase().contains("sorry")) return false;
       return true;
     }).toList();
 

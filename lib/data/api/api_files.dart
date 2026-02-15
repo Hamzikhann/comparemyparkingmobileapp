@@ -4,8 +4,8 @@ class ApiFiles {
   static String signup = "/auth/signup";
   static String bookingsList = "/booking/list";
   static String paymentHistoryList = "/payment/list";
-  static String searchParking = "/search/v3";
-  static String searchParking2 = "/search/v4";
+  static String searchParking = "/search/v5";
+  static String searchParking2 = "/search/v5";
   static String bookParking = "/booking/create";
   static String forgotPassword = "/auth/forgot/password";
   static String verifyEmail = "/auth/verify";

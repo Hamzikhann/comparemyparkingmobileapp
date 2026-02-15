@@ -236,10 +236,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatTimeForApi(TimeOfDay time) {
-    final hour = time.hourOfPeriod;
+    final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    return '$hour:$minute';
   }
 
   void _handleSearch() {

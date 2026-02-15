@@ -82,14 +82,44 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           style: TextStyle(
                               fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       SizedBox(height: 24.h),
-                      Text("Customer Name",
-                          style: TextStyle(
-                              fontSize: 12.sp, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8.h),
-                      NonEditableTextField(
-                        hintText: "",
-                        value:
-                            "${GlobalsBookingDetail.bookingdetailuser?.registrations.first.firstName} ${GlobalsBookingDetail.bookingdetailuser?.registrations.first.lastName}",
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("First Name",
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText: "",
+                                  value:
+                                      "${GlobalsBookingDetail.bookingdetailuser?.registrations.first.firstName}",
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Last Name",
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(height: 8.h),
+                                NonEditableTextField(
+                                  hintText: "",
+                                  value:
+                                      "${GlobalsBookingDetail.bookingdetailuser?.registrations.first.lastName}",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 24.h),
                       Text("Contact Number",

@@ -194,10 +194,9 @@ class _PackagesScreenState extends State<PackagesScreen> {
   }
 
   String _formatTimeForApi(TimeOfDay time) {
-    final hour = time.hourOfPeriod;
+    final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    return '$hour:$minute';
   }
 
   Future<SearchResultResponse> _performSearch() async {

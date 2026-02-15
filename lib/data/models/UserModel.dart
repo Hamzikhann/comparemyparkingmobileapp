@@ -30,34 +30,50 @@ class UserModel {
     String? imgUrl;
     if (userMap['userProfile'] != null) {
       if (userMap['userProfile'] is Map) {
-        imgUrl = userMap['userProfile']['imageUrl'];
+        imgUrl = userMap['userProfile']['imageUrl'] ??
+            userMap['userProfile']['image'] ??
+            userMap['userProfile']['profileImage'];
       } else if (userMap['userProfile'] is String) {
         imgUrl = userMap['userProfile'];
       }
     }
-    imgUrl ??= userMap['imageUrl'];
+
+    // fallback to top level or common keys
+    imgUrl ??= userMap['imageUrl'] ??
+        userMap['image'] ??
+        userMap['imageurl'] ??
+        userMap['profileImage'] ??
+        userMap['photo'];
 
     // 3. Clean and process URL
     if (imgUrl != null &&
         imgUrl.toString().toLowerCase() != 'null' &&
         imgUrl.toString().trim().isNotEmpty) {
       imgUrl = imgUrl.toString().trim();
-      // Only prepend http if it DOES NOT look like a local path
-      // Local paths usually start with /data/ (Android) or /var/ (iOS) or /storage/
-      // Relative API paths usually start with /uploads/ or /images/ or similar
+
+      // Only prepend base URL if it's not a full URL and not a local path
       if (!imgUrl.startsWith('http')) {
-        // If it looks like a local absolute path, keep it as is
-        // Simple heuristic: if it contains typical local path segments
         bool isLocalPath = imgUrl.contains('/data/') ||
             imgUrl.contains('/var/') ||
             imgUrl.contains('/storage/') ||
-            imgUrl.contains('/Users/'); // iOS/Simulators
+            imgUrl.contains('/Users/');
 
         if (!isLocalPath) {
           if (!imgUrl.startsWith('/')) {
             imgUrl = "/$imgUrl";
           }
           imgUrl = "https://test.thefutureinno.com$imgUrl";
+        }
+      }
+
+      // Add cache breaker if it's a network image
+      if (imgUrl.startsWith('http')) {
+        if (!imgUrl.contains('?t=')) {
+          if (imgUrl.contains('?')) {
+            imgUrl = "$imgUrl&t=${DateTime.now().millisecondsSinceEpoch}";
+          } else {
+            imgUrl = "$imgUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+          }
         }
       }
     } else {

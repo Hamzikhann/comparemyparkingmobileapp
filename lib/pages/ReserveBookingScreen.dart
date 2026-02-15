@@ -19,7 +19,8 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
 
   // Controllers
   // Step 1
-  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -63,8 +64,8 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   void _loadUserProfileInfo() {
     if (Globals.user != null) {
       setState(() {
-        fullNameController.text =
-            "${Globals.user!.firstName} ${Globals.user!.lastName}".trim();
+        firstNameController.text = Globals.user!.firstName;
+        lastNameController.text = Globals.user!.lastName;
         emailController.text = Globals.user!.email;
         phoneController.text = Globals.user!.phoneNo;
         selectedTitle = "Mr"; // Default since UserModel doesn't have title
@@ -167,11 +168,35 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
             ),
           ),
           SizedBox(height: 16.h),
-          _buildLabel("Full Name"),
-          _buildTextField(
-              controller: fullNameController,
-              hint: "Enter Full Name",
-              validator: (v) => validateRequired(v, "Full Name")),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("First Name"),
+                    _buildTextField(
+                        controller: firstNameController,
+                        hint: "Enter First Name",
+                        validator: (v) => validateRequired(v, "First Name")),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("Last Name"),
+                    _buildTextField(
+                        controller: lastNameController,
+                        hint: "Enter Last Name",
+                        validator: (v) => validateRequired(v, "Last Name")),
+                  ],
+                ),
+              ),
+            ],
+          ),
           SizedBox(height: 16.h),
           _buildLabel("Phone Number"),
           _buildTextField(
@@ -440,17 +465,8 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
 
     if (Globals.user == null) {
       try {
-        // Split name properly
-        String fullName = fullNameController.text.trim();
-        String firstName = "";
-        String lastName = "";
-        if (fullName.isNotEmpty) {
-          List<String> parts = fullName.split(" ");
-          firstName = parts.first;
-          if (parts.length > 1) {
-            lastName = parts.sublist(1).join(" ");
-          }
-        }
+        String firstName = firstNameController.text.trim();
+        String lastName = lastNameController.text.trim();
 
         // Show loading
         ScaffoldMessenger.of(context)
@@ -495,17 +511,9 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
       return;
     }
 
-    // Split name properly
-    String fullName = fullNameController.text.trim();
-    String firstName = "";
-    String lastName = "";
-    if (fullName.isNotEmpty) {
-      List<String> parts = fullName.split(" ");
-      firstName = parts.first;
-      if (parts.length > 1) {
-        lastName = parts.sublist(1).join(" ");
-      }
-    }
+    // Take names directly from controllers
+    String firstName = firstNameController.text.trim();
+    String lastName = lastNameController.text.trim();
 
     // Create Booking Info
     final bookingInfo = BookingInfoModel(

@@ -581,12 +581,7 @@ class GeneralRepository {
           endTime.isEmpty) {
         throw Exception('All parameters are required');
       }
-      final apiEndpoint;
-      if (airport == 'Stansted' || airport == 'Luton' || airport == 'Bristol') {
-        apiEndpoint = ApiFiles.searchParking;
-      } else {
-        apiEndpoint = ApiFiles.searchParking2;
-      }
+      final apiEndpoint = ApiFiles.searchParking;
       print(apiEndpoint);
 
       server.makeApiRequest(
@@ -622,6 +617,7 @@ class GeneralRepository {
           });
         },
         onSuccess: (Map<String, dynamic> response) {
+          print("Search Response: $response");
           final status = response['status']?.toString().toLowerCase();
           final jobId = response['jobId']?.toString() ?? '';
           final message = response['message']?.toString().toLowerCase() ?? '';
@@ -640,12 +636,28 @@ class GeneralRepository {
           }
 
           try {
-            // Immediate success
+            // Immediate success - Check if data exists
             if (response['data'] == null) {
-              throw Exception('Invalid API response structure');
+              // Some APIs might return the result list directly or under a different key if it's immediate
+              if (response is List) {
+                _finalizeSearch(
+                    completer,
+                    SearchResultResponse(
+                        message: "success",
+                        data: (response as List)
+                            .map((e) => ParkingOption.fromJson(e))
+                            .toList()));
+                return;
+              }
+              throw Exception(
+                  'Invalid API response structure: missing data field');
             }
-            _finalizeSearch(completer, SearchResultResponse.fromJson(response));
+
+            final results = SearchResultResponse.fromJson(response);
+            print("Parsed ${results.data.length} results");
+            _finalizeSearch(completer, results);
           } catch (e) {
+            print("Parsing error: $e");
             _handleSearchError(completer, e.toString());
           }
         },
