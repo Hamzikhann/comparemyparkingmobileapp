@@ -208,6 +208,7 @@ class _PackagesScreenState extends State<PackagesScreen> {
         airport: Globals.selectedAirport,
         startTime: Globals.startTime,
         endTime: Globals.endTime,
+        promoCode: Globals.promoCode,
       )
           .then((response) {
         Globals.searchResults = response.data;
@@ -287,154 +288,204 @@ class _PackagesScreenState extends State<PackagesScreen> {
           children: [
             SizedBox(height: 16.h),
             // Custom Search Bar Header
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.black),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                      child: IntrinsicHeight(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: GestureDetector(
+                                onTap: () {
+                                  // TODO: Open airport selection or go back to search
+                                  Navigator.pop(context);
+                                },
+                                child: Center(
+                                  child: Text(
+                                    Globals.selectedAirport.isNotEmpty
+                                        ? Globals.selectedAirport
+                                        : "Select Airport",
+                                    style: TextStyle(
+                                      color: Color(0xFF6B7280),
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            VerticalDivider(
+                              color: Colors.grey[300],
+                              thickness: 1,
+                              indent: 8,
+                              endIndent: 8,
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: GestureDetector(
+                                onTap: () => _pickDateAndTime(isStart: true),
+                                child: Container(
+                                  // Transparent container to expand hit test
+                                  color: Colors.transparent,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          parsedStartDate != null
+                                              ? DateFormat('dd MMM')
+                                                  .format(parsedStartDate!)
+                                              : 'Check In',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontFamily: 'Archivo',
+                                            color: parsedStartDate != null
+                                                ? Color(0xFF1A1A2E)
+                                                : Color(0xFF6B6B6B),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (parsedStartTime != null)
+                                          Text(
+                                            parsedStartTime!.format(context),
+                                            style: TextStyle(
+                                              fontSize: 10.sp,
+                                              fontFamily: 'Archivo',
+                                              color: Color(0xFF4B725D),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            VerticalDivider(
+                              color: Colors.grey[300],
+                              thickness: 1,
+                              indent: 8,
+                              endIndent: 8,
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: GestureDetector(
+                                onTap: () => _pickDateAndTime(isStart: false),
+                                child: Container(
+                                  color: Colors.transparent,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          parsedEndDate != null
+                                              ? DateFormat('dd MMM')
+                                                  .format(parsedEndDate!)
+                                              : 'Check Out',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontFamily: 'Archivo',
+                                            color: parsedEndDate != null
+                                                ? Color(0xFF1A1A2E)
+                                                : Color(0xFF6B6B6B),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (parsedEndTime != null)
+                                          Text(
+                                            parsedEndTime!.format(context),
+                                            style: TextStyle(
+                                              fontSize: 10.sp,
+                                              fontFamily: 'Archivo',
+                                              color: Color(0xFF4B725D),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 40.w,
+                              height: 40.w,
+                              decoration: BoxDecoration(
+                                color: Color(
+                                    0xFF4A6F56), // Greenish color from design
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: Icon(Icons.search,
+                                    color: Colors.white, size: 20.sp),
+                                onPressed:
+                                    _retrySearch, // Or open search filter
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 16.h),
+
+            // Promo Code Field
             Container(
               margin: EdgeInsets.symmetric(horizontal: 16.w),
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
               decoration: BoxDecoration(
                 color: Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(30.r),
               ),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: GestureDetector(
-                        onTap: () {
-                          // TODO: Open airport selection or go back to search
-                          Navigator.pop(context);
-                        },
-                        child: Center(
-                          child: Text(
-                            Globals.selectedAirport.isNotEmpty
-                                ? Globals.selectedAirport
-                                : "Select Airport",
-                            style: TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ),
-                    VerticalDivider(
-                      color: Colors.grey[300],
-                      thickness: 1,
-                      indent: 8,
-                      endIndent: 8,
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: GestureDetector(
-                        onTap: () => _pickDateAndTime(isStart: true),
-                        child: Container(
-                          // Transparent container to expand hit test
-                          color: Colors.transparent,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  parsedStartDate != null
-                                      ? DateFormat('dd MMM')
-                                          .format(parsedStartDate!)
-                                      : 'Check In',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontFamily: 'Archivo',
-                                    color: parsedStartDate != null
-                                        ? Color(0xFF1A1A2E)
-                                        : Color(0xFF6B6B6B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (parsedStartTime != null)
-                                  Text(
-                                    parsedStartTime!.format(context),
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Archivo',
-                                      color: Color(0xFF4B725D),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    VerticalDivider(
-                      color: Colors.grey[300],
-                      thickness: 1,
-                      indent: 8,
-                      endIndent: 8,
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: GestureDetector(
-                        onTap: () => _pickDateAndTime(isStart: false),
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  parsedEndDate != null
-                                      ? DateFormat('dd MMM')
-                                          .format(parsedEndDate!)
-                                      : 'Check Out',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontFamily: 'Archivo',
-                                    color: parsedEndDate != null
-                                        ? Color(0xFF1A1A2E)
-                                        : Color(0xFF6B6B6B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (parsedEndTime != null)
-                                  Text(
-                                    parsedEndTime!.format(context),
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Archivo',
-                                      color: Color(0xFF4B725D),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 40.w,
-                      height: 40.w,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF4A6F56), // Greenish color from design
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(Icons.search,
-                            color: Colors.white, size: 20.sp),
-                        onPressed: _retrySearch, // Or open search filter
-                      ),
-                    ),
-                  ],
+              child: TextFormField(
+                initialValue: Globals.promoCode,
+                onChanged: (value) {
+                  Globals.promoCode = value;
+                },
+                decoration: InputDecoration(
+                  hintText: 'Enter Promo Code (Optional)',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.local_offer_outlined,
+                    color: Color(0xFF4A6F56),
+                    size: 20.sp,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                 ),
               ),
             ),

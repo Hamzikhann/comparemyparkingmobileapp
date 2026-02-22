@@ -569,6 +569,7 @@ class GeneralRepository {
     required String airport,
     required String startTime,
     required String endTime,
+    String? promoCode,
   }) async {
     final completer = Completer<SearchResultResponse>();
 
@@ -584,16 +585,22 @@ class GeneralRepository {
       final apiEndpoint = ApiFiles.searchParking;
       print(apiEndpoint);
 
+      Map<String, dynamic> requestData = {
+        "startDate": startDate,
+        "endDate": endDate,
+        "airport": airport,
+        "startTime": startTime,
+        "endTime": endTime,
+      };
+
+      if (promoCode != null && promoCode.isNotEmpty) {
+        requestData["promoCode"] = promoCode;
+      }
+
       server.makeApiRequest(
         apiEndpoint: apiEndpoint,
         requestMethod: RequestMethod.post,
-        requestData: {
-          "startDate": startDate,
-          "endDate": endDate,
-          "airport": airport,
-          "startTime": startTime,
-          "endTime": endTime,
-        },
+        requestData: requestData,
         onLoad: () {
           // Initialize loader settings
           EasyLoading.instance.dismissOnTap = false;

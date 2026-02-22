@@ -335,15 +335,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                         setState(() {});
                       },
-                      child: CircleAvatar(
-                        radius: 22.r,
-                        backgroundImage: (Globals.user?.imageURL != null &&
-                                Globals.user!.imageURL!.isNotEmpty)
-                            ? (Globals.user!.imageURL!.startsWith('http')
-                                ? NetworkImage(Globals.user!.imageURL!)
-                                : FileImage(File(Globals.user!.imageURL!))
-                                    as ImageProvider)
-                            : const AssetImage('assets/images/user.png'),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22.r,
+                            backgroundImage: (Globals.user?.imageURL != null &&
+                                    Globals.user!.imageURL!.isNotEmpty)
+                                ? (Globals.user!.imageURL!.startsWith('http')
+                                    ? NetworkImage(Globals.user!.imageURL!)
+                                    : FileImage(File(Globals.user!.imageURL!))
+                                        as ImageProvider)
+                                : const AssetImage('assets/images/user.png'),
+                          ),
+                          SizedBox(width: 10.w),
+                          if (Globals.user?.firstName != null &&
+                              Globals.user!.firstName.isNotEmpty)
+                            Text(
+                              Globals.user!.firstName,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Archivo',
+                                color: colors.primaryNew,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (Globals.user != null)
@@ -583,6 +599,47 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Promo Code Field
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 10.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF0F3F5),
+                  borderRadius: BorderRadius.circular(50.r),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextFormField(
+                  initialValue: Globals.promoCode,
+                  onChanged: (value) {
+                    Globals.promoCode = value;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Enter Promo Code (Optional)',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF6B6B6B),
+                      fontSize: 14.sp,
+                      fontFamily: 'Archivo',
+                    ),
+                    prefixIcon: Icon(
+                      Icons.local_offer_outlined,
+                      color: colors.primaryNew,
+                      size: 20.sp,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                   ),
                 ),
               ),
