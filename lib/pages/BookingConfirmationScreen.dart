@@ -99,7 +99,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ),
                       pw.SizedBox(height: 10),
                       pw.Text(
-                        Globals.option?.price ?? '0.00',
+                        '£${Globals.option?.price ?? '0.00'}',
                         style: pw.TextStyle(
                           fontSize: 32,
                           fontWeight: pw.FontWeight.bold,
@@ -173,7 +173,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                       ),
                       pw.Text(
-                        Globals.option?.price ?? '0.00',
+                        '£${Globals.option?.price ?? '0.00'}',
                         style: pw.TextStyle(
                           fontSize: 20,
                           fontWeight: pw.FontWeight.bold,
@@ -410,7 +410,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 ),
                                 SizedBox(height: 8.h),
                                 Text(
-                                  "${Globals.option?.price ?? '0.00'}",
+                                  "£${Globals.option?.price ?? '0.00'}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 28.sp,
