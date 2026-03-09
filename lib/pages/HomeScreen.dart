@@ -43,11 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
   TimeOfDay? parsedEndTime;
   Future<BookingResponse>? _bookingsFuture;
   final GeneralRepository _repository = GeneralRepository();
+  final TextEditingController _registrationController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadBookings();
+  }
+
+  @override
+  void dispose() {
+    _registrationController.dispose();
+    super.dispose();
   }
 
   void _loadBookings() {
@@ -309,6 +316,45 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MyRoutes.packagesScreen,
     );
+  }
+
+  void _handleRegistrationSearch() async {
+    final registration = _registrationController.text.trim();
+    if (registration.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a registration number')),
+      );
+      return;
+    }
+
+    try {
+      final response = await _repository.searchByRegistration(registration);
+      if (response['success'] == true && response['data']['bookings'] != null) {
+        final List bookings = response['data']['bookings'];
+        if (bookings.isNotEmpty) {
+          final result = await Navigator.pushNamed(
+            context,
+            MyRoutes.claimDetail,
+            arguments: bookings[0],
+          );
+          if (result == true) {
+            _loadBookings(); // Refresh home screen
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('No booking found with this registration number')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Search failed')),
+        );
+      }
+    } catch (e) {
+      // Error handled by repository
+    }
   }
 
   @override
@@ -641,6 +687,71 @@ class _HomeScreenState extends State<HomeScreen> {
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                   ),
+                ),
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Search With Registration Number
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 10.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF0F3F5),
+                  borderRadius: BorderRadius.circular(50.r),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _registrationController,
+                        decoration: InputDecoration(
+                          hintText: 'Search With Registration Number',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF6B6B6B),
+                            fontSize: 14.sp,
+                            fontFamily: 'Archivo',
+                          ),
+                          prefixIcon: Icon(
+                            Icons.directions_car_outlined,
+                            color: colors.primaryNew,
+                            size: 20.sp,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.w, vertical: 14.h),
+                        ),
+                        onFieldSubmitted: (_) => _handleRegistrationSearch(),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(4.w),
+                      child: InkWell(
+                        onTap: _handleRegistrationSearch,
+                        customBorder: CircleBorder(),
+                        child: Container(
+                          width: 48.w,
+                          height: 48.h,
+                          decoration: BoxDecoration(
+                            color: colors.primaryNew,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.search,
+                            color: Colors.white,
+                            size: 24.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 

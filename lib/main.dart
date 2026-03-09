@@ -10,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/BookingDetailUser.dart';
+import 'package:parkingapp/pages/BookingClaimDetailScreen.dart';
 import 'package:parkingapp/pages/EditProfile.dart';
 import 'package:parkingapp/pages/ForgotPassword.dart';
 import 'package:parkingapp/pages/HomeScreen.dart';
@@ -146,6 +147,10 @@ class MyApp extends StatelessWidget {
             '/bookingConfirmation': (context) => BookingConfirmationScreen(),
             '/home': (context) => HomeScreen(),
             '/selection': (context) => const LoginSelectionScreen(),
+            '/claimDetail': (context) => BookingClaimDetailScreen(
+                  bookingData: ModalRoute.of(context)!.settings.arguments
+                      as Map<String, dynamic>,
+                ),
           },
         );
       },

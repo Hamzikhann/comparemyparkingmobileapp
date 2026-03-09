@@ -1415,6 +1415,63 @@ class GeneralRepository {
     );
     return completer.future;
   }
+
+  Future<Map<String, dynamic>> searchByRegistration(String registration) async {
+    Completer<Map<String, dynamic>> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.searchByRegistration,
+      requestMethod: RequestMethod.post,
+      requestData: {"registration": registration},
+      onLoad: () {
+        EasyLoading.show(status: "Searching...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete(res);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'search_reg',
+          message: errorMessage,
+          duration: 3,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
+  }
+
+  Future<void> claimBooking(String importId, int recordIndex) async {
+    Completer<void> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.claimBooking,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "importId": importId,
+        "recordIndex": recordIndex,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Claiming...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        completer.complete();
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        Alertify.showAlert(
+          alertKey: 'claim_booking',
+          message: errorMessage,
+          duration: 3,
+          type: AlertType.error,
+        );
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
+  }
 }
 
 class _SearchLoaderWidget extends StatelessWidget {

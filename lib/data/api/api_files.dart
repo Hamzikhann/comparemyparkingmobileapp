@@ -27,4 +27,6 @@ class ApiFiles {
   static String verifyPayment = "/stripe/verify-payment";
   static String dashboardData = "/dashboard/monthly-data";
   static String mainDashboardData = "/dashboard";
+  static String searchByRegistration = "/upload/bookings/search";
+  static String claimBooking = "/upload/bookings/claim";
 }

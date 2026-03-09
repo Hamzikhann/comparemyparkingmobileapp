@@ -23,4 +23,5 @@ class MyRoutes {
   static String bookingConfirmation = '/bookingConfirmation';
   static String homeRoute = '/home';
   static String selectionRoute = '/selection';
+  static String claimDetail = '/claimDetail';
 }
