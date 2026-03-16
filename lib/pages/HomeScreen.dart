@@ -44,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<BookingResponse>? _bookingsFuture;
   final GeneralRepository _repository = GeneralRepository();
   final TextEditingController _registrationController = TextEditingController();
+  int _selectedTabIndex = 0;
 
   @override
   void initState() {
@@ -469,85 +470,127 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              // Three buttons row
-              // Search Bar
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 10.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFF0F3F5),
-                  borderRadius: BorderRadius.circular(50.r),
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: IntrinsicHeight(
+              // Tabs for switching Search Modes
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Container(
+                  height: 45.h,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F3F5),
+                    borderRadius: BorderRadius.circular(25.r),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Row(
                     children: [
-                      // Select Airport
                       Expanded(
-                        flex: 3,
-                        child: InkWell(
-                          onTap: _showAirportDialog,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(50.r),
-                            bottomLeft: Radius.circular(50.r),
-                          ),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedTabIndex = 0;
+                            });
+                          },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 4.w, vertical: 4.h),
-                            child: Center(
-                              child: Text(
-                                selectedAirport ?? 'Select Airport',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontFamily: 'Archivo',
-                                  color: selectedAirport != null
-                                      ? Color(0xFF1A1A2E)
-                                      : Color(0xFF6B6B6B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            decoration: BoxDecoration(
+                              color: _selectedTabIndex == 0
+                                  ? colors.primaryNew
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(25.r),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Standard Search',
+                              style: TextStyle(
+                                color: _selectedTabIndex == 0
+                                    ? Colors.white
+                                    : Color(0xFF6B6B6B),
+                                fontSize: 13.sp,
+                                fontFamily: 'Archivo',
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ),
                       ),
-
-                      // Divider
-                      VerticalDivider(
-                        color: Color(0xFFD1D5DB),
-                        thickness: 1,
-                        indent: 12.h,
-                        endIndent: 12.h,
-                        width: 1,
-                      ),
-
-                      // Check In
                       Expanded(
-                        flex: 3,
-                        child: InkWell(
-                          onTap: () => _pickDateAndTime(isStart: true),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedTabIndex = 1;
+                            });
+                          },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 16.h),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  parsedStartDate != null
-                                      ? DateFormat('dd MMM')
-                                          .format(parsedStartDate!)
-                                      : 'Check In',
+                            decoration: BoxDecoration(
+                              color: _selectedTabIndex == 1
+                                  ? colors.primaryNew
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(25.r),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Claim Booking',
+                              style: TextStyle(
+                                color: _selectedTabIndex == 1
+                                    ? Colors.white
+                                    : Color(0xFF6B6B6B),
+                                fontSize: 13.sp,
+                                fontFamily: 'Archivo',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+
+              if (_selectedTabIndex == 0) ...[
+                // Search Bar
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F3F5),
+                    borderRadius: BorderRadius.circular(50.r),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        // Select Airport
+                        Expanded(
+                          flex: 3,
+                          child: InkWell(
+                            onTap: _showAirportDialog,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(50.r),
+                              bottomLeft: Radius.circular(50.r),
+                            ),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 4.w, vertical: 4.h),
+                              child: Center(
+                                child: Text(
+                                  selectedAirport ?? 'Select Airport',
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     fontFamily: 'Archivo',
-                                    color: parsedStartDate != null
+                                    color: selectedAirport != null
                                         ? Color(0xFF1A1A2E)
                                         : Color(0xFF6B6B6B),
                                     fontWeight: FontWeight.w500,
@@ -555,79 +598,229 @@ class _HomeScreenState extends State<HomeScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                if (parsedStartTime != null)
-                                  Text(
-                                    parsedStartTime!.format(context),
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Archivo',
-                                      color: colors.primaryNew,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
-                      // Divider
-                      VerticalDivider(
-                        color: Color(0xFFD1D5DB),
-                        thickness: 1,
-                        indent: 12.h,
-                        endIndent: 12.h,
-                        width: 1,
-                      ),
+                        // Divider
+                        VerticalDivider(
+                          color: Color(0xFFD1D5DB),
+                          thickness: 1,
+                          indent: 12.h,
+                          endIndent: 12.h,
+                          width: 1,
+                        ),
 
-                      // Check Out
+                        // Check In
+                        Expanded(
+                          flex: 3,
+                          child: InkWell(
+                            onTap: () => _pickDateAndTime(isStart: true),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 16.h),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    parsedStartDate != null
+                                        ? DateFormat('dd MMM')
+                                            .format(parsedStartDate!)
+                                        : 'Check In',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontFamily: 'Archivo',
+                                      color: parsedStartDate != null
+                                          ? Color(0xFF1A1A2E)
+                                          : Color(0xFF6B6B6B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (parsedStartTime != null)
+                                    Text(
+                                      parsedStartTime!.format(context),
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        fontFamily: 'Archivo',
+                                        color: colors.primaryNew,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Divider
+                        VerticalDivider(
+                          color: Color(0xFFD1D5DB),
+                          thickness: 1,
+                          indent: 12.h,
+                          endIndent: 12.h,
+                          width: 1,
+                        ),
+
+                        // Check Out
+                        Expanded(
+                          flex: 3,
+                          child: InkWell(
+                            onTap: () => _pickDateAndTime(isStart: false),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 16.h),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    parsedEndDate != null
+                                        ? DateFormat('dd MMM')
+                                            .format(parsedEndDate!)
+                                        : 'Check Out',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontFamily: 'Archivo',
+                                      color: parsedEndDate != null
+                                          ? Color(0xFF1A1A2E)
+                                          : Color(0xFF6B6B6B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (parsedEndTime != null)
+                                    Text(
+                                      parsedEndTime!.format(context),
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        fontFamily: 'Archivo',
+                                        color: colors.primaryNew,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Search Button
+                        Padding(
+                          padding: EdgeInsets.all(4.w),
+                          child: InkWell(
+                            onTap: _handleSearch,
+                            customBorder: CircleBorder(),
+                            child: Container(
+                              width: 48.w,
+                              height: 48.h,
+                              decoration: BoxDecoration(
+                                color: colors.primaryNew,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.search,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+
+                // Promo Code Field
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F3F5),
+                    borderRadius: BorderRadius.circular(50.r),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    initialValue: Globals.promoCode,
+                    onChanged: (value) {
+                      Globals.promoCode = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Enter Promo Code (Optional)',
+                      hintStyle: TextStyle(
+                        color: Color(0xFF6B6B6B),
+                        fontSize: 14.sp,
+                        fontFamily: 'Archivo',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.local_offer_outlined,
+                        color: colors.primaryNew,
+                        size: 20.sp,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 20.w, vertical: 14.h),
+                    ),
+                  ),
+                ),
+              ],
+
+              SizedBox(height: 16.h),
+
+              if (_selectedTabIndex == 1) ...[
+                // Search With Registration Number
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F3F5),
+                    borderRadius: BorderRadius.circular(50.r),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
                       Expanded(
-                        flex: 3,
-                        child: InkWell(
-                          onTap: () => _pickDateAndTime(isStart: false),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 16.h),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  parsedEndDate != null
-                                      ? DateFormat('dd MMM')
-                                          .format(parsedEndDate!)
-                                      : 'Check Out',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontFamily: 'Archivo',
-                                    color: parsedEndDate != null
-                                        ? Color(0xFF1A1A2E)
-                                        : Color(0xFF6B6B6B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (parsedEndTime != null)
-                                  Text(
-                                    parsedEndTime!.format(context),
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Archivo',
-                                      color: colors.primaryNew,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                              ],
+                        child: TextFormField(
+                          controller: _registrationController,
+                          decoration: InputDecoration(
+                            hintText: 'Search With Registration Number',
+                            hintStyle: TextStyle(
+                              color: Color(0xFF6B6B6B),
+                              fontSize: 14.sp,
+                              fontFamily: 'Archivo',
                             ),
+                            prefixIcon: Icon(
+                              Icons.directions_car_outlined,
+                              color: colors.primaryNew,
+                              size: 20.sp,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20.w, vertical: 14.h),
                           ),
+                          onFieldSubmitted: (_) => _handleRegistrationSearch(),
                         ),
                       ),
-
-                      // Search Button
                       Padding(
                         padding: EdgeInsets.all(4.w),
                         child: InkWell(
-                          onTap: _handleSearch,
+                          onTap: _handleRegistrationSearch,
                           customBorder: CircleBorder(),
                           child: Container(
                             width: 48.w,
@@ -647,113 +840,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              // Promo Code Field
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 10.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFF0F3F5),
-                  borderRadius: BorderRadius.circular(50.r),
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextFormField(
-                  initialValue: Globals.promoCode,
-                  onChanged: (value) {
-                    Globals.promoCode = value;
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Enter Promo Code (Optional)',
-                    hintStyle: TextStyle(
-                      color: Color(0xFF6B6B6B),
-                      fontSize: 14.sp,
-                      fontFamily: 'Archivo',
-                    ),
-                    prefixIcon: Icon(
-                      Icons.local_offer_outlined,
-                      color: colors.primaryNew,
-                      size: 20.sp,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              // Search With Registration Number
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 10.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFF0F3F5),
-                  borderRadius: BorderRadius.circular(50.r),
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _registrationController,
-                        decoration: InputDecoration(
-                          hintText: 'Search With Registration Number',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF6B6B6B),
-                            fontSize: 14.sp,
-                            fontFamily: 'Archivo',
-                          ),
-                          prefixIcon: Icon(
-                            Icons.directions_car_outlined,
-                            color: colors.primaryNew,
-                            size: 20.sp,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 14.h),
-                        ),
-                        onFieldSubmitted: (_) => _handleRegistrationSearch(),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(4.w),
-                      child: InkWell(
-                        onTap: _handleRegistrationSearch,
-                        customBorder: CircleBorder(),
-                        child: Container(
-                          width: 48.w,
-                          height: 48.h,
-                          decoration: BoxDecoration(
-                            color: colors.primaryNew,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.search,
-                            color: Colors.white,
-                            size: 24.sp,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
 
               SizedBox(height: 24.h),
 
