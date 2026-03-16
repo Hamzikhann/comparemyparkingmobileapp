@@ -45,6 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final GeneralRepository _repository = GeneralRepository();
   final TextEditingController _registrationController = TextEditingController();
   int _selectedTabIndex = 0;
+  List<dynamic> _searchedBookings = [];
+  bool _isSearchingRegistration = false;
+  bool _registrationSearchPerformed = false;
 
   @override
   void initState() {
@@ -328,26 +331,18 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    setState(() {
+      _isSearchingRegistration = true;
+      _registrationSearchPerformed = true;
+      _searchedBookings = [];
+    });
+
     try {
       final response = await _repository.searchByRegistration(registration);
       if (response['success'] == true && response['data']['bookings'] != null) {
-        final List bookings = response['data']['bookings'];
-        if (bookings.isNotEmpty) {
-          final result = await Navigator.pushNamed(
-            context,
-            MyRoutes.claimDetail,
-            arguments: bookings[0],
-          );
-          if (result == true) {
-            _loadBookings(); // Refresh home screen
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('No booking found with this registration number')),
-          );
-        }
+        setState(() {
+          _searchedBookings = response['data']['bookings'];
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['message'] ?? 'Search failed')),
@@ -355,7 +350,145 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       // Error handled by repository
+    } finally {
+      setState(() {
+        _isSearchingRegistration = false;
+      });
     }
+  }
+
+  Widget _buildRegistrationSearchResults() {
+    if (_searchedBookings.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Center(
+          child: Text(
+            'No booking found with this registration number',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontFamily: 'Archivo',
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Search Results',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontFamily: 'Archivo',
+              color: Color(0xFF1A1A2E),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          ..._searchedBookings.map((booking) {
+            return GestureDetector(
+              onTap: () async {
+                final result = await Navigator.pushNamed(
+                  context,
+                  MyRoutes.claimDetail,
+                  arguments: booking,
+                );
+                if (result == true) {
+                  _loadBookings();
+                }
+              },
+              child: Container(
+                margin: EdgeInsets.only(bottom: 12.h),
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          booking['reference_no']?.toUpperCase() ?? 'N/A',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Archivo',
+                            color: colors.primaryNew,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: colors.primaryNew.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            booking['booking_status'] ?? 'Pending',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primaryNew,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Icon(Icons.directions_car,
+                            size: 16.sp, color: Colors.grey[600]),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "${booking['vehicle_registration'] ?? ''}",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontFamily: 'Archivo',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today,
+                            size: 14.sp, color: Colors.grey[600]),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "${booking['start_date'] ?? ''} - ${booking['end_date'] ?? ''}",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Archivo',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
   }
 
   @override
@@ -840,53 +973,62 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                if (_isSearchingRegistration)
+                  Padding(
+                    padding: EdgeInsets.only(top: 20.h),
+                    child: const Center(child: CircularProgressIndicator()),
+                  )
+                else if (_registrationSearchPerformed)
+                  _buildRegistrationSearchResults(),
               ],
 
               SizedBox(height: 24.h),
 
               // Booking History Section
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Text(
-                  'See your Booking History',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontFamily: 'Archivo',
-                    color: Color(0xFF1A1A2E),
-                    fontWeight: FontWeight.w700,
+              if (_selectedTabIndex == 0 || !_registrationSearchPerformed)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Text(
+                    'See your Booking History',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontFamily: 'Archivo',
+                      color: Color(0xFF1A1A2E),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
 
               SizedBox(height: 16.h),
 
               // Booking cards
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: FutureBuilder<BookingResponse>(
-                  future: _bookingsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return _buildErrorState(snapshot.error.toString());
-                    }
-                    if (snapshot.hasData) {
-                      final bookings = snapshot.data!.completedParkings;
-                      if (bookings.isEmpty) {
-                        return _noBookingCard();
+              if (_selectedTabIndex == 0 || !_registrationSearchPerformed)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: FutureBuilder<BookingResponse>(
+                    future: _bookingsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
                       }
-                      return Column(
-                        children: bookings.map((booking) {
-                          return _buildBookingCard(booking);
-                        }).toList(),
-                      );
-                    }
-                    return _noBookingCard();
-                  },
+                      if (snapshot.hasError) {
+                        return _buildErrorState(snapshot.error.toString());
+                      }
+                      if (snapshot.hasData) {
+                        final bookings = snapshot.data!.completedParkings;
+                        if (bookings.isEmpty) {
+                          return _noBookingCard();
+                        }
+                        return Column(
+                          children: bookings.map((booking) {
+                            return _buildBookingCard(booking);
+                          }).toList(),
+                        );
+                      }
+                      return _noBookingCard();
+                    },
+                  ),
                 ),
-              ),
 
               SizedBox(height: 80.h), // Bottom padding for navigation bar
             ],
