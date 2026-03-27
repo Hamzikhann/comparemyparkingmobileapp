@@ -390,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: 16.h),
           ..._searchedBookings.map((booking) {
+            final mappedData = booking['mappedData'] ?? {};
             return GestureDetector(
               onTap: () async {
                 final result = await Navigator.pushNamed(
@@ -423,7 +424,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          booking['reference_no']?.toUpperCase() ?? 'N/A',
+                          (mappedData['referenceNo'] ??
+                                  booking['reference_no'] ??
+                                  'N/A')
+                              .toUpperCase(),
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
@@ -439,7 +443,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
-                            booking['booking_status'] ?? 'Pending',
+                            mappedData['packageName'] ??
+                                booking['booking_status'] ??
+                                'Pending',
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
@@ -449,6 +455,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+                    if (mappedData['customerName'] != null) ...[
+                      SizedBox(height: 8.h),
+                      Text(
+                        mappedData['customerName'],
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontFamily: 'Archivo',
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 12.h),
                     Row(
                       children: [
@@ -456,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 16.sp, color: Colors.grey[600]),
                         SizedBox(width: 8.w),
                         Text(
-                          "${booking['vehicle_registration'] ?? ''}",
+                          "${mappedData['vehicleRegistrationNo'] ?? booking['vehicle_registration'] ?? ''}",
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontFamily: 'Archivo',
@@ -472,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 14.sp, color: Colors.grey[600]),
                         SizedBox(width: 8.w),
                         Text(
-                          "${booking['start_date'] ?? ''} - ${booking['end_date'] ?? ''}",
+                          "${mappedData['startDate'] ?? booking['start_date'] ?? ''} - ${mappedData['endDate'] ?? booking['end_date'] ?? ''}",
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontFamily: 'Archivo',
@@ -651,35 +669,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedTabIndex = 1;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _selectedTabIndex == 1
-                                  ? colors.primaryNew
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(25.r),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'Claim Booking',
-                              style: TextStyle(
+                      if (Globals.user != null)
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedTabIndex = 1;
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
                                 color: _selectedTabIndex == 1
-                                    ? Colors.white
-                                    : Color(0xFF6B6B6B),
-                                fontSize: 13.sp,
-                                fontFamily: 'Archivo',
-                                fontWeight: FontWeight.w600,
+                                    ? colors.primaryNew
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(25.r),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Claim Booking',
+                                style: TextStyle(
+                                  color: _selectedTabIndex == 1
+                                      ? Colors.white
+                                      : Color(0xFF6B6B6B),
+                                  fontSize: 13.sp,
+                                  fontFamily: 'Archivo',
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

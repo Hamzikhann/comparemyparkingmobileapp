@@ -1076,7 +1076,7 @@ class GeneralRepository {
     String paymentMethodType = 'card',
   }) async {
     final url = Uri.parse(
-      'https://test.thefutureinno.com/stripe/create-payment-intent',
+      'https://comparemyairportparking.com/api/stripe/create-payment-intent',
     );
 
     final token = Globals.user?.token ?? '';

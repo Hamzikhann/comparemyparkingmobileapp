@@ -64,7 +64,7 @@ class UserModel {
           if (!imgUrl.startsWith('/')) {
             imgUrl = "/$imgUrl";
           }
-          imgUrl = "https://test.thefutureinno.com$imgUrl";
+          imgUrl = "https://comparemyairportparking.com/api/$imgUrl";
         }
       }
 

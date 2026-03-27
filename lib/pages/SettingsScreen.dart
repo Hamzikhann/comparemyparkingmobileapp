@@ -6,6 +6,9 @@ import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:parkingapp/data/api/api.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -81,6 +84,7 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   _buildLogoutItem(context),
+                  if (Globals.user != null) _buildDeleteAccountItem(context),
                 ],
               ),
             ),
@@ -183,8 +187,77 @@ class SettingsScreen extends StatelessWidget {
 
         if (shouldLogout == true) {
           await SharedStorage.removeFromSharedPreferences();
-          Navigator.of(context).pushNamedAndRemoveUntil(
-              MyRoutes.selectionRoute, (route) => false);
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                MyRoutes.selectionRoute, (route) => false);
+          }
+        }
+      },
+    );
+  }
+
+  Widget _buildDeleteAccountItem(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.delete_forever, size: 24.sp, color: Colors.red),
+      title: Text(
+        "Delete Account",
+        style: TextStyle(fontSize: 16.sp, color: Colors.red),
+      ),
+      onTap: () async {
+        final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Delete Account"),
+            content: const Text(
+                "Are you sure you want to delete your account? This action cannot be undone."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Delete",
+                    style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldDelete == true) {
+          try {
+            EasyLoading.show(status: 'Deleting...');
+            final api = API();
+            final headers = {
+              'access-token': Globals.user?.token ?? '',
+              'Authorization': 'Bearer ${Globals.user?.token ?? ''}'
+            };
+            await api.sendRequest.post(
+              '/api/users/delete',
+              options: Options(headers: headers),
+            );
+            EasyLoading.dismiss();
+
+            // Logout sequence
+            Globals.clearVariables();
+
+            if (context.mounted) {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                MyRoutes.selectionRoute,
+                (route) => false,
+              );
+            }
+          } catch (e) {
+            EasyLoading.dismiss();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        "Failed to delete account. Please try again.")),
+              );
+            }
+          }
         }
       },
     );
