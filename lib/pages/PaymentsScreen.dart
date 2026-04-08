@@ -54,7 +54,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (clientSecret == null)
         throw Exception('Missing client secret in response');
 
-      Stripe.merchantIdentifier = 'merchant.com.stn00.parkingapp2';
+      Stripe.merchantIdentifier = 'merchant.com.comparemyparking'; // ✅ matches entitlements
 
       // Init Payment Sheet
       await Stripe.instance.initPaymentSheet(
@@ -62,7 +62,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'Parking Pilot',
           style: ThemeMode.system,
-          returnURL: 'com.stn00.parkingapp22://stripe-redirect',
+          returnURL: 'com.comparemyparking://stripe-redirect', // ✅ matches Info.plist URL scheme
           // Enable delayed methods for Klarna
           allowsDelayedPaymentMethods: true,
           // If we want to force/prefer the selected method, we rely on the Intent config.
@@ -327,14 +327,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
               textColor: Colors.white),
           SizedBox(height: 12.h),
           if (Platform.isIOS) ...[
-            _buildPaymentOption(
-                icon: Icons.phone_iphone,
-                label: "Apple Pay",
-                subLabel: "Pay securely with Apple Pay",
-                value: 'apple_pay',
-                color: Colors.black,
-                textColor: Colors.white,
-                isComingSoon: false),
+            Container(
+              height: 48.h,
+              width: double.infinity,
+              child: PlatformPayButton(
+                onPressed: () => startStripePayment(method: 'apple_pay'),
+                type: PlatformButtonType.pay,
+              ),
+            ),
             SizedBox(height: 12.h),
           ],
           _buildPaymentOption(
