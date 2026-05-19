@@ -47,21 +47,13 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera for capturing photos.</string>
-	<key>NSDocumentsFolderUsageDescription</key>
-	<string>We need access to documents for file uploads.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for recording videos.</string>
+	<string>Compare My Parking requires camera access so you can take a new profile picture or capture photos of your vehicle for your account.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need access to save files or photos you select.</string>
+	<string>Compare My Parking requires access to your photo library to save images or receipts generated within the app to your device.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to let you pick images.</string>
+	<string>Compare My Parking requires access to your photo library so you can select and upload existing photos for your profile picture or vehicle details.</string>
 	<key>NSPushNotificationsUsageDescription</key>
-	<string>This app uses notifications to keep you informed.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to show nearby parking spots.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to show nearby parking spots.</string>
+	<string>Compare My Parking uses notifications to keep you informed about your booking status, payment confirmations, and parking reminders.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

@@ -70,7 +70,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           applePay: Platform.isIOS
               ? const PaymentSheetApplePay(
                   merchantCountryCode: 'GB',
-                  buttonType: PlatformButtonType.pay,
+                  buttonType: PlatformButtonType.book,
                 )
               : null,
         ),
@@ -332,7 +332,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               width: double.infinity,
               child: PlatformPayButton(
                 onPressed: () => startStripePayment(method: 'apple_pay'),
-                type: PlatformButtonType.pay,
+                type: PlatformButtonType.book,
               ),
             ),
             SizedBox(height: 12.h),
