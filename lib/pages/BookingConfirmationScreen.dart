@@ -11,10 +11,8 @@ import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
@@ -33,31 +31,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   Future<void> _downloadPdf() async {
     try {
-      // Request storage permission
-      if (Platform.isAndroid) {
-        final deviceInfo = DeviceInfoPlugin();
-        final androidInfo = await deviceInfo.androidInfo;
-
-        if (androidInfo.version.sdkInt >= 33) {
-          // Android 13+ (API 33, 34, 35+)
-          // For saving to public Download folder, manageExternalStorage might be needed if using File API directly.
-          // Alternatively, we can request storage which might trigger media permissions.
-          if (!await Permission.manageExternalStorage.isGranted) {
-            await Permission.manageExternalStorage.request();
-          }
-        } else {
-          // Android 12 and below
-          final status = await Permission.storage.request();
-          if (!status.isGranted) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Storage permission denied")),
-              );
-            }
-            return;
-          }
-        }
-      }
 
       // Load logo image
       final ByteData logoData = await rootBundle.load('assets/images/logo.png');
@@ -191,9 +164,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       // Save PDF
       Directory? directory;
       if (Platform.isAndroid) {
-        directory = Directory('/storage/emulated/0/Download');
-        if (!await directory.exists()) {
-          directory = await getExternalStorageDirectory();
+        directory = await getExternalStorageDirectory();
+        if (directory == null) {
+          directory = await getApplicationDocumentsDirectory();
         }
       } else {
         directory = await getApplicationDocumentsDirectory();
@@ -201,7 +174,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final file =
-          File('${directory!.path}/booking_confirmation_$timestamp.pdf');
+          File('${directory.path}/booking_confirmation_$timestamp.pdf');
       await file.writeAsBytes(await pdf.save());
 
       // Show notification

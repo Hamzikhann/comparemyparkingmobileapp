@@ -1,9 +1,7 @@
 import 'dart:math';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:parkingapp/services/notification_service.dart';
 
 import 'package:flutter/material.dart';
@@ -1897,20 +1895,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Future<void> _exportToCsv(BuildContext context, List<Parking> data) async {
     try {
-      if (Platform.isAndroid) {
-        final androidInfo = await DeviceInfoPlugin().androidInfo;
-        if (androidInfo.version.sdkInt >= 33) {
-          if (!await Permission.manageExternalStorage.isGranted) {
-            await Permission.manageExternalStorage.request();
-          }
-        } else {
-          if (!await Permission.storage.request().isGranted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Storage permission denied")));
-            return;
-          }
-        }
-      }
 
       String csvContent =
           "Booking ID,Airport,Start Date,End Date,Customer Name,Email,Phone,Vehicle Reg,Vehicle Color,Passengers,Outbound Terminal,Outbound Flight,Inbound Terminal,Inbound Flight,Status\n";
@@ -1941,15 +1925,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
       Directory? directory;
       if (Platform.isAndroid) {
-        directory = Directory('/storage/emulated/0/Download');
-        if (!await directory.exists())
-          directory = await getExternalStorageDirectory();
+        directory = await getExternalStorageDirectory();
+        if (directory == null) {
+          directory = await getApplicationDocumentsDirectory();
+        }
       } else {
         directory = await getApplicationDocumentsDirectory();
       }
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${directory!.path}/booking_export_$timestamp.csv');
+      final file = File('${directory.path}/booking_export_$timestamp.csv');
       await file.writeAsString(csvContent);
 
       if (mounted) {
