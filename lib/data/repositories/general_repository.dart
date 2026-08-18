@@ -1416,12 +1416,16 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<Map<String, dynamic>> searchByRegistration(String registration) async {
+  Future<Map<String, dynamic>> searchByRegistration(
+      String registration, String airport) async {
     Completer<Map<String, dynamic>> completer = Completer();
     server.makeApiRequest(
       apiEndpoint: ApiFiles.searchByRegistration,
       requestMethod: RequestMethod.post,
-      requestData: {"registration": registration},
+      requestData: {
+        "registration": registration,
+        "airport": airport,
+      },
       onLoad: () {
         EasyLoading.show(status: "Searching...");
       },
@@ -1443,14 +1447,19 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<void> claimBooking(String importId, int recordIndex) async {
+  Future<void> claimBooking({
+    required String registration,
+    required String airport,
+    required String bookingReference,
+  }) async {
     Completer<void> completer = Completer();
     server.makeApiRequest(
       apiEndpoint: ApiFiles.claimBooking,
       requestMethod: RequestMethod.post,
       requestData: {
-        "importId": importId,
-        "recordIndex": recordIndex,
+        "registration": registration,
+        "airport": airport,
+        "booking_reference": bookingReference,
       },
       onLoad: () {
         EasyLoading.show(status: "Claiming...");

@@ -24,11 +24,38 @@ class _BookingClaimDetailScreenState extends State<BookingClaimDetailScreen> {
   }
 
   void _handleClaim() async {
-    final importId = widget.bookingData['importId'];
-    final recordIndex = widget.bookingData['recordIndex'];
+    final mappedData = widget.bookingData['mappedData'] ?? {};
+    final registration = (widget.bookingData['registration'] ??
+            mappedData['vehicleRegistrationNo'] ??
+            widget.bookingData['vehicleRegistrationNo'] ??
+            '')
+        .toString();
+    final airport = (widget.bookingData['airport'] ??
+            mappedData['airport'] ??
+            '')
+        .toString();
+    final bookingReference = (widget.bookingData['booking_reference'] ??
+            widget.bookingData['bookingReference'] ??
+            mappedData['referenceNo'] ??
+            widget.bookingData['referenceNo'] ??
+            '')
+        .toString();
+
+    if (registration.isEmpty || airport.isEmpty || bookingReference.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Missing required claim information (registration, airport, or reference)')),
+      );
+      return;
+    }
 
     try {
-      await _repository.claimBooking(importId, recordIndex);
+      await _repository.claimBooking(
+        registration: registration,
+        airport: airport,
+        bookingReference: bookingReference,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking claimed successfully!')),

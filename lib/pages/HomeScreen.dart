@@ -323,6 +323,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleRegistrationSearch() async {
+    if (selectedAirport == null || selectedAirport!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an airport')),
+      );
+      return;
+    }
+
     final registration = _registrationController.text.trim();
     if (registration.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -338,7 +345,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final response = await _repository.searchByRegistration(registration);
+      final response =
+          await _repository.searchByRegistration(registration, selectedAirport!);
       if (response['success'] == true && response['data']['bookings'] != null) {
         setState(() {
           _searchedBookings = response['data']['bookings'];
@@ -393,10 +401,14 @@ class _HomeScreenState extends State<HomeScreen> {
             final mappedData = booking['mappedData'] ?? {};
             return GestureDetector(
               onTap: () async {
+                final claimData = Map<String, dynamic>.from(booking);
+                claimData['registration'] =
+                    claimData['registration'] ?? _registrationController.text.trim();
+                claimData['airport'] = claimData['airport'] ?? selectedAirport;
                 final result = await Navigator.pushNamed(
                   context,
                   MyRoutes.claimDetail,
-                  arguments: booking,
+                  arguments: claimData,
                 );
                 if (result == true) {
                   _loadBookings();
@@ -930,6 +942,63 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 16.h),
 
               if (_selectedTabIndex == 1) ...[
+                // Select Airport Box for Claim
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF0F3F5),
+                    borderRadius: BorderRadius.circular(50.r),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: InkWell(
+                    onTap: _showAirportDialog,
+                    borderRadius: BorderRadius.circular(50.r),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20.w, vertical: 14.h),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.local_airport_outlined,
+                            color: colors.primaryNew,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Text(
+                              selectedAirport ?? 'Select Airport',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontFamily: 'Archivo',
+                                color: selectedAirport != null
+                                    ? Color(0xFF1A1A2E)
+                                    : Color(0xFF6B6B6B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF6B6B6B),
+                            size: 20.sp,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
                 // Search With Registration Number
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 10.w),

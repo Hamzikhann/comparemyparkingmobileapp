@@ -313,6 +313,49 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                         SizedBox(height: 24.h),
                       ],
 
+                      if (GlobalsBookingDetail.bookingdetailuser?.busTrackingUrl != null &&
+                          GlobalsBookingDetail.bookingdetailuser!.busTrackingUrl!.trim().isNotEmpty) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.tryParse(GlobalsBookingDetail
+                                  .bookingdetailuser!.busTrackingUrl!
+                                  .trim());
+                              if (uri != null && await canLaunchUrl(uri)) {
+                                await launchUrl(uri,
+                                    mode: LaunchMode.externalApplication);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Could not launch bus tracking link')),
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.directions_bus,
+                                size: 20.sp, color: Colors.white),
+                            label: Text(
+                              'Bus Tracking',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontFamily: 'Archivo',
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4B725D),
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                      ],
+
                       /// ✅ WhatsApp Button for Reserved bookings
                       if (Globals.detailType == "reserved") ...[
                         GestureDetector(

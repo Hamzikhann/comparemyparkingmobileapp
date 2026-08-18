@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:parkingapp/services/notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -1008,6 +1009,46 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 ),
               ],
             ),
+            if (booking.busTrackingUrl != null &&
+                booking.busTrackingUrl!.trim().isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.tryParse(booking.busTrackingUrl!.trim());
+                    if (uri != null && await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Could not launch bus tracking link')),
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.directions_bus,
+                      size: 18.sp, color: Colors.white),
+                  label: Text(
+                    'Bus Tracking',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontFamily: 'Archivo',
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryNew,
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

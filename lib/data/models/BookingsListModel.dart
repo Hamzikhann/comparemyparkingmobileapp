@@ -51,6 +51,7 @@ class Parking {
   final String? contactNumber;
   final String? arrivalProcedure;
   final String? departureProcedure;
+  final String? busTrackingUrl;
 
   Parking({
     required this.id,
@@ -76,6 +77,7 @@ class Parking {
     this.contactNumber,
     this.arrivalProcedure,
     this.departureProcedure,
+    this.busTrackingUrl,
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
@@ -103,6 +105,12 @@ class Parking {
           : (json['contact'] ?? json['contactNumber']),
       arrivalProcedure: json['arrivalProcedure'],
       departureProcedure: json['departureProcedure'],
+      busTrackingUrl: json['busTrackingUrl'] ??
+          json['bus_tracking_url'] ??
+          json['bus_tracking'] ??
+          json['trackingLink'] ??
+          json['tracking_link'] ??
+          json['busTracking'],
       registrations: (json['registrations'] as List?)
               ?.map((e) => Registration.fromJson(e))
               .toList() ??
