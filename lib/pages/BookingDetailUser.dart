@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
-import 'package:parkingapp/data/airport_service_config.dart';
 import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -297,11 +297,11 @@ class BookingdetailuserState extends State<Bookingdetailuser> {
                           children: checkPoints
                               .map((url) => GestureDetector(
                                     onTap: () => _showImageDialog(
-                                        "https://stanstedairportparking247.com/${url.imageUrl}"),
+                                        "${AppConfig.filesUrl}/${url.imageUrl}"),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
-                                        "https://stanstedairportparking247.com/${url.imageUrl}",
+                                        "${AppConfig.filesUrl}/${url.imageUrl}",
                                         width: 100,
                                         height: 100,
                                         fit: BoxFit.cover,

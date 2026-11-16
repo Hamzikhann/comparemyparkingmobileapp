@@ -1,60 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/booking_flow.dart';
+import 'package:parkingapp/data/models/PackageDetailModel.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/data/site_config_store.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
-import 'dart:math';
 
-class PackageDetailScreen extends StatelessWidget {
+/// One package, as the website's package-details page: the list data straight away,
+/// then the full content from GET /api/search/v5/package/:packageId.
+class PackageDetailScreen extends StatefulWidget {
   const PackageDetailScreen({super.key});
 
   @override
+  State<PackageDetailScreen> createState() => _PackageDetailScreenState();
+}
+
+class _PackageDetailScreenState extends State<PackageDetailScreen> {
+  PackageDetail? _detail;
+  bool _loadingDetail = false;
+  String? _detailError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetail();
+    SiteConfigStore.load().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _loadDetail() async {
+    final id = Globals.option?.packageId ?? '';
+    if (id.isEmpty) return;
+    setState(() {
+      _loadingDetail = true;
+      _detailError = null;
+    });
+    try {
+      final detail = await GeneralRepository().getPackageDetails(id);
+      if (!mounted) return;
+      setState(() => _detail = detail);
+    } catch (e) {
+      if (!mounted) return;
+      // e.g. "This package has expired. Please search again."
+      setState(() => _detailError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingDetail = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Retrieve the ParkingOption from Globals
     final ParkingOption? option = Globals.option;
 
     if (option == null) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(child: Text("No package details available")),
       );
     }
 
-    // Calculate random pricing logic
-    double currentPrice = 0.0;
-    try {
-      if (option.price.contains('£')) {
-        currentPrice =
-            double.parse(option.price.replaceAll(RegExp(r'[^0-9.]'), ''));
-      } else {
-        currentPrice = double.tryParse(option.price) ?? 0.0;
-      }
-    } catch (e) {
-      currentPrice = 0.0;
-    }
-
-    final random =
-        Random(option.name.hashCode); // Stable random based on option name
-
-    // Helper to generate competitor data
-    Map<String, String> getCompetitorData(int minOffset, int maxOffset) {
-      if (currentPrice <= 0) return {"price": "£--", "saving": "N/A"};
-
-      double offset = minOffset + random.nextDouble() * (maxOffset - minOffset);
-      double compPrice = currentPrice + offset;
-
-      return {
-        "price": "£${compPrice.toStringAsFixed(2)}",
-        "saving": "Save £${offset.toStringAsFixed(2)}"
-      };
-    }
-
-    // Generate 3 distinct data points
-    final c1 = getCompetitorData(7, 12);
-    final c2 = getCompetitorData(13, 16);
-    final c3 = getCompetitorData(17, 20);
+    final detail = _detail;
+    final features = (detail?.features.isNotEmpty ?? false)
+        ? detail!.features
+        : option.bulletPoints;
+    final marketing = SiteConfigStore.current;
+    final price = option.priceValue;
+    final comparisons = (!option.isFullyBooked &&
+            marketing.priceComparison &&
+            price > 0)
+        ? comparisonPrices(price)
+        : <ComparisonPrice>[];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -63,32 +83,33 @@ class PackageDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Top Bar / Header
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: TopBar(
                   greeting: "PARKING DETAIL",
                   onBackPressed: () => Navigator.pop(context),
-                  // Adjust TopBar if it doesn't support custom title or back button correctly
-                  // Assuming TopBar has these params based on usage in PackagesScreen
                 ),
               ),
 
-              // 2. Main Image
+              // Image (our tier image, else the provider logo)
               Container(
                 width: double.infinity,
                 height: 200.h,
                 margin: EdgeInsets.symmetric(horizontal: 16.w),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12.r),
-                  image: DecorationImage(
-                    image:
-                        (option.imagenew != null && option.imagenew!.isNotEmpty)
-                            ? NetworkImage(option.imagenew!)
-                            : NetworkImage(option.image!),
-                    fit: BoxFit.cover,
-                  ),
                 ),
+                child: option.imageUrl.isNotEmpty
+                    ? Image.network(
+                        option.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(Icons.local_parking,
+                            size: 48.sp, color: Colors.grey),
+                      )
+                    : Icon(Icons.local_parking,
+                        size: 48.sp, color: Colors.grey),
               ),
 
               SizedBox(height: 16.h),
@@ -98,7 +119,6 @@ class PackageDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 3. Title
                     Text(
                       option.name,
                       style: TextStyle(
@@ -108,174 +128,42 @@ class PackageDetailScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 12.h),
 
-                    // 4. Tags
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: option.bulletPoints.take(3).map((tag) {
-                        return Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                                0xFFE8F3E8), // Light green background
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              color: const Color(0xFF2E7D32), // Dark green text
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 5. Description
-                    Text(
-                      option.description,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: colors.secondarynew,
-                        fontFamily: 'Archivo',
-                        height: 1.5,
+                    if (features.isNotEmpty) ...[
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children:
+                            features.take(3).map((tag) => _tag(tag)).toList(),
                       ),
-                    ),
-                    SizedBox(height: 24.h),
+                      SizedBox(height: 16.h),
+                    ],
 
-                    // 6. Price and Compare Section
+                    if (option.summary.isNotEmpty) ...[
+                      Text(
+                        option.summary,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: colors.secondarynew,
+                          fontFamily: 'Archivo',
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 24.h),
+                    ],
+
+                    // Price and comparison
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Left: Best Price Box
-                        Expanded(
-                          child: Container(
-                            padding: EdgeInsets.all(16.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F3E8),
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  "Best Price",
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontFamily: 'Archivo',
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  option.price.contains('Sorry') ||
-                                          option.price.trim().startsWith('£')
-                                      ? option.price
-                                      : "£${option.price}",
-                                  style: TextStyle(
-                                    fontSize: 28.sp,
-                                    fontFamily: 'Archivo',
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1B3D38),
-                                  ),
-                                ),
-                                SizedBox(height: 4.h),
-                                Text(
-                                  "All inclusive • No hidden fees",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontFamily: 'Archivo',
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  c1['saving']!, // Use calculated saving
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontFamily: 'Archivo',
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.star,
-                                        color: Colors.amber, size: 20.sp),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      "${option.rating}",
-                                      style: TextStyle(
-                                        fontSize: 18.sp,
-                                        fontFamily: 'Archivo',
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-
-                        // Right: Competitors (Placeholder for now)
-                        Expanded(
-                          child: Container(
-                            padding: EdgeInsets.all(16.w),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "You Save vs Competitors",
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontFamily: 'Archivo',
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                _buildCompetitorRow(
-                                    "assets/images/compare.jpeg",
-                                    c1['price']!,
-                                    c1['saving']!),
-                                _buildCompetitorRow("assets/images/payel.jpeg",
-                                    c2['price']!, c2['saving']!),
-                                _buildCompetitorRow("assets/images/owl.jpeg",
-                                    c3['price']!, c3['saving']!),
-                              ],
-                            ),
-                          ),
-                        ),
+                        Expanded(child: _priceBox(option, marketing)),
+                        if (comparisons.isNotEmpty) ...[
+                          SizedBox(width: 16.w),
+                          Expanded(child: _comparisonBox(comparisons)),
+                        ],
                       ],
                     ),
                     SizedBox(height: 24.h),
 
-                    // 7. Bottom Features Strip
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildFeatureItem("24/7 CCTV Security"),
-                        Container(width: 1, height: 20, color: Colors.grey),
-                        _buildFeatureItem("24/7 Service"),
-                        Container(width: 1, height: 20, color: Colors.grey),
-                        _buildFeatureItem("Airport Location"),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-
-                    // 8. Action Buttons
                     Row(
                       children: [
                         Expanded(
@@ -289,15 +177,30 @@ class PackageDetailScreen extends StatelessWidget {
                                     Navigator.pushNamed(
                                         context, MyRoutes.reserveBooking);
                                   },
-                            // Add color customization if CustomButton supports it
-                            // style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF1B3D38)),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 40.h),
+                    SizedBox(height: 32.h),
 
-                    // 9. Other Great Options
+                    // Full content from the package-details API
+                    if (_loadingDetail)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        child: const Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_detailError != null)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 24.h),
+                        child: Text(
+                          _detailError!,
+                          style:
+                              TextStyle(fontSize: 13.sp, color: Colors.red[700]),
+                        ),
+                      )
+                    else
+                      ..._detailSections(option, detail, features),
+
                     _buildOtherGreatOptions(context, option),
 
                     SizedBox(height: 40.h),
@@ -311,8 +214,184 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFollowUpSection(String title, String content) {
-    if (content.isEmpty) return const SizedBox.shrink();
+  List<Widget> _detailSections(
+      ParkingOption option, PackageDetail? detail, List<String> features) {
+    final s = detail?.sections;
+    final follow = option.followUpPage;
+    // API sections first; the search's followUpPage while/if the detail is missing
+    final overview = (s?.overview.isNotEmpty ?? false)
+        ? s!.overview
+        : (follow?.overview ?? '');
+    final serviceDetails = (s?.serviceDetails.isNotEmpty ?? false)
+        ? s!.serviceDetails
+        : (follow?.serviceDetails ?? '');
+    final experience = (s?.customerExperience.isNotEmpty ?? false)
+        ? s!.customerExperience
+        : (follow?.customerExperience ?? '');
+    final location = (s?.location.isNotEmpty ?? false)
+        ? s!.location
+        : (follow?.location ?? '');
+    final info = detail?.airportInfo;
+
+    return [
+      _section("Overview", overview),
+      if (features.isNotEmpty) _featureList(features),
+      _section("Service Details", serviceDetails),
+      _section("Customer Experience", experience),
+      _section("Location", location),
+      _section("On Arrival", s?.onArrival ?? ''),
+      _section("On Return", s?.onReturn ?? ''),
+      if (info != null) _airportInfo(info),
+      if (detail != null && detail.reviews.isNotEmpty)
+        _reviews(detail.reviews),
+    ];
+  }
+
+  Widget _tag(String text) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F3E8),
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: const Color(0xFF2E7D32),
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+
+  Widget _priceBox(ParkingOption option, SiteConfig marketing) {
+    final showWas = !option.isFullyBooked &&
+        option.originalPrice > option.priceValue &&
+        option.priceValue > 0;
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F3E8),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        children: [
+          Text(
+            option.isFullyBooked ? "Availability" : "Our Price",
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontFamily: 'Archivo',
+              fontSize: 14.sp,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          if (showWas)
+            Text(
+              formatPrice(option.originalPrice),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.grey,
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
+          Text(
+            option.displayPrice,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: option.isFullyBooked ? 20.sp : 28.sp,
+              fontFamily: 'Archivo',
+              fontWeight: FontWeight.bold,
+              color: option.isFullyBooked
+                  ? Colors.red[700]
+                  : const Color(0xFF1B3D38),
+            ),
+          ),
+          if (!option.isFullyBooked) ...[
+            SizedBox(height: 4.h),
+            Text(
+              "All inclusive • No hidden fees",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontFamily: 'Archivo',
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+          if (!option.isFullyBooked &&
+              option.priceDiscount > 0 &&
+              marketing.savingsText.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3200),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Text(
+                marketing.savingsText,
+                style: TextStyle(fontSize: 11.sp, color: Colors.white),
+              ),
+            ),
+          ],
+          if (option.rating > 0) ...[
+            SizedBox(height: 8.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 20.sp),
+                SizedBox(width: 4.w),
+                Text(
+                  "${option.rating}",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontFamily: 'Archivo',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            if (option.reviews > 0)
+              Text(
+                "${option.reviews} reviews",
+                style: TextStyle(fontSize: 11.sp, color: Colors.grey[600]),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _comparisonBox(List<ComparisonPrice> comparisons) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Price Comparison",
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontFamily: 'Archivo',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          for (final c in comparisons)
+            _buildCompetitorRow(c.logoAsset, formatPrice(c.price),
+                "Save ${formatPrice(c.savings)}"),
+        ],
+      ),
+    );
+  }
+
+  Widget _section(String title, String content) {
+    if (content.trim().isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Column(
@@ -324,12 +403,12 @@ class PackageDetailScreen extends StatelessWidget {
               fontSize: 16.sp,
               fontWeight: FontWeight.bold,
               fontFamily: 'Archivo',
-              color: const Color(0xFF1A1A2E), // Dark theme color
+              color: const Color(0xFF1A1A2E),
             ),
           ),
           SizedBox(height: 8.h),
           Text(
-            content,
+            content.trim(),
             style: TextStyle(
               fontSize: 14.sp,
               color: const Color(0xFF6B6B6B),
@@ -342,21 +421,171 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _featureList(List<String> features) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "What's Included",
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Archivo',
+              color: const Color(0xFF1A1A2E),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          for (final f in features.take(8))
+            Padding(
+              padding: EdgeInsets.only(bottom: 6.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      size: 16.sp, color: Colors.green),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(f,
+                        style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.grey[800],
+                            fontFamily: 'Archivo')),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _airportInfo(AirportInfo info) {
+    final rows = <(IconData, String)>[
+      if (info.fullAddress.isNotEmpty) (Icons.location_on_outlined, info.fullAddress),
+      if (info.contactNumber.isNotEmpty) (Icons.phone_outlined, info.contactNumber),
+      if (info.contactEmail.isNotEmpty) (Icons.email_outlined, info.contactEmail),
+    ];
+    if (rows.isEmpty && info.extraInstructions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 24.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Airport Information",
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Archivo',
+            ),
+          ),
+          SizedBox(height: 10.h),
+          for (final r in rows)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(r.$1, size: 18.sp, color: const Color(0xFF1B3D38)),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: SelectableText(r.$2,
+                        style: TextStyle(fontSize: 13.sp)),
+                  ),
+                ],
+              ),
+            ),
+          if (info.extraInstructions.isNotEmpty)
+            Text(info.extraInstructions,
+                style: TextStyle(
+                    fontSize: 13.sp, color: Colors.grey[700], height: 1.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _reviews(List<PackageReview> reviews) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Reviews (${reviews.length})",
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Archivo',
+            ),
+          ),
+          SizedBox(height: 8.h),
+          for (final r in reviews.take(20))
+            Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: 10.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      for (var i = 0; i < r.rating.round().clamp(0, 5); i++)
+                        Icon(Icons.star, size: 14.sp, color: Colors.amber),
+                      if (r.rating > 0) SizedBox(width: 6.w),
+                      Flexible(
+                        child: Text(
+                          r.author.isNotEmpty ? r.author : "Anonymous",
+                          style: TextStyle(
+                              fontSize: 12.sp, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (r.date.isNotEmpty)
+                        Text("  • ${r.date}",
+                            style: TextStyle(
+                                fontSize: 11.sp, color: Colors.grey[600])),
+                    ],
+                  ),
+                  if (r.text.isNotEmpty) ...[
+                    SizedBox(height: 6.h),
+                    Text(r.text,
+                        style: TextStyle(
+                            fontSize: 13.sp, color: Colors.grey[800])),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCompetitorRow(String imagePath, String price, String saving) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Image.asset(
-                imagePath,
-                width: 40.w,
-                height: 20.h,
-                fit: BoxFit.contain,
-              ),
-            ],
+          Image.asset(
+            imagePath,
+            width: 40.w,
+            height: 20.h,
+            fit: BoxFit.contain,
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -380,50 +609,25 @@ class PackageDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureItem(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 12.sp,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Archivo',
-        color: const Color(0xFF1B3D38),
-      ),
-    );
-  }
-
-  double _parsePrice(String price) {
-    if (price.toLowerCase().contains("sorry") ||
-        price.toLowerCase().contains("booked")) return 999999.0;
-    String clean = price.replaceAll(RegExp(r'[^0-9.]'), '');
-    if (clean.isEmpty) return 999999.0;
-    return double.tryParse(clean) ?? 999999.0;
-  }
-
   Widget _buildOtherGreatOptions(
       BuildContext context, ParkingOption currentOption) {
-    final currentPrice = _parsePrice(currentOption.price);
+    final currentPrice = currentOption.isFullyBooked
+        ? double.infinity
+        : currentOption.priceValue;
 
-    // 1. Get all candidates: Exclude self and unavailable items
-    List<ParkingOption> candidates = Globals.searchResults.where((opt) {
-      if (opt.name == currentOption.name) return false;
-      if (opt.isFullyBooked) return false;
-      if (opt.price.toLowerCase().contains("booked") ||
-          opt.price.toLowerCase().contains("sorry")) return false;
-      return true;
-    }).toList();
+    // Cheaper bookable packages from the same search, cheapest first
+    final List<ParkingOption> displayOptions = Globals.searchResults
+        .where((opt) =>
+            !opt.isFullyBooked &&
+            opt.priceValue > 0 &&
+            opt.priceValue < currentPrice &&
+            (opt.packageId ?? opt.name) !=
+                (currentOption.packageId ?? currentOption.name))
+        .toList()
+      ..sort((a, b) => a.priceValue.compareTo(b.priceValue));
 
-    // 2. Filter strictly cheaper than current option
-    List<ParkingOption> cheaperOptions = candidates.where((opt) {
-      return _parsePrice(opt.price) < currentPrice;
-    }).toList();
-
-    // 3. Sort by price (cheapest first)
-    cheaperOptions
-        .sort((a, b) => _parsePrice(a.price).compareTo(_parsePrice(b.price)));
-
-    // 4. Take top 4 of available cheaper options
-    List<ParkingOption> displayOptions = cheaperOptions.take(4).toList();
+    if (displayOptions.isEmpty) return const SizedBox.shrink();
+    final shown = displayOptions.take(4).toList();
 
     return Column(
       children: [
@@ -451,153 +655,38 @@ class PackageDetailScreen extends StatelessWidget {
           ),
         ),
         SizedBox(height: 24.h),
-
-        // Static Promo Cards
-        Row(
-          children: [
-            Expanded(
-                child: _buildStaticPromoCard(
-              icon: Icons.person,
-              title: "Meet & Greet",
-              subtitle: "Maximum Convenience",
-              color: const Color(0xFF9C27B0), // Purple
-              bgColor: const Color(0xFFF3E5F5),
-            )),
-            SizedBox(width: 16.w),
-            Expanded(
-                child: _buildStaticPromoCard(
-              icon: Icons.directions_car,
-              title: "Park & Ride",
-              subtitle: "Best Value",
-              color: const Color(0xFF1976D2), // Blue
-              bgColor: const Color(0xFFE3F2FD),
-            )),
-          ],
+        ListView.separated(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: (shown.length / 2).ceil(),
+          separatorBuilder: (context, index) => SizedBox(height: 16.h),
+          itemBuilder: (context, index) {
+            final first = index * 2;
+            final second = first + 1;
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildOptionCard(context, shown[first])),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: second < shown.length
+                      ? _buildOptionCard(context, shown[second])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            );
+          },
         ),
-        SizedBox(height: 24.h),
-
-        // Dynamic Options Grid
-        if (displayOptions.isNotEmpty)
-          ListView.separated(
-            physics: NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: (displayOptions.length / 2).ceil(),
-            separatorBuilder: (context, index) => SizedBox(height: 16.h),
-            itemBuilder: (context, index) {
-              int firstIndex = index * 2;
-              int secondIndex = firstIndex + 1;
-              return Row(
-                children: [
-                  Expanded(
-                      child: _buildOptionCard(
-                          context, displayOptions[firstIndex])),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: secondIndex < displayOptions.length
-                        ? _buildOptionCard(context, displayOptions[secondIndex])
-                        : Container(),
-                  ),
-                ],
-              );
-            },
-          ),
       ],
     );
   }
 
-  Widget _buildStaticPromoCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required Color bgColor,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: Colors.white, size: 16.sp),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                        fontFamily: 'Archivo',
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: color.withOpacity(0.8),
-                        fontFamily: 'Archivo',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          _buildCheckItem("Drive directly to terminal", color),
-          _buildCheckItem("No shuttle buses needed", color),
-          _buildCheckItem("Professional chauffeurs", color),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckItem(String text, Color color) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.check, size: 12.sp, color: color),
-          SizedBox(width: 4.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: color.withOpacity(0.9),
-                fontFamily: 'Archivo',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildOptionCard(BuildContext context, ParkingOption option) {
-    bool isMeetGreet = option.name.toLowerCase().contains("meet") ||
+    final isMeetGreet = option.name.toLowerCase().contains("meet") ||
         option.type?.toLowerCase().contains("meet") == true;
-    Color themeColor = isMeetGreet
-        ? const Color(0xFF7B1FA2)
-        : const Color(0xFF1565C0); // Purple : Blue
-    Color headerColor = themeColor;
+    final themeColor =
+        isMeetGreet ? const Color(0xFF7B1FA2) : const Color(0xFF1565C0);
+    final marketing = SiteConfigStore.current;
 
     return Container(
       decoration: BoxDecoration(
@@ -608,16 +697,15 @@ class PackageDetailScreen extends StatelessWidget {
             BoxShadow(
                 color: Colors.grey.withOpacity(0.1),
                 blurRadius: 4,
-                offset: Offset(0, 2))
+                offset: const Offset(0, 2))
           ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
           Container(
             padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
             decoration: BoxDecoration(
-              color: headerColor,
+              color: themeColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
             ),
             child: Row(
@@ -640,82 +728,79 @@ class PackageDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-
           Padding(
             padding: EdgeInsets.all(12.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      option.price,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                        fontFamily: 'Archivo',
-                      ),
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(4.r),
-                      ),
-                      child: Text(
-                        "Save £5.00",
-                        style: TextStyle(
-                            fontSize: 8.sp,
-                            color: Colors.green,
-                            fontFamily: 'Archivo'),
-                      ),
-                    )
-                  ],
+                Text(
+                  option.displayPrice,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontFamily: 'Archivo',
+                  ),
                 ),
-                SizedBox(height: 8.h),
-                Text("Main Features:",
-                    style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Archivo')),
-                SizedBox(height: 4.h),
-                ...option.bulletPoints.take(3).map((bp) => Padding(
-                      padding: EdgeInsets.only(bottom: 2.h),
-                      child: Row(
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              size: 10.sp, color: Colors.green),
-                          SizedBox(width: 4.w),
-                          Expanded(
-                            child: Text(
-                              bp,
-                              style: TextStyle(
-                                  fontSize: 9.sp,
-                                  color: Colors.grey[700],
-                                  fontFamily: 'Archivo'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                if (option.priceDiscount > 0 &&
+                    marketing.savingsText.isNotEmpty)
+                  Container(
+                    margin: EdgeInsets.only(top: 4.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      marketing.savingsText,
+                      style: TextStyle(
+                          fontSize: 8.sp,
+                          color: Colors.green,
+                          fontFamily: 'Archivo'),
+                    ),
+                  ),
+                if (option.bulletPoints.isNotEmpty) ...[
+                  SizedBox(height: 8.h),
+                  Text("Main Features:",
+                      style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Archivo')),
+                  SizedBox(height: 4.h),
+                  ...option.bulletPoints.take(3).map((bp) => Padding(
+                        padding: EdgeInsets.only(bottom: 2.h),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                size: 10.sp, color: Colors.green),
+                            SizedBox(width: 4.w),
+                            Expanded(
+                              child: Text(
+                                bp,
+                                style: TextStyle(
+                                    fontSize: 9.sp,
+                                    color: Colors.grey[700],
+                                    fontFamily: 'Archivo'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )),
+                          ],
+                        ),
+                      )),
+                ],
                 SizedBox(height: 12.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Select this option and reload page or navigate back with it
                       Globals.option = option;
                       Navigator.pushReplacementNamed(
                           context, MyRoutes.packageDetail);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF1B3D38), // Dark Green button
+                      backgroundColor: const Color(0xFF1B3D38),
                       padding: EdgeInsets.symmetric(vertical: 8.h),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6.r)),

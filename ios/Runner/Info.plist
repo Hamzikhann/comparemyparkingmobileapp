@@ -46,8 +46,12 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Compare My Parking uses the microphone to record voice notes in staff chat.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Compare My Parking requires camera access so you can take a new profile picture or capture photos of your vehicle for your account.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Compare My Parking uses your location only when you choose to share your Meet and Greet pickup point, so your driver can find you.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Compare My Parking requires access to your photo library to save images or receipts generated within the app to your device.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -1,12 +1,11 @@
+import 'package:parkingapp/services/auth_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
-import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/CustomAlert.dart';
 import 'package:parkingapp/widgets/CustomDropdown.dart';
 import 'package:parkingapp/widgets/CustomTextField.dart';
@@ -275,12 +274,6 @@ class _AddEditDriverScreenState extends State<AddEditDriverScreen> {
   );
 }
 
-  void _handleLogout() {
-    Globals.user = null;
-    SharedStorage.removeFromSharedPreferences();
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      MyRoutes.loginRoute, 
-      (route) => false,
-    );
-  }
+  // Same logout as everyone else: stops this phone's pushes, clears chats
+  void _handleLogout() => logoutAndGoToLogin(context);
 }

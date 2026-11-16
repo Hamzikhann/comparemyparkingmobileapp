@@ -10,7 +10,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/data/api/api_files.dart';
+import 'package:parkingapp/services/push_token.dart';
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
@@ -22,6 +24,9 @@ import 'package:parkingapp/data/models/OtpModel.dart';
 import 'package:parkingapp/data/models/OtpModelSignup.dart';
 import 'package:parkingapp/data/models/PaymentResponse.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
+import 'package:parkingapp/data/models/PackageDetailModel.dart';
+import 'package:parkingapp/data/airport_services.dart';
+import 'package:parkingapp/data/booking_flow.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
 import 'package:parkingapp/data/models/UserUpdateModel.dart';
 import 'package:parkingapp/data/models/VehicleLookupModel.dart';
@@ -31,6 +36,14 @@ import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/data/models/DashboardDataModel.dart';
 import 'package:parkingapp/data/models/AdminDashboardModel.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
+
+/// A payment that could not be started; [message] is safe to show to the customer.
+class PaymentIntentException implements Exception {
+  final String message;
+  PaymentIntentException(this.message);
+  @override
+  String toString() => message;
+}
 
 class GeneralRepository {
   Timer? _searchTimer;
@@ -281,6 +294,50 @@ class GeneralRepository {
       },
     );
 
+    return completer.future;
+  }
+
+  /// Checkout sign-up without a password (POST /api/auth/v1/signup), as on the website:
+  /// creates a customer account, or logs in an existing customer with that email.
+  /// That route accepts only these fields (no password, no fcmToken).
+  Future<UserModel> signupGuest({
+    required String title,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String phoneNo,
+  }) async {
+    Completer<UserModel> completer = Completer();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.guestSignup,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "title": title,
+        "firstName": firstName,
+        "lastName": lastName,
+        "email": email,
+        "phoneNo": phoneNo,
+      },
+      onLoad: () {
+        EasyLoading.show(status: "Saving your details...");
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        EasyLoading.dismiss();
+        try {
+          final data = res['data'];
+          final userData =
+              data is Map && data['user'] != null ? data['user'] : data;
+          completer.complete(
+              UserModel.fromJson({'user': userData, 'token': res['token']}));
+        } catch (e) {
+          completer.completeError('Could not read your account: $e');
+        }
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
     return completer.future;
   }
 
@@ -583,11 +640,12 @@ class GeneralRepository {
         throw Exception('All parameters are required');
       }
       final apiEndpoint = ApiFiles.searchParking;
-      print(apiEndpoint);
+      // Same-day searches ask the API for the next day, as the website does
+      final apiDates = searchApiDates(startDate, endDate);
 
       Map<String, dynamic> requestData = {
-        "startDate": startDate,
-        "endDate": endDate,
+        "startDate": apiDates.startDate,
+        "endDate": apiDates.endDate,
         "airport": airport,
         "startTime": startTime,
         "endTime": endTime,
@@ -623,48 +681,15 @@ class GeneralRepository {
             _searchProgressNotifier.value = current;
           });
         },
+        // v5 always answers with the results (no background job any more)
         onSuccess: (Map<String, dynamic> response) {
-          print("Search Response: $response");
-          final status = response['status']?.toString().toLowerCase();
-          final jobId = response['jobId']?.toString() ?? '';
-          final message = response['message']?.toString().toLowerCase() ?? '';
-
-          // If background processing
-          if (jobId.isNotEmpty &&
-              (status == 'processing' ||
-                  status == 'queued' ||
-                  status == 'pending' ||
-                  status == 'started' ||
-                  message.contains('background') ||
-                  message.contains('process'))) {
-            print("Background search detected. JobId: $jobId");
-            _pollSearchStatus(jobId, completer);
-            return;
-          }
-
           try {
-            // Immediate success - Check if data exists
-            if (response['data'] == null) {
-              // Some APIs might return the result list directly or under a different key if it's immediate
-              if (response is List) {
-                _finalizeSearch(
-                    completer,
-                    SearchResultResponse(
-                        message: "success",
-                        data: (response as List)
-                            .map((e) => ParkingOption.fromJson(e))
-                            .toList()));
-                return;
-              }
-              throw Exception(
-                  'Invalid API response structure: missing data field');
+            if (response['data'] is! List) {
+              throw Exception(response['message']?.toString() ??
+                  'Invalid search response');
             }
-
-            final results = SearchResultResponse.fromJson(response);
-            print("Parsed ${results.data.length} results");
-            _finalizeSearch(completer, results);
+            _finalizeSearch(completer, SearchResultResponse.fromJson(response));
           } catch (e) {
-            print("Parsing error: $e");
             _handleSearchError(completer, e.toString());
           }
         },
@@ -680,53 +705,6 @@ class GeneralRepository {
     return completer.future;
   }
 
-  void _pollSearchStatus(
-      String jobId, Completer<SearchResultResponse> completer) {
-    server.makeApiRequest(
-      apiEndpoint: "${ApiFiles.searchStatus}/$jobId",
-      requestMethod: RequestMethod.post,
-      onLoad: () {
-        // Do not show separate loader, rely on the timer from searchParking
-      },
-      onSuccess: (Map<String, dynamic> response) {
-        final status = response['status']?.toString().toLowerCase();
-
-        if (status == 'processing' ||
-            status == 'queued' ||
-            status == 'pending' ||
-            status == 'started') {
-          // Continue polling.
-          // We increased polling frequency to check more often since we have a nice loader now.
-          Future.delayed(const Duration(seconds: 2), () {
-            _pollSearchStatus(jobId, completer);
-          });
-        } else if (status == 'completed' ||
-            status == 'success' ||
-            response['data'] != null) {
-          try {
-            final result = SearchResultResponse.fromJson(response);
-            // if empty data with success status, that's a valid empty result.
-            _finalizeSearch(completer, result);
-          } catch (e) {
-            // If parsing fails, maybe not really complete? Retry or fail.
-            print("Parsing failed despite success status: $e");
-            _handleSearchError(completer, 'Failed to process results: $e');
-          }
-        } else {
-          // Failed/Unknown
-          _handleSearchError(completer, response['message'] ?? 'Search failed');
-        }
-      },
-      onError: (String errorMessage) {
-        print("Polling error: $errorMessage. Retrying...");
-        // Retry polling on error
-        Future.delayed(const Duration(seconds: 5), () {
-          _pollSearchStatus(jobId, completer);
-        });
-      },
-    );
-  }
-
   void _finalizeSearch(
       Completer<SearchResultResponse> completer, SearchResultResponse result) {
     _searchTimer?.cancel();
@@ -738,11 +716,51 @@ class GeneralRepository {
       EasyLoading.instance.dismissOnTap = true; // Reset
 
       if (result.data.isEmpty) {
-        EasyLoading.showInfo('No parking options available');
+        // The server says why when it knows (e.g. "This airport is not available")
+        EasyLoading.showInfo(result.note?.isNotEmpty == true
+            ? result.note!
+            : 'No parking options available');
       }
 
       if (!completer.isCompleted) completer.complete(result);
     });
+  }
+
+  /// GET /api/site-config: airport list + marketing switches. Never throws; falls back
+  /// to the built-in active airports when the server can't be reached.
+  Future<SiteConfig> getSiteConfig() async {
+    final completer = Completer<SiteConfig>();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.siteConfig,
+      requestMethod: RequestMethod.get,
+      onLoad: () {},
+      onSuccess: (res) => completer.complete(SiteConfig.fromJson(res)),
+      onError: (_) => completer.complete(SiteConfig.defaults),
+    );
+    return completer.future;
+  }
+
+  /// GET /api/search/v5/package/:packageId: full content of one searched package.
+  /// Also remembers the airport service info for the booking screens.
+  Future<PackageDetail> getPackageDetails(String packageId) async {
+    final completer = Completer<PackageDetail>();
+    server.makeApiRequest(
+      apiEndpoint:
+          '${ApiFiles.packageDetails}/${Uri.encodeComponent(packageId)}',
+      requestMethod: RequestMethod.get,
+      onLoad: () {},
+      onSuccess: (res) {
+        try {
+          final detail = PackageDetail.fromJson(res);
+          AirportServices.remember(detail);
+          completer.complete(detail);
+        } catch (e) {
+          completer.completeError(e.toString());
+        }
+      },
+      onError: (msg) => completer.completeError(msg),
+    );
+    return completer.future;
   }
 
   void _handleSearchError(
@@ -788,6 +806,8 @@ class GeneralRepository {
     required String paymentStatus,
     required String paymentDate,
     required String transactionId,
+    String? brandName,
+    String? tierKey,
   }) async {
     Completer<Map<String, dynamic>> completer = Completer();
 
@@ -833,6 +853,9 @@ class GeneralRepository {
           "bulletPoints": bulletPoints,
           "totalPayment": totalPayment,
           "packageType": packageType,
+          // Our brand and tier (live airports), for brand-specific email content
+          if (brandName != null && brandName.isNotEmpty) "brandName": brandName,
+          if (tierKey != null && tierKey.isNotEmpty) "tierKey": tierKey,
 
           // Payment
           "referenceNo": referenceNo,
@@ -1068,23 +1091,28 @@ class GeneralRepository {
     return completer.future;
   }
 
+  /// The server charges the price of [packageId] from its own search results; [amount]
+  /// (pounds, e.g. 38.69) is only compared with it, as on the website.
   Future<Map<String, dynamic>> createPaymentIntent({
-    required String amount,
+    required double amount,
+    required String packageId,
     required String currency,
     required String startDate,
     required String endDate,
     String paymentMethodType = 'card',
   }) async {
     final url = Uri.parse(
-      'https://comparemyairportparking.com/api/stripe/create-payment-intent',
+      '${AppConfig.baseUrl}/api/stripe/create-payment-intent',
     );
 
     final token = Globals.user?.token ?? '';
 
-    // Convert amount to integer (smallest unit e.g. pence)
-    final amountInt = int.tryParse(amount) ?? 0;
-    if (amountInt <= 0) {
-      throw Exception('Invalid amount: $amount');
+    if (packageId.isEmpty) {
+      throw PaymentIntentException(
+          'Your search has expired. Please search again.');
+    }
+    if (amount <= 0) {
+      throw PaymentIntentException('This parking is not available to book.');
     }
 
     try {
@@ -1097,26 +1125,21 @@ class GeneralRepository {
       request.headers.set('content-type', 'application/json');
       request.headers.set('access-token', token);
 
-      final body = jsonEncode({
-        "amount": amountInt, // e.g. 3869
-        "currency": currency.toLowerCase(), // gbp
-        "payment_method": paymentMethodType,
-        "test_mode": false,
-
-        "startDate": startDate,
-        "startTime": Globals.startTime,
-        "endDate": endDate,
-        "endTime": Globals.endTime,
-
-        "airport": Globals.selectedAirport,
-        "userId": Globals.user?.id,
-
-        "customer": {
-          "email": Globals.booking_info_model?.email,
-          "name":
-              "${Globals.booking_info_model?.firstName} ${Globals.booking_info_model?.lastName}"
-        }
-      });
+      final body = jsonEncode(paymentIntentPayload(
+        packageId: packageId,
+        amount: amount,
+        currency: currency,
+        paymentMethod: paymentMethodType,
+        startDate: startDate,
+        startTime: Globals.startTime,
+        endDate: endDate,
+        endTime: Globals.endTime,
+        airport: Globals.selectedAirport,
+        userId: Globals.user?.id,
+        email: Globals.booking_info_model?.email,
+        firstName: Globals.booking_info_model?.firstName,
+        lastName: Globals.booking_info_model?.lastName,
+      ));
 
       request.write(body);
 
@@ -1125,17 +1148,57 @@ class GeneralRepository {
 
       if (response.statusCode == 200) {
         return jsonDecode(responseBody) as Map<String, dynamic>;
-      } else {
-        print(
-          'Failed to create payment intent: ${response.statusCode} $responseBody',
-        );
-        throw Exception(
-          'Failed to create payment intent: ${response.statusCode} $responseBody',
-        );
       }
+      // Show the server's reason, e.g. "Your search has expired. Please search again..."
+      String message = 'Could not start the payment (${response.statusCode}).';
+      try {
+        final decoded = jsonDecode(responseBody);
+        if (decoded is Map && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {}
+      throw PaymentIntentException(message);
+    } on PaymentIntentException {
+      rethrow;
     } catch (e) {
-      throw Exception('Payment Intent Error: $e');
+      throw PaymentIntentException('Could not start the payment: $e');
     }
+  }
+
+  /// Stripe payment for changing an existing booking's dates. The server works out
+  /// the amount (change fee + extra days, set per airport) and returns it in
+  /// `data.amount`; /booking/update then checks this payment with Stripe.
+  Future<Map<String, dynamic>> createBookingChangePaymentIntent({
+    required String bookingId,
+    required String startDate,
+    required String startTime,
+    required String endDate,
+    required String endTime,
+  }) {
+    final completer = Completer<Map<String, dynamic>>();
+    server.makeApiRequest(
+      apiEndpoint: ApiFiles.bookingChangePaymentIntent,
+      requestMethod: RequestMethod.post,
+      requestData: {
+        "bookingId": bookingId,
+        "startDate": startDate,
+        "startTime": startTime,
+        "endDate": endDate,
+        "endTime": endTime,
+      },
+      onLoad: () => EasyLoading.show(status: "Preparing payment..."),
+      onSuccess: (Map<String, dynamic> response) {
+        EasyLoading.dismiss();
+        if (!completer.isCompleted) completer.complete(response);
+      },
+      onError: (String errorMessage) {
+        EasyLoading.dismiss();
+        if (!completer.isCompleted) {
+          completer.completeError(PaymentIntentException(errorMessage));
+        }
+      },
+    );
+    return completer.future;
   }
 
   Future<Map<String, dynamic>> verifyPayment(String paymentIntentId) async {
@@ -1298,7 +1361,115 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<NotificationResponse> getNotifications() async {
+  /// Simple POST returning the server's message. Errors complete with the
+  /// server message (callers show it).
+  Future<String> _postForMessage(String endpoint, Map<String, dynamic> data,
+      {String loading = "Please wait...", bool silent = false}) {
+    final completer = Completer<String>();
+    server.makeApiRequest(
+      apiEndpoint: endpoint,
+      requestMethod: RequestMethod.post,
+      requestData: data,
+      onLoad: () {
+        if (!silent) EasyLoading.show(status: loading);
+      },
+      onSuccess: (Map<String, dynamic> res) {
+        if (!silent) EasyLoading.dismiss();
+        completer.complete((res['message'] ?? 'Done').toString());
+      },
+      onError: (String errorMessage) {
+        if (!silent) EasyLoading.dismiss();
+        completer.completeError(errorMessage);
+      },
+    );
+    return completer.future;
+  }
+
+  /// Clears this phone's push token on the server (no more pushes after logout).
+  /// Sends the token so the server only clears it if it is still this phone's.
+  Future<String> logoutOnServer() async {
+    final token = await PushToken.current();
+    return _postForMessage(
+        ApiFiles.logout, {if (token != null) "fcmToken": token},
+        silent: true);
+  }
+
+  /// POST without the spinner/alert handling; completes with the full reply or
+  /// fails with the server's message (the reset screen shows it).
+  Future<Map<String, dynamic>> _postQuiet(
+      String endpoint, Map<String, dynamic> data) {
+    final completer = Completer<Map<String, dynamic>>();
+    server.makeApiRequest(
+      apiEndpoint: endpoint,
+      requestMethod: RequestMethod.post,
+      requestData: data,
+      onLoad: () {},
+      onSuccess: (Map<String, dynamic> res) => completer.complete(res),
+      onError: (String errorMessage) => completer.completeError(errorMessage),
+    );
+    // Offline: the API service reports nothing, so don't wait forever
+    return completer.future.timeout(const Duration(seconds: 30),
+        onTimeout: () =>
+            throw 'No connection. Please check your internet and try again.');
+  }
+
+  /// Forgot password (app): emails a 6-digit code. Returns the server message.
+  Future<String> sendPasswordResetCode(String email) async {
+    final res = await _postQuiet(ApiFiles.resetCodeSend, {"email": email});
+    return (res['message'] ?? 'Code sent').toString();
+  }
+
+  /// Checks the emailed code; returns a short-lived reset token.
+  Future<String> verifyPasswordResetCode(String email, String otp) async {
+    final res = await _postQuiet(
+        ApiFiles.resetCodeVerify, {"email": email, "otp": otp});
+    final token = res['data']?['resetToken']?.toString() ?? '';
+    if (token.isEmpty) throw 'Something went wrong. Please try again.';
+    return token;
+  }
+
+  /// Saves the new password and returns the logged-in user (as login does).
+  Future<UserModel> resetPasswordWithCode(
+      String resetToken, String password) async {
+    final res = await _postQuiet(ApiFiles.resetCodeNewPassword, {
+      "resetToken": resetToken,
+      "password": password,
+      "confirmPassword": password,
+    });
+    final user =
+        UserModel.fromJson({'user': res['data']['user'], 'token': res['token']});
+    await SharedStorage.saveUser(user);
+    return user;
+  }
+
+  /// Saves this phone's push token for the logged-in user.
+  Future<String> saveFcmToken(String token) =>
+      _postForMessage(ApiFiles.saveFcmToken, {"fcmToken": token}, silent: true);
+
+  Future<String> changePassword(
+          String oldPassword, String password, String confirmation) =>
+      _postForMessage(
+          ApiFiles.changePassword,
+          {
+            "oldPassword": oldPassword,
+            "password": password,
+            "passwordConfirmation": confirmation,
+          },
+          loading: "Updating password...");
+
+  /// Admin: deactivate an employee (releases their not-started jobs).
+  Future<String> deactivateEmployee(String userId) => _postForMessage(
+      ApiFiles.deactivateEmployee, {"userId": userId},
+      loading: "Deactivating...");
+
+  /// Admin: move an assignment to another employee.
+  Future<String> reassignDriver(String assignmentId, String newEmployeeId) =>
+      _postForMessage(ApiFiles.reassignDriver,
+          {"assignmentId": assignmentId, "newEmployeeId": newEmployeeId},
+          loading: "Reassigning...");
+
+  /// [silent]: no loading spinner (used for the unread badge).
+  Future<NotificationResponse> getNotifications({bool silent = false}) async {
     Completer<NotificationResponse> completer = Completer();
 
     server.makeApiRequest(
@@ -1308,10 +1479,10 @@ class GeneralRepository {
         "userId": Globals.user?.id ?? "",
       },
       onLoad: () {
-        EasyLoading.show(status: "Loading notifications...");
+        if (!silent) EasyLoading.show(status: "Loading notifications...");
       },
       onSuccess: (Map<String, dynamic> res) {
-        EasyLoading.dismiss();
+        if (!silent) EasyLoading.dismiss();
         try {
           final response = NotificationResponse.fromJson(res);
           completer.complete(response);
@@ -1320,7 +1491,7 @@ class GeneralRepository {
         }
       },
       onError: (String errorMessage) {
-        EasyLoading.dismiss();
+        if (!silent) EasyLoading.dismiss();
         completer.completeError(errorMessage);
       },
     );

@@ -47,6 +47,9 @@ class NotificationModel {
   final String userId;
   final User? user;
 
+  /// Job notifications: encrypted id of the booking they are about.
+  final String bookingId;
+
   NotificationModel({
     required this.id,
     required this.title,
@@ -58,6 +61,7 @@ class NotificationModel {
     required this.updatedAt,
     required this.userId,
     this.user,
+    this.bookingId = '',
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +76,7 @@ class NotificationModel {
       updatedAt: json['updatedAt'] ?? '',
       userId: json['userId'] ?? '',
       user: json['user'] != null ? User.fromJson(json['user']) : null,
+      bookingId: (json['bookingId'] ?? '').toString(),
     );
   }
 
@@ -98,6 +103,7 @@ class NotificationModel {
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId ?? this.userId,
       user: user ?? this.user,
+      bookingId: bookingId,
     );
   }
 }

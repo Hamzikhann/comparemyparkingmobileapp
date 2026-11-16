@@ -18,8 +18,15 @@ import 'package:parkingapp/pages/IntroScreen.dart';
 import 'package:parkingapp/pages/LoginScreen.dart';
 import 'package:parkingapp/pages/MainScreen.dart';
 import 'package:parkingapp/pages/NotificationsScreen.dart';
+import 'package:parkingapp/services/push_token.dart';
 import 'package:parkingapp/pages/OtpScreen.dart';
+import 'dart:convert';
+import 'package:parkingapp/chat/chat_service.dart';
+import 'package:parkingapp/chat/ui/chat_screen.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/repositories/general_repository.dart';
+import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/services/job_push.dart';
 import 'package:parkingapp/pages/PackageDetailScreen.dart';
 import 'package:parkingapp/pages/PackagesScreen.dart';
 import 'package:parkingapp/pages/PrivacyPolicyScreen.dart';
@@ -32,7 +39,7 @@ import 'package:parkingapp/pages/admin/AdminHome.dart';
 import 'package:parkingapp/pages/admin/DriverListScreen.dart';
 import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
 import 'package:parkingapp/pages/driver/BookingDetailDriver.dart';
-import 'package:parkingapp/pages/driver/DriverHome.dart';
+import 'package:parkingapp/pages/driver/DriverMainScreen.dart';
 import 'package:parkingapp/pages/driver/NotificationsScreenDriver.dart';
 import 'package:parkingapp/pages/resetOtp/OtpScreen2.dart';
 import 'package:parkingapp/pages/LoginSelectionScreen.dart';
@@ -56,6 +63,9 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
+// Runs in a separate isolate when a push arrives while the app is closed;
+// the annotation keeps it callable from native code in release/AOT builds.
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("Handling background message: ${message.messageId}");
@@ -76,6 +86,8 @@ void main() async {
 
   // Notification setup
   await setupNotifications();
+  // Send a new push token to the server whenever Firebase changes it
+  PushToken.sync();
 
   // Initialize download notification service
   await NotificationService().initialize();
@@ -131,7 +143,7 @@ class MyApp extends StatelessWidget {
             '/packagesScreen': (context) => PackagesScreen(),
             '/main': (context) => MainScreen(),
             '/payment': (context) => PaymentScreen(),
-            '/driverhome': (context) => Driverhome(),
+            '/driverhome': (context) => const DriverMainScreen(),
             '/bookingDetail': (context) => Bookingdetaildriver(),
             '/editProfile': (context) => Editprofile(),
             '/support': (context) => SupportScreen(),
@@ -177,6 +189,14 @@ Future<void> setupNotifications() async {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(),
     ),
+    // Tap on a notification shown while the app was open
+    onDidReceiveNotificationResponse: (response) {
+      final payload = response.payload;
+      if (payload == null || payload.isEmpty) return;
+      try {
+        _openFromPush(Map<String, dynamic>.from(jsonDecode(payload)));
+      } catch (_) {}
+    },
   );
 
   // Request notification permissions
@@ -227,6 +247,17 @@ Future<void> setupNotifications() async {
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
 
+    if (message.data['type'] == jobPushType) {
+      jobPushTick.value++; // refresh employee job list + badge
+    }
+
+    // Chat: no banner for the chat that is open on screen
+    if (message.data['type'] == 'Chat' &&
+        message.data['conversationId'] ==
+            ChatService.instance.activeConversationId) {
+      return;
+    }
+
     if (notification != null && android != null) {
       flutterLocalNotificationsPlugin.show(
         notification.hashCode,
@@ -241,15 +272,53 @@ Future<void> setupNotifications() async {
           ),
           iOS: DarwinNotificationDetails(),
         ),
+        payload: jsonEncode(message.data),
       );
     }
   });
 
-  // Handle tapped notifications
-  // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  //   print("📬 Notification opened");
-  //   navigateBasedOnRole();
-  // });
+  // Tap on a system notification while the app was in the background
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    _openFromPush(message.data);
+  });
+
+  // Tap on a notification that launched the app from closed. Wait for the
+  // splash/role routing to finish first.
+  final initial = await messaging.getInitialMessage();
+  if (initial != null) {
+    Future.delayed(const Duration(seconds: 3), () => _openFromPush(initial.data));
+  }
+}
+
+/// Opens what a push is about: a chat (staff) or a job (employees).
+Future<void> _openFromPush(Map<String, dynamic> data) async {
+  if (data['type'] == 'Chat') {
+    final convId = (data['conversationId'] ?? '').toString();
+    final nav = navigatorKey.currentState;
+    if (convId.isEmpty || nav == null || !ChatService.isStaff) return;
+    if (ChatService.instance.activeConversationId == convId) return;
+    nav.push(MaterialPageRoute(builder: (_) => ChatScreen(conversationId: convId)));
+    return;
+  }
+  final bookingId = (data['bookingId'] ?? '').toString();
+  if (data['type'] != jobPushType || bookingId.isEmpty) return;
+  if (Globals.user == null || Globals.roleTitle != "Employee") return;
+  final nav = navigatorKey.currentState;
+  if (nav == null) return;
+  try {
+    final res = await GeneralRepository().getBookingsForDriver();
+    final all = [...res.assignedAssignments, ...res.completedAssignmnets];
+    final match = all.where((p) => p.id == bookingId).toList();
+    if (match.isNotEmpty) {
+      Globals.bookingDriverResponse = match.first;
+      nav.pushNamed(MyRoutes.bookingDetail);
+    } else {
+      // e.g. job removed from this employee: show the notifications list
+      nav.pushNamed(MyRoutes.notificationsDriver);
+    }
+  } catch (_) {
+    nav.pushNamed(MyRoutes.notificationsDriver);
+  }
 }
 
 void navigateBasedOnRole() async {
@@ -259,7 +328,7 @@ void navigateBasedOnRole() async {
     final nav = navigatorKey.currentState!;
     if (Globals.user != null) {
       if (Globals.roleTitle == "Employee") {
-        nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => const DriverMainScreen()));
       } else if (Globals.roleTitle == "Administrator") {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
       } else {
@@ -267,7 +336,7 @@ void navigateBasedOnRole() async {
       }
     } else {
       if (Globals.roleTitle == "Employee") {
-        nav.pushReplacement(MaterialPageRoute(builder: (_) => Driverhome()));
+        nav.pushReplacement(MaterialPageRoute(builder: (_) => const DriverMainScreen()));
       } else if (Globals.roleTitle == "Administrator") {
         nav.pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
       } else {

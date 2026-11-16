@@ -5,27 +5,28 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
-import 'package:parkingapp/pages/driver/ViewAllScreen.dart';
-import 'package:parkingapp/routes/MyRoutes.dart';
+import 'package:parkingapp/pages/EditProfile.dart';
+import 'package:parkingapp/pages/driver/driver_helpers.dart';
 import 'package:parkingapp/utils/colors.dart';
-import 'package:parkingapp/widgets/NonEditatbleTextFeild.dart';
-import 'package:parkingapp/widgets/driver/SessionCard.dart';
-import 'package:parkingapp/widgets/driver/TopBar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+/// Home tab for employees (drivers): greeting, job counts and upcoming jobs.
 class Driverhome extends StatefulWidget {
-  const Driverhome({Key? key}) : super(key: key);
+  /// Called with `true` for completed jobs, `false` for active jobs,
+  /// so the main screen can switch to the Jobs tab.
+  final void Function(bool completed)? onViewAllJobs;
+
+  const Driverhome({Key? key, this.onViewAllJobs}) : super(key: key);
 
   @override
-  State<Driverhome> createState() => _ReserveBookingScreenState();
+  State<Driverhome> createState() => _DriverhomeState();
 }
 
-class _ReserveBookingScreenState extends State<Driverhome> {
-  late Future<BookingDriverResponse> _bookingsFuture;
+class _DriverhomeState extends State<Driverhome> {
   final GeneralRepository _repository = GeneralRepository();
   bool _isLoading = true;
   String? _errorMessage;
+  List<Parking> _active = [];
+  List<Parking> _completed = [];
 
   @override
   void initState() {
@@ -38,373 +39,245 @@ class _ReserveBookingScreenState extends State<Driverhome> {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
-      _bookingsFuture = _repository.getBookingsForDriver();
-      await _bookingsFuture;
+      final response = await _repository.getBookingsForDriver();
+      if (!mounted) return;
+      setState(() {
+        _active = response.assignedAssignments;
+        _completed = response.completedAssignmnets;
+      });
     } catch (e) {
-      setState(() {
-        _errorMessage = "Failed to load data: ${e.toString()}";
-      });
+      if (!mounted) return;
+      setState(() => _errorMessage = "Failed to load jobs: $e");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Show exit confirmation dialog
-        bool shouldExit = await _showExitConfirmationDialog(context);
-        return shouldExit; // If true, allow back navigation; if false, prevent it
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            children: [
-              TopBar(
-                title: "Driver",
-                showBackButton: false,
-                onBackPressed: () {},
-                onLogoutPressed: () {
-                  // Handle logout
-                  Globals.user = null;
-                  SharedStorage.removeFromSharedPreferences();
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                      MyRoutes.loginRoute, (route) => false);
-                },
-                onNotificationPressed: () {
-                  // Handle logout
-                  Navigator.pushNamed(context, MyRoutes.notificationsDriver);
-                },
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            Expanded(child: _buildBody()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final user = Globals.user;
+    final hasImage = user?.imageURL != null && user!.imageURL!.isNotEmpty;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: GestureDetector(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const Editprofile()),
+          );
+          if (mounted) setState(() {});
+        },
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22.r,
+              backgroundImage: hasImage
+                  ? (user.imageURL!.startsWith('http')
+                      ? NetworkImage(user.imageURL!)
+                      : FileImage(File(user.imageURL!)) as ImageProvider)
+                  : const AssetImage('assets/images/user.png'),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Hello, ${user?.firstName ?? ''}",
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Archivo',
+                      color: colors.primaryNew,
+                    ),
+                  ),
+                  Text(
+                    "Employee",
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontFamily: 'Archivo',
+                      color: const Color(0xFF6B6B6B),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _errorMessage != null
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(_errorMessage!),
-                                SizedBox(height: 16.h),
-                                ElevatedButton(
-                                  onPressed: _loadData,
-                                  child: const Text("Retry"),
-                                ),
-                              ],
-                            ),
-                          )
-                        : FutureBuilder<BookingDriverResponse>(
-                            future: _bookingsFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center();
-                              } else if (snapshot.hasError) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text("Error: ${snapshot.error}"),
-                                      SizedBox(height: 16.h),
-                                      ElevatedButton(
-                                        onPressed: _loadData,
-                                        child: const Text("Retry"),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else if (snapshot.hasData) {
-                                final reserved =
-                                    snapshot.data!.assignedAssignments;
-                                final completed =
-                                    snapshot.data!.completedAssignmnets;
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                                return SingleChildScrollView(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 20.w, vertical: 16.h),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text("Driver Info",
-                                          style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Archivo')),
-                                      SizedBox(height: 24.h),
-                                      Text("Driver Name",
-                                          style: TextStyle(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Archivo')),
-                                      SizedBox(height: 8.h),
-                                      NonEditableTextField(
-                                        hintText: "",
-                                        value:
-                                            "${Globals.user?.firstName ?? ''} ${Globals.user?.lastName ?? ''}",
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text("Active",
-                                                style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'Archivo')),
-                                          ),
-                                          SizedBox(width: 10.w),
-                                          Expanded(
-                                            child: Text("Completed",
-                                                style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'Archivo')),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 8.h),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: NonEditableTextField(
-                                              hintText: "${reserved.length}",
-                                            ),
-                                          ),
-                                          SizedBox(width: 10.w),
-                                          Expanded(
-                                            child: NonEditableTextField(
-                                              hintText: "${completed.length}",
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 16.h),
-
-                                      /// 🔄 TASK LIST ROW WITH REFRESH
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Task List",
-                                            style: TextStyle(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Archivo',
-                                            ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: _loadData,
-                                            child: Text(
-                                              "Refresh",
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w500,
-                                                color: colors.primary,
-                                                decoration:
-                                                    TextDecoration.underline,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 24.h),
-
-                                      buildSection("Active Session", reserved,
-                                          Icons.schedule),
-                                      buildSection("Completed Sessions",
-                                          completed, Icons.check_circle),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                return const Center(
-                                    child: Text("No data available."));
-                              }
-                            },
-                          ),
+  Widget _buildBody() {
+    if (_isLoading && _active.isEmpty && _completed.isEmpty) {
+      return const Center(
+          child: CircularProgressIndicator(color: colors.primaryNew));
+    }
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_errorMessage!, textAlign: TextAlign.center),
+              SizedBox(height: 16.h),
+              ElevatedButton(
+                onPressed: _loadData,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primaryNew),
+                child:
+                    const Text("Retry", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
         ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: colors.primaryNew,
+      onRefresh: _loadData,
+      child: ListView(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _statCard("Active Jobs", _active.length,
+                    Icons.schedule, colors.primaryNew,
+                    onTap: () => widget.onViewAllJobs?.call(false)),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _statCard("Completed", _completed.length,
+                    Icons.check_circle_outline, colors.secondarynew,
+                    onTap: () => widget.onViewAllJobs?.call(true)),
+              ),
+            ],
+          ),
+          SizedBox(height: 24.h),
+          _sectionHeader("Active Jobs", _active.length,
+              () => widget.onViewAllJobs?.call(false)),
+          SizedBox(height: 12.h),
+          if (_active.isEmpty)
+            _emptyText("No active jobs right now")
+          else
+            ..._active
+                .take(3)
+                .map((p) => buildDriverSessionCard(context, p, 'active')),
+          SizedBox(height: 16.h),
+          _sectionHeader("Recently Completed", _completed.length,
+              () => widget.onViewAllJobs?.call(true)),
+          SizedBox(height: 12.h),
+          if (_completed.isEmpty)
+            _emptyText("No completed jobs yet")
+          else
+            ..._completed
+                .take(2)
+                .map((p) => buildDriverSessionCard(context, p, 'completed')),
+          SizedBox(height: 16.h),
+        ],
       ),
     );
   }
 
-  Widget buildSection(String title, List<Parking> parkings, IconData icon) {
-    if (parkings.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textFieldBorder,
-                  fontSize: 16.sp)),
-          SizedBox(height: 8.h),
-          Text("No ${title.toLowerCase()} available",
-              style: TextStyle(fontSize: 14.sp)),
-          SizedBox(height: 16.h),
-        ],
-      );
-    }
-
-    String type = title.contains('Completed') ? 'completed' : 'active';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  Widget _statCard(String label, int count, IconData icon, Color color,
+      {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textFieldBorder,
-                  fontSize: 16.sp,
-                ),
+            Icon(icon, color: color, size: 24.sp),
+            SizedBox(height: 12.h),
+            Text(
+              "$count",
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Archivo',
+                color: color,
               ),
             ),
-            if (parkings.length > 1)
-              TextButton(
-                onPressed: () => _viewAll(title, parkings),
-                child: Text(
-                  "View all",
-                  style: TextStyle(color: colors.primary),
-                ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontFamily: 'Archivo',
+                color: const Color(0xFF6B6B6B),
               ),
+            ),
           ],
         ),
-        ...List.generate(
-          1, // or change to parkings.length to show all
-          (index) {
-            final parking = parkings[index];
-            return SessionCard(
-              title: "${parking.airport} Airport",
-              status: parking.status,
-              subTitle: parking.registrations.isNotEmpty
-                  ? parking.registrations.first.inboundFlightNo
-                  : "No flight number",
-              date: parking.startDate,
-              time: parking.startTime,
-              price: "Car Maker: ${parking.vehicles.first.vehicleManufacturer}",
-              type: type,
-              timeRemaining: parking.startTime,
-              rate: "aa",
-              onViewRidePressed: () {
-                Globals.bookingDriverResponse = parking;
-                Navigator.pushNamed(
-                  context,
-                  MyRoutes.bookingDetail,
-                );
-              },
-              onViewLocationPressed: () {
-                // location click
-                getLocation(parking.registrations.first.bookingId);
-              },
-            );
-          },
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title, int count, VoidCallback onViewAll) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Archivo',
+              color: const Color(0xFF1A1A2E),
+            ),
+          ),
         ),
+        if (count > 0)
+          GestureDetector(
+            onTap: onViewAll,
+            child: Text(
+              "View all",
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontFamily: 'Archivo',
+                fontWeight: FontWeight.w600,
+                color: colors.secondarynew,
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  void _viewAll(String type, List<Parking> parkings) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ViewAllScreen(title: type, parkings: parkings),
+  Widget _emptyText(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontFamily: 'Archivo',
+          color: Colors.grey[500],
+        ),
       ),
     );
-  }
-
-  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
-    // Ensure the return type is Future<bool>
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Exit"),
-          content: Text("Are you sure you want to exit?"),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false); // Don't exit
-              },
-              child: Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(true); // Exit
-              },
-              child: Text("Exit"),
-            ),
-          ],
-        );
-      },
-    );
-
-    // Return the result or false if the result is null (dialog dismissed)
-    return result ?? false;
-  }
-
-  Future<void> getLocation(String bookingID) async {
-    try {
-      final value = await GeneralRepository().getLocationCoordinates(bookingID);
-      final longitude = value['longitude'];
-      final latitude = value['latitude'];
-
-      if (longitude == null ||
-          longitude.isEmpty ||
-          latitude == null ||
-          latitude.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("No location found."),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
-
-      final googleMapsUrl = Uri.parse(
-          "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
-      final appleMapsUrl =
-          Uri.parse("http://maps.apple.com/?q=$latitude,$longitude");
-
-      if (Platform.isAndroid) {
-        if (await canLaunchUrl(googleMapsUrl)) {
-          await launchUrl(googleMapsUrl);
-        } else {
-          print("Could not open Google Maps on Android.");
-        }
-      } else if (Platform.isIOS) {
-        // Try Google Maps first on iOS
-        final iosGoogleMapsUrl =
-            Uri.parse("comgooglemaps://?q=$latitude,$longitude");
-
-        if (await canLaunchUrl(iosGoogleMapsUrl)) {
-          await launchUrl(iosGoogleMapsUrl);
-        } else {
-          // Fallback to Apple Maps
-          if (await canLaunchUrl(appleMapsUrl)) {
-            await launchUrl(appleMapsUrl);
-          } else {
-            print("Could not open any maps on iOS.");
-          }
-        }
-      }
-    } catch (e) {
-      print("Error: $e");
-    }
   }
 }

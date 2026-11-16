@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
@@ -9,11 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/airport_service_config.dart';
+import 'package:parkingapp/data/airport_services.dart';
+import 'package:parkingapp/data/booking_flow.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModel.dart';
 
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/utils/share_location.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
@@ -226,7 +227,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 
   void _showBookingDetails(BuildContext context, Parking booking) {
-    final packageType = Globals.option?.type ?? 'meet and greet';
+    final packageType = booking.packageType.isNotEmpty
+        ? booking.packageType
+        : (Globals.option?.type ?? '');
     final serviceInfo = getAirportServiceInfo(
       booking.airport,
       packageType,
@@ -980,17 +983,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: List.generate(5, (index) {
-                    final randomRating =
-                        (Random(booking.id.hashCode).nextInt(3) + 2);
-                    return Icon(
-                      index < randomRating ? Icons.star : Icons.star_border,
-                      color: Color(0xFFFFC107),
-                      size: 20.sp,
-                    );
-                  }),
-                ),
+                // (The random star rating that was here had no data behind it)
+                const SizedBox.shrink(),
                 // Book Again button
                 GestureDetector(
                   onTap: () {
@@ -1049,6 +1043,36 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 ),
               ),
             ],
+            // Meet and Greet: customer shares where the driver should collect the car
+            if (booking.isMeetAndGreet &&
+                type != 'completed' &&
+                Globals.user?.roleTitle.toLowerCase() != 'administrator') ...[
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => shareMyPickupLocation(context, booking.id),
+                  icon: Icon(Icons.my_location,
+                      size: 18.sp, color: colors.primaryNew),
+                  label: Text(
+                    'Share pickup location',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontFamily: 'Archivo',
+                      fontWeight: FontWeight.w600,
+                      color: colors.primaryNew,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: colors.primaryNew),
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1068,11 +1092,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
+  // Website format "hh:mm a"; the old version wrote 12 PM as "0:30 PM"
   String _formatTimeForApi(TimeOfDay time) {
-    final hour = time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    return formatApiTime(time.hour, time.minute);
   }
 
   void _showUpdateBooking(BuildContext screenContext, Parking booking) {
@@ -1164,32 +1186,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
     int _calculateAdditionalDays() {
       if (updateStartDate == null || updateEndDate == null) return 0;
 
-      final originalStart = DateTime.parse(booking.startDate);
-      final originalEnd = DateTime.parse(booking.endDate);
-
-      // Compare pure dates to avoid time-of-day math issues
-      final oStart =
-          DateTime(originalStart.year, originalStart.month, originalStart.day);
-      final oEnd =
-          DateTime(originalEnd.year, originalEnd.month, originalEnd.day);
-      final uStart = DateTime(
-          updateStartDate!.year, updateStartDate!.month, updateStartDate!.day);
-      final uEnd = DateTime(
-          updateEndDate!.year, updateEndDate!.month, updateEndDate!.day);
-
-      int daysBefore = oStart.difference(uStart).inDays;
-      int daysAfter = uEnd.difference(oEnd).inDays;
-
-      int extraDays =
-          (daysBefore > 0 ? daysBefore : 0) + (daysAfter > 0 ? daysAfter : 0);
-
-      return extraDays.clamp(0, 100);
+      // Only days beyond the original length of stay are charged (same rule as the server)
+      return bookingChangeExtraDays(
+          DateTime.parse(booking.startDate),
+          DateTime.parse(booking.endDate),
+          updateStartDate!,
+          updateEndDate!);
     }
 
-    double _calculateTotalCost() {
-      int extraDays = _calculateAdditionalDays();
-      return 20.0 + (extraDays * 15.0);
-    }
+    // Estimate shown in the sheet; the payment uses the server's amount
+    double _calculateTotalCost() => bookingChangeCost(_calculateAdditionalDays());
 
     Future<void> _handleUpdatePayment(
         String paymentId, double totalCost, StateSetter setState) async {
@@ -1280,14 +1286,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
         double totalCost, StateSetter setState) async {
       final localMessenger = ScaffoldMessenger.of(this.context);
       try {
-        final amountInPence = (totalCost).toInt().toString();
-
-        final response = await _repository.createPaymentIntent(
-          amount: amountInPence,
-          currency: "gbp",
+        final response = await _repository.createBookingChangePaymentIntent(
+          bookingId: booking.id,
           startDate: _formatDateForApi(updateStartDate!),
+          startTime: _formatTimeForApi(updateStartTime),
           endDate: _formatDateForApi(updateEndDate!),
+          endTime: _formatTimeForApi(updateEndTime),
         );
+        // What the server charges (admin can set other fees per airport)
+        final charged = parsePrice(response['data']?['amount']);
+        if (charged > 0) totalCost = charged;
 
         final clientSecret = response['paymentIntent']?['client_secret'] ??
             response['clientSecret'];

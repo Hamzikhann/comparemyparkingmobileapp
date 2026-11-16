@@ -23,12 +23,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
   String selectedTitle = "Mr";
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
 
   // Step 2
   final TextEditingController outBoundController = TextEditingController();
@@ -211,62 +206,7 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
               hint: "Enter Email",
               keyboardType: TextInputType.emailAddress,
               validator: validateEmail),
-          if (Globals.user == null) ...[
-            SizedBox(height: 16.h),
-            _buildLabel("Password"),
-            _buildTextField(
-              controller: passwordController,
-              hint: "Enter Password",
-              obscureText: !_isPasswordVisible,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordVisible
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: Colors.grey,
-                  size: 20.sp,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Password is required';
-                if (v.length < 8)
-                  return 'Password must be at least 8 characters';
-                return null;
-              },
-            ),
-            SizedBox(height: 16.h),
-            _buildLabel("Confirm Password"),
-            _buildTextField(
-              controller: confirmPasswordController,
-              hint: "Confirm Password",
-              obscureText: !_isConfirmPasswordVisible,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isConfirmPasswordVisible
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: Colors.grey,
-                  size: 20.sp,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                  });
-                },
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Please confirm password';
-                if (v != passwordController.text)
-                  return 'Passwords do not match';
-                return null;
-              },
-            ),
-          ],
+          // No password at checkout, as on the website (v1/signup)
           SizedBox(height: 40.h), // Spacing for button
           Align(
             alignment: Alignment.centerRight,
@@ -468,32 +408,25 @@ class _ReserveBookingScreenState extends State<ReserveBookingScreen> {
         String firstName = firstNameController.text.trim();
         String lastName = lastNameController.text.trim();
 
-        // Show loading
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Creating account...')));
-
-        final value = await GeneralRepository().signup(
+        // Creates the customer account, or logs in a returning customer by email
+        final value = await GeneralRepository().signupGuest(
           title: selectedTitle,
           firstName: firstName,
           lastName: lastName,
           email: emailController.text.trim(),
           phoneNo: phoneController.text.trim(),
-          password: passwordController.text.trim(),
-          confirmPassword: confirmPasswordController.text.trim(),
         );
 
-        // Set global user like in SignupScreen
         Globals.user = value;
         Globals.roleTitle = value.roleTitle;
         await SharedStorage.saveUser(value);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created successfully')));
+        if (!mounted) return;
 
         setState(() => _currentStep = 1);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signup failed: ${e.toString()}')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } else {
       setState(() => _currentStep = 1);

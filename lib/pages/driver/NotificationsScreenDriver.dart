@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/NotificationModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/pages/driver/ViewAllScreen.dart';
+import 'package:parkingapp/pages/driver/driver_helpers.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class NotificationsScreenDriver extends StatefulWidget {
-  const NotificationsScreenDriver({super.key});
+  /// false when shown as a bottom-navigation tab.
+  final bool showBackButton;
+
+  const NotificationsScreenDriver({super.key, this.showBackButton = true});
 
   @override
   State<NotificationsScreenDriver> createState() =>
@@ -70,40 +72,45 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
     }
   }
 
-  Future<void> _markAsReadAndNavigate(
-      String notificationId, List<String> bookingIds) async {
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Marks the notification read, then opens the job it is about.
+  Future<void> _markAsReadAndNavigate(NotificationModel notification) async {
     try {
-      await _repository.markNotificationsAsRead([notificationId]);
+      if (!notification.isRead) {
+        await _repository.markNotificationsAsRead([notification.id]);
+        setState(() {
+          final index =
+              _notifications.indexWhere((n) => n.id == notification.id);
+          if (index != -1) {
+            _notifications[index] =
+                _notifications[index].copyWith(isRead: true);
+          }
+        });
+      }
 
-      setState(() {
-        final index = _notifications.indexWhere((n) => n.id == notificationId);
-        if (index != -1) {
-          _notifications[index] = _notifications[index].copyWith(isRead: true);
-        }
-      });
+      // Older notifications (before job links) have no booking id
+      if (notification.bookingId.isEmpty) {
+        _snack('This notification is not linked to a job');
+        return;
+      }
 
-      final allBookings = [
-        ...Globals.reservedParkings,
-      ];
+      // Fresh job list (active + completed) for this employee
+      final res = await _repository.getBookingsForDriver();
+      final all = [...res.assignedAssignments, ...res.completedAssignmnets];
+      final match =
+          all.where((p) => p.id == notification.bookingId).toList();
 
-      final relevantBookings = allBookings.where((parking) {
-        return bookingIds.contains(parking.id) ||
-            parking.registrations
-                .any((reg) => bookingIds.contains(reg.bookingId));
-      }).toList();
-
-      if (relevantBookings.isNotEmpty) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                ViewAllScreen(title: "Active", parkings: relevantBookings),
-          ),
-        );
+      if (!mounted) return;
+      if (match.isNotEmpty) {
+        openDriverBooking(context, match.first);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No related bookings found')),
-        );
+        // e.g. the job was reassigned to someone else or cancelled
+        _snack('This job is no longer assigned to you');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,7 +128,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
           children: [
             TopBar(
               greeting: 'Notifications',
-              showBackButton: true,
+              showBackButton: widget.showBackButton,
               onBackPressed: () => Navigator.pop(context),
             ),
             if (_notifications.isNotEmpty)
@@ -135,7 +142,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
                       child: Text(
                         'Clear All',
                         style: TextStyle(
-                          color: colors.primary,
+                          color: colors.primaryNew,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -214,17 +221,19 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
     final dateTime =
         DateTime.tryParse(notification.createdAt) ?? DateTime.now();
     final formattedDate = DateFormat('MMM d, yyyy - hh:mm a').format(dateTime);
-    final bookingIds =
-        notification.user?.bookings.map((b) => b.id).toList() ?? [];
 
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
       ),
-      color: notification.isRead ? Colors.white : colors.blueLight2,
+      color: notification.isRead
+          ? Colors.white
+          : colors.primaryNew.withOpacity(0.06),
+      elevation: 0,
+      shadowColor: Colors.transparent,
       child: InkWell(
-        onTap: () => _markAsReadAndNavigate(notification.id, bookingIds),
+        onTap: () => _markAsReadAndNavigate(notification),
         borderRadius: BorderRadius.circular(12.r),
         child: Padding(
           padding: EdgeInsets.all(16.w),
@@ -241,7 +250,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
                         color:
-                            notification.isRead ? Colors.black : colors.primary,
+                            notification.isRead ? Colors.black : colors.primaryNew,
                       ),
                     ),
                   ),
@@ -249,7 +258,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
                     Container(
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: colors.primary,
+                        color: colors.primaryNew,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -262,7 +271,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
                     notification.body!,
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: colors.blueLight2,
+                      color: const Color(0xFF6B6B6B),
                     ),
                   ),
                 ),

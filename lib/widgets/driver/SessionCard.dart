@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:parkingapp/utils/colors.dart';
 
+/// Job card for the employee (driver) screens.
+/// Styled to match the customer booking cards.
 class SessionCard extends StatelessWidget {
   final String title;
   final String status;
   final String subTitle;
   final String date;
   final String time;
+
+  /// Car maker (shown next to the car icon).
   final String price;
   final Icon? icon;
   final String type; // 'active', 'completed'
@@ -16,6 +19,9 @@ class SessionCard extends StatelessWidget {
   final String? rate;
   final VoidCallback? onViewRidePressed;
   final VoidCallback? onViewLocationPressed;
+
+  static const Color _titleColor = Color(0xFF1A1A2E);
+  static const Color _mutedColor = Color(0xFF6B6B6B);
 
   const SessionCard({
     super.key,
@@ -33,234 +39,152 @@ class SessionCard extends StatelessWidget {
     this.onViewLocationPressed,
   });
 
+  bool get _isCompleted => type == 'completed';
+
   @override
   Widget build(BuildContext context) {
-    switch (type) {
-      case 'completed':
-        return _buildCompletedCard();
-      case 'active':
-      default:
-        return _buildActiveCard();
-    }
-  }
-
-  Widget _buildActiveCard() {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Location and price row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Location
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+    return GestureDetector(
+      onTap: onViewRidePressed,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
                     title,
                     style: TextStyle(
                       fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Archivo',
+                      color: _titleColor,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text(
-                    subTitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey,
+                ),
+                _statusChip(),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            _infoRow(Icons.flight, subTitle),
+            SizedBox(height: 4.h),
+            _infoRow(Icons.access_time, "$date  •  $time"),
+            SizedBox(height: 4.h),
+            _infoRow(Icons.directions_car, price),
+            if (!_isCompleted) ...[
+              SizedBox(height: 14.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onViewRidePressed,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                        side: const BorderSide(color: colors.primaryNew),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: Text(
+                        'View Job',
+                        style: TextStyle(
+                          color: colors.primaryNew,
+                          fontSize: 13.sp,
+                          fontFamily: 'Archivo',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
+                  if (onViewLocationPressed != null) ...[
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: onViewLocationPressed,
+                      icon: Icon(Icons.location_on,
+                          size: 16.sp, color: Colors.white),
+                      label: Text(
+                        'Location',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.sp,
+                          fontFamily: 'Archivo',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primaryNew,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  ],
                 ],
               ),
-              // Price
-              Text(
-                price,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
-              ),
             ],
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Date and time row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                date,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Buttons row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onViewRidePressed,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    side: BorderSide(color: colors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  child: Text(
-                    'View Ride',
-                    style: TextStyle(
-                      color: colors.primary,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onViewLocationPressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  child: Text(
-                    'View Location',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCompletedCard() {
+  Widget _infoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16.sp, color: _mutedColor),
+        SizedBox(width: 6.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontFamily: 'Archivo',
+              color: _mutedColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _statusChip() {
+    final label = _isCompleted
+        ? 'Completed'
+        : (status.isNotEmpty
+            ? status[0].toUpperCase() + status.substring(1)
+            : 'Active');
+    final fg = _isCompleted ? colors.secondarynew : colors.primaryNew;
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: fg.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20.r),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 8.h),
-          // Price (left) and Location (right) in same row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Price on left
-              SvgPicture.asset(
-                'assets/images/completed.svg',
-                height: 24.h,
-                width: 24.w,
-              ),
-              // Location on right
-              Row(
-                children: [
-                  Icon(Icons.location_on, color: Colors.grey, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        subTitle,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          // Time remaining in same row - left and right aligned
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                date,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                status,
-                style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: colors.primary),
-              ),
-            ],
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontFamily: 'Archivo',
+          fontWeight: FontWeight.w600,
+          color: fg,
+        ),
       ),
     );
   }

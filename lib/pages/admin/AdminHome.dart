@@ -1,3 +1,4 @@
+import 'package:parkingapp/services/auth_actions.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,9 +7,7 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
-import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:parkingapp/data/models/DashboardDataModel.dart';
 import 'package:parkingapp/data/models/AdminDashboardModel.dart';
@@ -117,13 +116,8 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                           builder: (context) => PaymentScreenAdmin()));
                 },
                 onBackPressed: () {},
-                onLogoutPressed: () {
-                  // Handle logout
-                  Globals.user = null;
-                  SharedStorage.removeFromSharedPreferences();
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                      MyRoutes.loginRoute, (route) => false);
-                },
+                // Same logout as everyone else: stops this phone's pushes, clears chats
+                onLogoutPressed: () => logoutAndGoToLogin(context),
               ),
               Expanded(
                 child: RefreshIndicator(

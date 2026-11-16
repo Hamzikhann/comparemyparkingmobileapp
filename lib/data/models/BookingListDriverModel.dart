@@ -36,8 +36,21 @@ class Parking {
   final String userId;
   final String? guestUserId;
   final String packageId;
+
+  /// From the included package (e.g. "Meet and Greet").
+  final String packageType;
+
+  /// Meet and Greet: the driver collects the car from the customer.
+  bool get isMeetAndGreet => packageType
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .contains('meet and greet');
   final List<Registration> registrations;
   final List<Vehicle> vehicles;
+
+  /// bookingAssignments.status: the source of truth for job progress.
+  final String jobStatus;
 
   Parking({
     required this.id,
@@ -54,8 +67,10 @@ class Parking {
     required this.userId,
     this.guestUserId,
     required this.packageId,
+    this.packageType = '',
     required this.registrations,
     required this.vehicles,
+    this.jobStatus = '',
   });
 
   factory Parking.fromJson(Map<String, dynamic> json) {
@@ -74,6 +89,9 @@ class Parking {
       userId: json['userId'] as String? ?? '',
       guestUserId: json['guestUserId'] as String?,
       packageId: json['packageId'] as String? ?? '',
+      packageType: (json['package'] is Map)
+          ? (json['package']['packageType'] ?? '').toString()
+          : '',
       registrations: (json['registrations'] as List?)
               ?.map((data) => Registration.fromJson(data))
               .toList() ??
@@ -82,8 +100,26 @@ class Parking {
               ?.map((data) => Vehicle.fromJson(data))
               .toList() ??
           [],
+      jobStatus: _assignmentStatus(json['bookingAssignments']),
     );
   }
+
+  /// Status of this employee's assignment (Assigned / Started / Completed).
+  static String _assignmentStatus(dynamic assignments) {
+    if (assignments is List && assignments.isNotEmpty) {
+      final first = assignments.first;
+      if (first is Map && first['status'] != null) {
+        return first['status'].toString();
+      }
+    }
+    return '';
+  }
+
+  /// Job not started yet (legacy "Reassigned" counts as not started).
+  bool get isNotStarted =>
+      jobStatus.isEmpty || jobStatus == 'Assigned' || jobStatus == 'Reassigned';
+  bool get isStarted => jobStatus == 'Started';
+  bool get isCompleted => jobStatus == 'Completed';
 }
 
 class Registration {

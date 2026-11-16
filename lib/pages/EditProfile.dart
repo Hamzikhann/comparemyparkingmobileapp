@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
@@ -81,7 +82,7 @@ class _EditprofileState extends State<Editprofile> {
           // Prepend base URL if relative (and not a local path)
           if (!newImageUrl.startsWith('http') && !newImageUrl.startsWith('/')) {
             newImageUrl =
-                "https://comparemyairportparking.com/api/$newImageUrl";
+                "${AppConfig.baseUrl}/api/$newImageUrl";
           }
 
           // Force a cache-breaker to ensure image refreshes if URL is the same

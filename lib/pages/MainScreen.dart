@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/chat_service.dart';
+import 'package:parkingapp/chat/ui/chats_screen.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/pages/BookingsScreen.dart';
 import 'package:parkingapp/pages/HomeScreen.dart';
@@ -23,8 +25,27 @@ class _MainScreenState extends State<MainScreen> {
         _isAdmin ? const Adminhome() : HomeScreen(),
         BookingsScreen(),
         PaymentHistoryScreen(),
+        if (_isAdmin) const ChatsScreen(), // admins chat with drivers
         SettingsScreen(),
       ];
+
+  static const int _adminChatsTab = 3;
+
+  List<NavBarItem> get _items => _isAdmin
+      ? const [
+          NavBarItem(label: "Home", svgPath: "assets/images/home.svg"),
+          NavBarItem(label: "Bookings", svgPath: "assets/images/bookings.svg"),
+          NavBarItem(label: "Payments", svgPath: "assets/images/wallets.svg"),
+          NavBarItem(label: "Chats", icon: Icons.chat_bubble_outline),
+          NavBarItem(label: "Settings", svgPath: "assets/images/settings.svg"),
+        ]
+      : Custombottomnavbar.customerItems;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isAdmin) ChatService.instance.start();
+  }
 
   Future<bool> _onWillPop() async {
     return await showDialog(
@@ -54,13 +75,20 @@ class _MainScreenState extends State<MainScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: _screens[_currentIndex],
-        bottomNavigationBar: Custombottomnavbar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+        bottomNavigationBar: ListenableBuilder(
+          listenable: ChatService.instance,
+          builder: (context, _) => Custombottomnavbar(
+            items: _items,
+            currentIndex: _currentIndex,
+            badges: _isAdmin
+                ? {_adminChatsTab: ChatService.instance.totalUnread}
+                : const {},
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
         ),
       ),
     );

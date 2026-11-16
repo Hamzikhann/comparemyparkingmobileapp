@@ -105,7 +105,17 @@ class APIService {
   void _handleError(DioException e, void Function(String) onError) {
     if (!offlineNotifier.getOfflineStatus()) {
       try {
-        if (e.response?.statusCode == 404) {
+        final data = e.response?.data;
+        final serverMessage = (data is Map && data["message"] is String)
+            ? (data["message"] as String).trim()
+            : '';
+        if (e.type == DioExceptionType.badResponse &&
+            (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+          onError.call("Unauthorized: ${data is Map ? data["message"] : ''}");
+        } else if (serverMessage.isNotEmpty) {
+          // The server's own explanation, e.g. "Wrong code. 4 tries left."
+          onError.call(serverMessage);
+        } else if (e.response?.statusCode == 404) {
           onError.call(e.message.toString());
         } else if (e.type == DioExceptionType.badResponse &&
             (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {

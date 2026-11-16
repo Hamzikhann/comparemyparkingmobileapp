@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/data/shared/SharedStorage.dart';
+import 'package:parkingapp/pages/ResetPasswordScreen.dart';
 import 'package:parkingapp/providers/AlertNotifier.dart';
 import 'package:parkingapp/providers/Alertify.dart';
 import 'package:parkingapp/utils/colors.dart';
@@ -131,7 +132,31 @@ class _LoginPageState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 80.h),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ResetPasswordScreen(
+                                      initialEmail:
+                                          emailController.text.trim()),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontFamily: 'Archivo',
+                                color: colors.secondarynew,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 56.h),
                         // Sign up link
                         Center(
                           child: Row(

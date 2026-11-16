@@ -1,3 +1,4 @@
+import 'package:parkingapp/data/api/config.dart';
 class UserModel {
   String id;
   String firstName;
@@ -64,7 +65,7 @@ class UserModel {
           if (!imgUrl.startsWith('/')) {
             imgUrl = "/$imgUrl";
           }
-          imgUrl = "https://comparemyairportparking.com/api/$imgUrl";
+          imgUrl = "${AppConfig.baseUrl}/api/$imgUrl";
         }
       }
 

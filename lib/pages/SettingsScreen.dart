@@ -2,13 +2,14 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/TopBar.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:parkingapp/data/api/api.dart';
+import 'package:parkingapp/pages/ChangePasswordScreen.dart';
+import 'package:parkingapp/services/auth_actions.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -61,8 +62,17 @@ class SettingsScreen extends StatelessWidget {
                     "Change Password",
                     Icons.lock_outline,
                     onTap: () {
-                      // Navigate to change password screen
-                      Navigator.pushNamed(context, MyRoutes.forgot);
+                      // Logged in: change with current password.
+                      // Not logged in: forgot-password (OTP) flow.
+                      if (Globals.user != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const ChangePasswordScreen()),
+                        );
+                      } else {
+                        Navigator.pushNamed(context, MyRoutes.forgot);
+                      }
                     },
                   ),
                   SizedBox(height: 24.h),
@@ -84,7 +94,9 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   _buildLogoutItem(context),
-                  if (Globals.user != null) _buildDeleteAccountItem(context),
+                  // Staff accounts are deactivated by an admin instead
+                  if (Globals.user != null && !isStaffUser)
+                    _buildDeleteAccountItem(context),
                 ],
               ),
             ),
@@ -185,12 +197,8 @@ class SettingsScreen extends StatelessWidget {
           ),
         );
 
-        if (shouldLogout == true) {
-          await SharedStorage.removeFromSharedPreferences();
-          if (context.mounted) {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-                MyRoutes.selectionRoute, (route) => false);
-          }
+        if (shouldLogout == true && context.mounted) {
+          await logoutAndGoToLogin(context);
         }
       },
     );

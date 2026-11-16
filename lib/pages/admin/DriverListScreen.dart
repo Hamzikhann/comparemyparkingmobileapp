@@ -1,10 +1,9 @@
+import 'package:parkingapp/services/auth_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/admin/AddEditDriverScreen.dart';
-import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/pages/admin/TopBar.dart';
 import 'package:parkingapp/utils/colors.dart';
 
@@ -48,9 +47,41 @@ class _DriverListScreenState extends State<DriverListScreen> {
     }
   }
 
-  void deleteDriver(String driverId) async {
-    // TODO: Implement delete API call
-    // await GeneralRepository().deleteDriver(driverId);
+  /// Deactivates the employee (they can no longer log in). Their not-started
+  /// jobs are released so they can be assigned to someone else.
+  Future<void> deactivateDriver(Driver driver) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Deactivate driver'),
+        content: Text(
+            'Deactivate ${driver.firstName} ${driver.lastName}? They will no '
+            'longer be able to log in, and their upcoming jobs will be '
+            'released for reassignment.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: const Text('Deactivate',
+                  style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final msg = await GeneralRepository().deactivateEmployee(driver.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
     fetchDrivers(); // Refresh list
   }
 
@@ -80,12 +111,8 @@ class _DriverListScreenState extends State<DriverListScreen> {
             TopBar(
               title: "Drivers",
               onBackPressed: () => Navigator.pop(context),
-              onLogoutPressed: () {
-                Globals.user = null;
-                SharedStorage.removeFromSharedPreferences();
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    MyRoutes.loginRoute, (route) => false);
-              },
+              // Same logout as everyone else: stops this phone's pushes, clears chats
+              onLogoutPressed: () => logoutAndGoToLogin(context),
             ),
             Expanded(
               child: _buildBody(),
@@ -136,8 +163,9 @@ class _DriverListScreenState extends State<DriverListScreen> {
                     onPressed: () => editDriver(driver),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteDriver(driver.id),
+                    tooltip: 'Deactivate',
+                    icon: Icon(Icons.person_off, color: Colors.red),
+                    onPressed: () => deactivateDriver(driver),
                   ),
                 ],
               ),

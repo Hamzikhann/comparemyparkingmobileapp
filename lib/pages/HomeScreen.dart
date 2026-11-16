@@ -6,7 +6,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/airport_service_config.dart';
+import 'package:parkingapp/data/airport_services.dart';
+import 'package:parkingapp/data/booking_flow.dart';
+import 'package:parkingapp/data/site_config_store.dart';
 import 'package:parkingapp/data/GlobalsBookingDetail.dart';
 import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
@@ -23,17 +25,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedAirport;
-  final List<String> airportOptions = [
-    'Stansted',
-    'Bristol',
-    'Luton',
-    'Birmingham',
-    'Manchester',
-    'Gatwick',
-    'Heathrow',
-    'Liverpool',
-    'Southend'
-  ];
+  // From the admin panel (GET /api/site-config); built-in active airports until it loads
+  List<String> get airportOptions => SiteConfigStore.current.airports;
   String? selectedDateRange;
   String? checkInTime;
   String? checkOutTime;
@@ -53,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadBookings();
+    SiteConfigStore.load().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -246,11 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  String _formatTimeForApi(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
+  // Website format "hh:mm a" (e.g. "02:30 PM")
+  String _formatTimeForApi(TimeOfDay time) =>
+      formatApiTime(time.hour, time.minute);
 
   void _handleSearch() {
     if (selectedAirport == null) {
@@ -1127,7 +1121,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showBookingDetails(BuildContext context, Parking booking) {
-    final packageType = Globals.option?.type ?? 'meet and greet';
+    final packageType = booking.packageType.isNotEmpty
+        ? booking.packageType
+        : (Globals.option?.type ?? '');
     final serviceInfo = getAirportServiceInfo(
       booking.airport,
       packageType,
@@ -2105,32 +2101,16 @@ class _HomeScreenState extends State<HomeScreen> {
     int _calculateAdditionalDays() {
       if (updateStartDate == null || updateEndDate == null) return 0;
 
-      final originalStart = DateTime.parse(booking.startDate);
-      final originalEnd = DateTime.parse(booking.endDate);
-
-      // Compare pure dates to avoid time-of-day math issues
-      final oStart =
-          DateTime(originalStart.year, originalStart.month, originalStart.day);
-      final oEnd =
-          DateTime(originalEnd.year, originalEnd.month, originalEnd.day);
-      final uStart = DateTime(
-          updateStartDate!.year, updateStartDate!.month, updateStartDate!.day);
-      final uEnd = DateTime(
-          updateEndDate!.year, updateEndDate!.month, updateEndDate!.day);
-
-      int daysBefore = oStart.difference(uStart).inDays;
-      int daysAfter = uEnd.difference(oEnd).inDays;
-
-      int extraDays =
-          (daysBefore > 0 ? daysBefore : 0) + (daysAfter > 0 ? daysAfter : 0);
-
-      return extraDays.clamp(0, 100);
+      // Only days beyond the original length of stay are charged (same rule as the server)
+      return bookingChangeExtraDays(
+          DateTime.parse(booking.startDate),
+          DateTime.parse(booking.endDate),
+          updateStartDate!,
+          updateEndDate!);
     }
 
-    double _calculateTotalCost() {
-      int extraDays = _calculateAdditionalDays();
-      return 20.0 + (extraDays * 15.0);
-    }
+    // Estimate shown in the sheet; the payment uses the server's amount
+    double _calculateTotalCost() => bookingChangeCost(_calculateAdditionalDays());
 
     Future<void> _handleUpdatePayment(
         String paymentId, double totalCost, StateSetter setState) async {
@@ -2220,14 +2200,16 @@ class _HomeScreenState extends State<HomeScreen> {
         double totalCost, StateSetter setState) async {
       final localMessenger = ScaffoldMessenger.of(this.context);
       try {
-        final amountInPence = (totalCost).toInt().toString();
-
-        final response = await _repository.createPaymentIntent(
-          amount: amountInPence,
-          currency: "gbp",
+        final response = await _repository.createBookingChangePaymentIntent(
+          bookingId: booking.id,
           startDate: _formatDateForApi(updateStartDate!),
+          startTime: _formatTimeForApi(updateStartTime),
           endDate: _formatDateForApi(updateEndDate!),
+          endTime: _formatTimeForApi(updateEndTime),
         );
+        // What the server charges (admin can set other fees per airport)
+        final charged = parsePrice(response['data']?['amount']);
+        if (charged > 0) totalCost = charged;
 
         final clientSecret = response['paymentIntent']?['client_secret'] ??
             response['clientSecret'];

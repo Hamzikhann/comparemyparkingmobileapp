@@ -1,9 +1,9 @@
+import 'package:parkingapp/services/auth_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/data/shared/SharedStorage.dart';
 import 'package:parkingapp/pages/admin/DriverListScreen.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
@@ -37,12 +37,8 @@ class ViewAllScreen extends StatelessWidget {
             TopBar(
               title: title,
               onBackPressed: () => Navigator.pop(context),
-              onLogoutPressed: () {
-                // Handle logout
-                Globals.user = null;
-                SharedStorage.removeFromSharedPreferences();
-                Navigator.of(context).pushNamedAndRemoveUntil(MyRoutes.loginRoute, (route) => false);
-              },
+              // Same logout as everyone else: stops this phone's pushes, clears chats
+              onLogoutPressed: () => logoutAndGoToLogin(context),
             ),
             Expanded(
               child: ListView.builder(
@@ -59,7 +55,8 @@ class ViewAllScreen extends StatelessWidget {
                       item.bookingAssignments.first.employee?.firstName != null
                   ? item.bookingAssignments.first.employee!.firstName
                   : 'Un-Assigned',
-                      showAssignDriver: type == 'pending', // showAssignDriver true only if pending
+                      // Assign (pending) or reassign (already assigned); not for completed
+                      showAssignDriver: type != 'completed',
                     ),
                   );
                 },
@@ -194,7 +191,9 @@ class ViewAllScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    "Assign Driver",
+                    parking.bookingAssignments.isNotEmpty
+                        ? "Reassign Driver"
+                        : "Assign Driver",
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
@@ -268,12 +267,41 @@ class ViewAllScreen extends StatelessWidget {
                                 if (selectedDriverId != null) {
                                   setState(() => isLoading = true);
                                   try {
+                                    // Already has a driver: reassign that
+                                    // assignment (one employee per booking)
+                                    final current = parking
+                                            .bookingAssignments.isNotEmpty
+                                        ? parking.bookingAssignments.first
+                                        : null;
+                                    if (current != null &&
+                                        current.id.isNotEmpty) {
+                                      if (current.employeeId ==
+                                          selectedDriverId) {
+                                        setState(() => isLoading = false);
+                                        Navigator.pop(context);
+                                        return;
+                                      }
+                                      final msg = await GeneralRepository()
+                                          .reassignDriver(
+                                              current.id, selectedDriverId!);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(
+                                              content: Text(msg)));
+                                      Navigator.pop(context);
+                                      Navigator.of(context)
+                                          .pushNamedAndRemoveUntil(
+                                              MyRoutes.adminHome,
+                                              (route) => false);
+                                      return;
+                                    }
                                     // Call the API to assign driver
                                     await assignDriver(context,
                                       parking.registrations.first.bookingId,
                                       selectedDriverId!,
                                     );
                                   } catch (e) {
+                                    setState(() => isLoading = false);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text("Failed to assign driver: ${e.toString()}"),

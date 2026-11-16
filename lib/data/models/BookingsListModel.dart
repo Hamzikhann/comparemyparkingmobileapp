@@ -43,6 +43,16 @@ class Parking {
   final String userId;
   final String? guestUserId;
   final String packageId;
+
+  /// From the included package (e.g. "Meet and Greet").
+  final String packageType;
+
+  /// Meet and Greet: the driver collects the car from the customer.
+  bool get isMeetAndGreet => packageType
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .contains('meet and greet');
   final List<Registration> registrations;
   final List<Vehicle> vehicles;
   final List<BookingAssignment> bookingAssignments;
@@ -69,6 +79,7 @@ class Parking {
     required this.userId,
     this.guestUserId,
     required this.packageId,
+    this.packageType = '',
     required this.registrations,
     required this.vehicles,
     required this.bookingAssignments,
@@ -97,6 +108,9 @@ class Parking {
       userId: json['userId'] ?? '',
       guestUserId: json['guestUserId'],
       packageId: json['packageId'] ?? '',
+      packageType: (json['package'] is Map)
+          ? (json['package']['packageType'] ?? '').toString()
+          : '',
       location: json['location'] is Map
           ? json['location']['address']
           : json['location'],
@@ -105,7 +119,8 @@ class Parking {
           : (json['contact'] ?? json['contactNumber']),
       arrivalProcedure: json['arrivalProcedure'],
       departureProcedure: json['departureProcedure'],
-      busTrackingUrl: json['busTrackingUrl'] ??
+      busTrackingUrl: json['busTrackingLink'] ??
+          json['busTrackingUrl'] ??
           json['bus_tracking_url'] ??
           json['bus_tracking'] ??
           json['trackingLink'] ??

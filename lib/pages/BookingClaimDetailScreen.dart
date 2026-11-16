@@ -63,7 +63,25 @@ class _BookingClaimDetailScreenState extends State<BookingClaimDetailScreen> {
         Navigator.of(context).pop(true); // Return true to indicate success
       }
     } catch (e) {
-      // Error handled by repository
+      // The repository's alert has no place on this screen: show the server's reason here
+      if (!mounted) return;
+      final message = e.toString().trim().isEmpty
+          ? 'Could not claim this booking. Please try again.'
+          : e.toString();
+      final alreadyClaimed = message.toLowerCase().contains('already been claimed');
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(alreadyClaimed ? 'Already claimed' : 'Claim failed'),
+          content: Text(alreadyClaimed
+              ? 'This booking has already been claimed, so it can\'t be claimed again.'
+              : message),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+          ],
+        ),
+      );
     }
   }
 

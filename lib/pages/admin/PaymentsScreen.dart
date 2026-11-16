@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/widgets/driver/TopBar.dart';
 import '../../data/models/Payment.dart';
@@ -30,7 +31,7 @@ class _PaymentScreenAdminState extends State<PaymentScreenAdmin> {
     });
 
     final String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final url = Uri.parse('https://stanstedairportparking247.com/api/payment/v2/list');
+    final url = Uri.parse('${AppConfig.baseUrl}/api/payment/v2/list');
 
     try {
       final response = await http.post(

@@ -4,6 +4,7 @@ import 'package:parkingapp/data/models/BookingInfoModel.dart';
 import 'package:parkingapp/data/models/CardsModel.dart';
 import 'package:parkingapp/data/models/IPmodel.dart';
 import 'package:parkingapp/data/models/UserModel.dart';
+import 'package:parkingapp/services/push_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedStorage {
@@ -22,6 +23,8 @@ class SharedStorage {
       final data = json.decode(jsonString);
       Globals.user = UserModel.fromJson(data);
       Globals.roleTitle = Globals.user?.roleTitle ?? "";
+      // Opened already logged in: make sure the server has this phone's push token
+      PushToken.sync();
     }
   }
 

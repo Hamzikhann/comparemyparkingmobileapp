@@ -6,7 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/airport_service_config.dart';
+import 'package:parkingapp/data/airport_services.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';

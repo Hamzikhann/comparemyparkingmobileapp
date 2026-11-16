@@ -1,27 +1,84 @@
+import 'package:parkingapp/data/booking_flow.dart';
+
+/// Response of POST /api/search/v5.
 class SearchResultResponse {
   final String message;
   final List<ParkingOption> data;
   final String? airport;
 
+  /// Server note when there is nothing to show (e.g. "This airport is not available").
+  final String? note;
+
+  /// False for display-only airports: their packages show as "Fully Booked".
+  final bool bookable;
+
+  /// Promo code result, when one was entered and accepted.
+  final PromoCodeDetails? promoCodeDetails;
+
   SearchResultResponse({
     required this.message,
     required this.data,
     this.airport,
+    this.note,
+    this.bookable = true,
+    this.promoCodeDetails,
   });
 
   factory SearchResultResponse.fromJson(Map<String, dynamic> json) {
-    var list = json['data'] as List? ?? [];
-    String? airportName = json['airport']?.toString();
-    List<ParkingOption> resultsList = list
-        .map((i) => ParkingOption.fromJson(i, airportContext: airportName))
-        .toList();
-
+    final list = json['data'] as List? ?? [];
     return SearchResultResponse(
-      message: json['message'] ?? '',
-      data: resultsList,
-      airport: airportName,
+      message: json['message']?.toString() ?? '',
+      data: list
+          .whereType<Map>()
+          .map((i) => ParkingOption.fromJson(Map<String, dynamic>.from(i)))
+          .toList(),
+      airport: json['airport']?.toString(),
+      note: json['note']?.toString(),
+      bookable: json['bookable'] is bool ? json['bookable'] as bool : true,
+      promoCodeDetails: json['promoCodeDetails'] is Map
+          ? PromoCodeDetails.fromJson(
+              Map<String, dynamic>.from(json['promoCodeDetails']))
+          : null,
     );
   }
+}
+
+class PromoCodeDetails {
+  final String code;
+  final String discountType;
+  final double? discountPercentage;
+  final double? discountAmount;
+
+  PromoCodeDetails({
+    required this.code,
+    required this.discountType,
+    this.discountPercentage,
+    this.discountAmount,
+  });
+
+  factory PromoCodeDetails.fromJson(Map<String, dynamic> json) {
+    double? num_(dynamic v) => v == null ? null : parsePrice(v);
+    return PromoCodeDetails(
+      code: json['code']?.toString() ?? '',
+      discountType: json['discountType']?.toString() ?? '',
+      discountPercentage: num_(json['discountPercentage']),
+      discountAmount: num_(json['discountAmount']),
+    );
+  }
+
+  /// "SUMMER10 applied (10% off)" / "SUMMER10 applied (£5.00 off)"
+  String get label {
+    if (discountType == 'percentage' && discountPercentage != null) {
+      return '$code applied (${_trim(discountPercentage!)}% off)';
+    }
+    if (discountAmount != null) {
+      return '$code applied (${formatPrice(discountAmount!)} off)';
+    }
+    return '$code applied';
+  }
+
+  static String _trim(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 }
 
 class FollowUpPage {
@@ -47,6 +104,7 @@ class FollowUpPage {
   }
 }
 
+/// One package from the search. Field rules follow the website's src/utils/packages.js.
 class ParkingOption {
   final String name;
   final String price;
@@ -68,6 +126,19 @@ class ParkingOption {
   final String? companyId;
   final String? logoUrl;
 
+  /// Id of this package in the server's search results. Payment is charged from it.
+  final String? packageId;
+
+  /// Our brand and tier (live airports), sent with the booking for brand-specific emails.
+  final String? originalName;
+  final String? tier;
+
+  /// Price before our discount (live) or the provider's price (display airports).
+  final double originalPrice;
+  final double priceDiscount;
+  final bool bookable;
+  final int viewingCount;
+
   ParkingOption({
     required this.name,
     required this.price,
@@ -88,60 +159,66 @@ class ParkingOption {
     this.productId,
     this.companyId,
     this.logoUrl,
+    this.packageId,
+    this.originalName,
+    this.tier,
+    this.originalPrice = 0,
+    this.priceDiscount = 0,
+    this.bookable = true,
+    this.viewingCount = 0,
   });
 
-  factory ParkingOption.fromJson(Map<String, dynamic> json,
-      {String? airportContext}) {
-    // 1. Determine Title based on airport
-    String finalName = '';
-    bool isSpecialAirport = airportContext == 'Stansted' ||
-        airportContext == 'Luton' ||
-        airportContext == 'Bristol';
+  /// Number to charge / show: our price when bookable, otherwise the provider's.
+  double get priceValue => bookable ? parsePrice(price) : originalPrice;
 
-    if (isSpecialAirport) {
-      finalName =
-          json['name']?.toString() ?? json['productName']?.toString() ?? '';
-    } else {
-      finalName =
-          json['productName']?.toString() ?? json['name']?.toString() ?? '';
-    }
+  /// "£38.69", or "Fully Booked".
+  String get displayPrice {
+    if (isFullyBooked) return 'Fully Booked';
+    final v = priceValue;
+    return v > 0 ? formatPrice(v) : price;
+  }
 
-    // 2. Map Features
-    List<String> features = [];
-    if (json['features'] != null && json['features'] is List) {
-      features = (json['features'] as List).map((e) => e.toString()).toList();
-    } else if (json['keyFeatures'] != null && json['keyFeatures'] is List) {
-      features =
-          (json['keyFeatures'] as List).map((e) => e.toString()).toList();
-    }
+  /// Short text for cards: the tier summary, else the description.
+  String get summary =>
+      (frontPageSummary?.trim().isNotEmpty ?? false)
+          ? frontPageSummary!.trim()
+          : description;
 
-    // 3. Handle Fully Booked
-    bool fullyBooked = json['isFullyBooked'] as bool? ?? false;
-    String priceStr = json['price']?.toString() ?? '';
-    if (priceStr.toLowerCase().contains('booked')) {
-      fullyBooked = true;
-    }
+  /// Best image: our tier image, else the provider logo (empty when there is none).
+  String get imageUrl => [imagenew, image, logoUrl]
+      .firstWhere((u) => u != null && u.trim().isNotEmpty, orElse: () => '')!;
 
-    // 4. Follow Up Page
+  factory ParkingOption.fromJson(Map<String, dynamic> json) {
+    final bookable = json['bookable'] is bool ? json['bookable'] as bool : true;
+    final priceStr = json['price']?.toString() ?? '';
+
+    final fullyBooked = !bookable ||
+        json['isFullyBooked'] == true ||
+        RegExp(r'fully booked|sorry', caseSensitive: false).hasMatch(priceStr);
+
     FollowUpPage? followUp;
-    if (json['followUpPage'] != null && json['followUpPage'] is Map) {
-      followUp = FollowUpPage.fromJson(json['followUpPage']);
+    if (json['followUpPage'] is Map) {
+      followUp =
+          FollowUpPage.fromJson(Map<String, dynamic>.from(json['followUpPage']));
     }
+
+    final rating = json['rating'] is num
+        ? (json['rating'] as num).toDouble()
+        : double.tryParse(json['rating']?.toString() ?? '') ?? 0.0;
 
     return ParkingOption(
-      name: finalName,
+      name: _firstText([json['name'], json['productName']]) ?? 'Parking Package',
       price: priceStr,
-      description: json['description']?.toString() ?? 'No description Added',
+      description: json['description']?.toString() ?? '',
       terminalInfo: json['terminalInfo']?.toString(),
-      bulletPoints: features,
+      bulletPoints: _features(json),
       hasParkMark: json['hasParkMark'] as bool? ?? false,
-      image: json['logoUrl'] ?? json['logo'] ?? json['image'],
-      imagenew: json['imagenew']?.toString(),
+      image: _firstText([json['logoUrl'], json['logo'], json['image']]),
+      imagenew: _firstText([json['imagenew']]),
       type: (json['type'] ?? json['category'])?.toString(),
-      rating:
-          (json['rating'] is num) ? (json['rating'] as num).toDouble() : 0.0,
+      rating: rating,
       ratingText: json['ratingText']?.toString() ?? '',
-      reviews: (json['reviewCount'] is int) ? json['reviewCount'] as int : 0,
+      reviews: int.tryParse(json['reviewCount']?.toString() ?? '') ?? 0,
       specialLabel: json['specialLabel']?.toString(),
       frontPageSummary: json['frontPageSummary']?.toString(),
       isFullyBooked: fullyBooked,
@@ -149,6 +226,35 @@ class ParkingOption {
       productId: json['productId']?.toString(),
       companyId: json['companyId']?.toString(),
       logoUrl: json['logoUrl']?.toString(),
+      packageId: json['packageId']?.toString(),
+      originalName: _firstText([json['originalName']]),
+      tier: _firstText([json['tier']]),
+      originalPrice: parsePrice(json['originalPrice']),
+      priceDiscount: parsePrice(json['priceDiscount']),
+      bookable: bookable,
+      viewingCount: int.tryParse(json['viewingCount']?.toString() ?? '') ?? 0,
     );
+  }
+
+  static String? _firstText(List<dynamic> values) {
+    for (final v in values) {
+      final s = v?.toString().trim() ?? '';
+      if (s.isNotEmpty && s != 'null') return s;
+    }
+    return null;
+  }
+
+  /// keyFeatures first, then features; drops empty entries (website getPackageFeatures).
+  static List<String> _features(Map<String, dynamic> json) {
+    for (final list in [json['keyFeatures'], json['features']]) {
+      if (list is List) {
+        final valid = list
+            .whereType<String>()
+            .where((f) => f.trim().isNotEmpty && f != '[Circular]')
+            .toList();
+        if (valid.isNotEmpty) return valid;
+      }
+    }
+    return [];
   }
 }

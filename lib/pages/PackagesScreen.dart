@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/data/Globals.dart';
+import 'package:parkingapp/data/booking_flow.dart';
+import 'package:parkingapp/data/site_config_store.dart';
 import 'package:parkingapp/data/models/SearchResultResponse.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/utils/colors.dart';
 import 'package:parkingapp/widgets/CustomButton.dart';
-import 'dart:math';
 
 class PackagesScreen extends StatefulWidget {
   const PackagesScreen({super.key});
@@ -32,6 +33,10 @@ class _PackagesScreenState extends State<PackagesScreen> {
     _initializeDatesFromGlobals();
     _searchFuture = _performSearch();
     Globals.option = null;
+    // Marketing switches (savings badge) from the admin panel
+    SiteConfigStore.load().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   void _initializeDatesFromGlobals() {
@@ -43,20 +48,26 @@ class _PackagesScreenState extends State<PackagesScreen> {
         parsedEndDate = DateTime.parse(Globals.endDate);
       }
       if (Globals.startTime.isNotEmpty) {
-        // "h:mm a" format e.g. "2:30 PM"
-        // Cleaning string just in case there are extra spaces
-        final cleanedStart = Globals.startTime.trim();
-        final dt = DateFormat("h:mm a").parse(cleanedStart);
-        parsedStartTime = TimeOfDay.fromDateTime(dt);
+        parsedStartTime = _parseGlobalTime(Globals.startTime);
       }
       if (Globals.endTime.isNotEmpty) {
-        final cleanedEnd = Globals.endTime.trim();
-        final dt = DateFormat("h:mm a").parse(cleanedEnd);
-        parsedEndTime = TimeOfDay.fromDateTime(dt);
+        parsedEndTime = _parseGlobalTime(Globals.endTime);
       }
     } catch (e) {
       debugPrint("Error parsing globals for dates: $e");
     }
+  }
+
+  /// Globals times are saved in the website's "hh:mm a" (e.g. "03:55 PM") by HomeScreen
+  /// and this screen. Older values may be 24-hour "HH:mm" (e.g. "15:55").
+  TimeOfDay _parseGlobalTime(String value) {
+    final cleaned = value.trim();
+    final m = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(cleaned);
+    if (m != null) {
+      return TimeOfDay(
+          hour: int.parse(m.group(1)!), minute: int.parse(m.group(2)!));
+    }
+    return TimeOfDay.fromDateTime(DateFormat("h:mm a").parse(cleaned));
   }
 
   Future<void> _pickDateAndTime({required bool isStart}) async {
@@ -193,11 +204,9 @@ class _PackagesScreenState extends State<PackagesScreen> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  String _formatTimeForApi(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
+  // Website format "hh:mm a" (e.g. "02:30 PM")
+  String _formatTimeForApi(TimeOfDay time) =>
+      formatApiTime(time.hour, time.minute);
 
   Future<SearchResultResponse> _performSearch() async {
     try {
@@ -537,31 +546,44 @@ class _PackagesScreenState extends State<PackagesScreen> {
                   }
 
                   if (snapshot.hasData) {
-                    final results = snapshot.data!.data;
+                    final search = snapshot.data!;
+                    final results = search.data;
                     final filteredResults = _showAvailableOnly
-                        ? results
-                            .where((item) => !item.price.contains('Sorry'))
-                            .toList()
+                        ? results.where((item) => !item.isFullyBooked).toList()
                         : results;
 
                     if (filteredResults.isEmpty) {
+                      // The server's reason when it gives one
+                      final note = search.note?.trim() ?? '';
                       return Center(
-                        child: Text(
-                          _showAvailableOnly
-                              ? 'No Bookings available '
-                              : 'No packages found',
-                          style: TextStyle(fontSize: 16.sp),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          child: Text(
+                            _showAvailableOnly && results.isNotEmpty
+                                ? 'No Bookings available'
+                                : (note.isNotEmpty
+                                    ? note
+                                    : 'No packages found'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 16.sp),
+                          ),
                         ),
                       );
                     }
 
+                    final promo = search.promoCodeDetails;
                     return ListView.separated(
                       padding:
                           EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                      itemCount: filteredResults.length,
+                      itemCount:
+                          filteredResults.length + (promo != null ? 1 : 0),
                       separatorBuilder: (context, index) =>
                           SizedBox(height: 16.h),
                       itemBuilder: (context, index) {
+                        if (promo != null) {
+                          if (index == 0) return _buildPromoBanner(promo);
+                          index -= 1;
+                        }
                         return _buildPackageCard(filteredResults[index]);
                       },
                     );
@@ -577,13 +599,50 @@ class _PackagesScreenState extends State<PackagesScreen> {
     );
   }
 
+  Widget _buildPromoBanner(PromoCodeDetails promo) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F3E8),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.local_offer_outlined,
+              size: 18.sp, color: const Color(0xFF2E7D32)),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              promo.label,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF2E7D32),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder() => Container(
+        width: 100.w,
+        height: 100.w,
+        color: Colors.grey[200],
+        child: Icon(Icons.local_parking, color: Colors.grey),
+      );
+
   Widget _buildPackageCard(ParkingOption option) {
-    // Determine if we should show tags. If API doesn't return nice tags, use placeholders or skip.
-    // The design shows "Quick & Easy" and "Friendly Local Team".
-    List<String> tags = option.bulletPoints.take(2).toList();
-    if (tags.isEmpty) {
-      tags = ["Quick & Easy", "Friendly Local Team"];
-    }
+    // Features from the API only (no made-up tags)
+    final List<String> tags = option.bulletPoints.take(2).toList();
+    final marketing = SiteConfigStore.current;
+    final showSaving = !option.isFullyBooked &&
+        option.priceDiscount > 0 &&
+        marketing.savingsText.isNotEmpty;
+    final showWasPrice = !option.isFullyBooked &&
+        option.originalPrice > option.priceValue &&
+        option.priceValue > 0;
 
     return GestureDetector(
       onTap: () {
@@ -614,34 +673,16 @@ class _PackagesScreenState extends State<PackagesScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8.r),
-                      child: (option.imagenew != null &&
-                              option.imagenew!.isNotEmpty)
+                      child: option.imageUrl.isNotEmpty
                           ? Image.network(
-                              option.imagenew!,
+                              option.imageUrl,
                               width: 100.w,
                               height: 100.w,
                               fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, stack) => Container(
-                                width: 100.w,
-                                height: 100.w,
-                                color: Colors.grey[200],
-                                child: Icon(Icons.local_parking,
-                                    color: Colors.grey),
-                              ),
+                              errorBuilder: (ctx, err, stack) =>
+                                  _imagePlaceholder(),
                             )
-                          : Image.network(
-                              option.image!,
-                              width: 100.w,
-                              height: 100.w,
-                              fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, stack) => Container(
-                                width: 100.w,
-                                height: 100.w,
-                                color: Colors.grey[200],
-                                child: Icon(Icons.local_parking,
-                                    color: Colors.grey),
-                              ),
-                            ),
+                          : _imagePlaceholder(),
                     ),
                     Positioned(
                       bottom: 0,
@@ -657,7 +698,9 @@ class _PackagesScreenState extends State<PackagesScreen> {
                           ),
                         ),
                         child: Text(
-                          "Secure My Parking Spot",
+                          option.isFullyBooked
+                              ? "Fully Booked"
+                              : "Secure My Parking Spot",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -669,51 +712,28 @@ class _PackagesScreenState extends State<PackagesScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
-                Container(
-                  width: 100.w,
-                  child: Builder(builder: (context) {
-                    final int views =
-                        Random(option.name.hashCode).nextInt(70) + 20;
-                    final int bought =
-                        Random(option.name.hashCode + 1).nextInt(views - 5) + 5;
-                    return Column(
+                // Viewer count from the API, only when it has one
+                if (option.viewingCount > 0) ...[
+                  SizedBox(height: 8.h),
+                  SizedBox(
+                    width: 100.w,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.remove_red_eye_outlined,
-                                size: 14.sp, color: colors.secondarynew),
-                            SizedBox(width: 4.w),
-                            Text(
-                              "$views views",
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: colors.secondarynew,
-                                fontFamily: 'Archivo',
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(Icons.shopping_bag_outlined,
-                                size: 14.sp, color: colors.secondarynew),
-                            SizedBox(width: 4.w),
-                            Text(
-                              "$bought bought",
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: colors.secondarynew,
-                                fontFamily: 'Archivo',
-                              ),
-                            ),
-                          ],
+                        Icon(Icons.remove_red_eye_outlined,
+                            size: 14.sp, color: colors.secondarynew),
+                        SizedBox(width: 4.w),
+                        Text(
+                          "${option.viewingCount} viewing",
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: colors.secondarynew,
+                            fontFamily: 'Archivo',
+                          ),
                         ),
                       ],
-                    );
-                  }),
-                ),
+                    ),
+                  ),
+                ],
               ],
             ),
             SizedBox(width: 12.w),
@@ -734,16 +754,18 @@ class _PackagesScreenState extends State<PackagesScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4.h),
-                  Text(
-                    "Start your journey the easy way with ${option.name}...",
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey[600],
+                  if (option.summary.isNotEmpty) ...[
+                    Text(
+                      option.summary,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8.h),
+                    SizedBox(height: 8.h),
+                  ],
 
                   // Tags
                   Wrap(
@@ -785,42 +807,67 @@ class _PackagesScreenState extends State<PackagesScreen> {
                               color: Colors.grey[500],
                             ),
                           ),
+                          if (showWasPrice)
+                            Text(
+                              formatPrice(option.originalPrice),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
                           Text(
-                            option.price.contains('Sorry') ||
-                                    option.price.trim().startsWith('£')
-                                ? option.price
-                                : "£${option.price}",
+                            option.displayPrice,
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: option.isFullyBooked
+                                  ? Colors.red[700]
+                                  : Colors.black,
                             ),
                           ),
-                          Text(
-                            "All inclusive • No hidden fees",
-                            style: TextStyle(
-                              fontSize: 8.sp,
-                              color: Colors.grey[500],
+                          if (showSaving)
+                            Container(
+                              margin: EdgeInsets.only(top: 2.h),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w, vertical: 2.h),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E3200),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Text(
+                                marketing.savingsText,
+                                style: TextStyle(
+                                    fontSize: 8.sp, color: Colors.white),
+                              ),
+                            )
+                          else if (!option.isFullyBooked)
+                            Text(
+                              "All inclusive • No hidden fees",
+                              style: TextStyle(
+                                fontSize: 8.sp,
+                                color: Colors.grey[500],
+                              ),
                             ),
-                          ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Icon(Icons.star, color: Colors.amber, size: 20.sp),
-                          SizedBox(width: 4.w),
-                          Text(
-                            option.rating > 0
-                                ? "${option.rating}"
-                                : "4.6", // Fallback to 4.6 if 0
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                      // Rating from the API only
+                      if (option.rating > 0)
+                        Row(
+                          children: [
+                            Icon(Icons.star,
+                                color: Colors.amber, size: 20.sp),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "${option.rating}",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                 ],

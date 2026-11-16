@@ -31,16 +31,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
-      final rawAmount =
-          (Globals.option?.price ?? "0").replaceAll(RegExp(r'[^\d.]'), '');
-      final amountInPence = (double.tryParse(rawAmount)!).toInt().toString();
-
-      debugPrint(
-          'Creating payment intent ($method) for amount: $amountInPence pence');
-
-      // Create Intent with specific method type
+      // The server charges the price of this package from its own search results
+      final option = Globals.option;
       final response = await GeneralRepository().createPaymentIntent(
-          amount: amountInPence,
+          amount: option?.priceValue ?? 0,
+          packageId: option?.packageId ?? '',
           currency: "gbp",
           startDate: Globals.startDate,
           endDate: Globals.endDate,
@@ -126,8 +121,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Flight
         outboundTerminal: Globals.booking_info_model?.outBoundTerminal ?? "",
         inboundTerminal: Globals.booking_info_model?.inBoundTerminal ?? "",
-        outboundFlightNo: Globals.booking_info_model?.returnFlight ?? "",
-        inboundFlightNo: Globals.booking_info_model?.departureFlight ?? "",
+        outboundFlightNo: Globals.booking_info_model?.departureFlight ?? "",
+        inboundFlightNo: Globals.booking_info_model?.returnFlight ?? "",
 
         // Customer
         title: Globals.booking_info_model?.title ?? "",
@@ -139,7 +134,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // Vehicle
         vehicleRegistrationNo: Globals.booking_info_model?.vehicleRegNo ?? "",
         vehicleManufacturer: Globals.booking_info_model?.carMaker ?? "",
-        vehicleYear: Globals.booking_info_model?.carModel ?? "",
+        vehicleYear: Globals.booking_info_model?.carYear ?? "",
         vehicleModel: Globals.booking_info_model?.carModel ?? "",
         vehicleColor: Globals.booking_info_model?.carColor ?? "",
         type: Globals.booking_info_model?.type ?? "",
@@ -149,12 +144,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         userId: Globals.user?.id ?? "",
         name: Globals.option?.name ?? "",
         price: Globals.option?.price ?? "",
-        description: Globals.option?.description ??
-            Globals.option?.frontPageSummary ??
-            "",
+        // As the website: the description, else the tier summary
+        description: (Globals.option?.description.isNotEmpty ?? false)
+            ? Globals.option!.description
+            : (Globals.option?.frontPageSummary ?? ""),
         bulletPoints: List<String>.from(Globals.option?.bulletPoints ?? []),
         totalPayment: Globals.option?.price ?? "",
         packageType: Globals.option?.type ?? "",
+        brandName: Globals.option?.originalName,
+        tierKey: Globals.option?.tier,
 
         // Payment
         referenceNo: "STRIPE-$paymentIntentId",

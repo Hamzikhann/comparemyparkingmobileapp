@@ -3,14 +3,39 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkingapp/utils/colors.dart';
 
+/// One tab in [Custombottomnavbar]. Give either an [svgPath] or an [icon].
+class NavBarItem {
+  final String label;
+  final String? svgPath;
+  final IconData? icon;
+
+  const NavBarItem({required this.label, this.svgPath, this.icon})
+      : assert(svgPath != null || icon != null);
+}
+
 class Custombottomnavbar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
+
+  /// Tabs to show. Defaults to the customer/admin tabs.
+  final List<NavBarItem> items;
+
+  /// Optional unread counts by tab index (shown as a red badge).
+  final Map<int, int> badges;
+
+  static const List<NavBarItem> customerItems = [
+    NavBarItem(label: "Home", svgPath: "assets/images/home.svg"),
+    NavBarItem(label: "Bookings", svgPath: "assets/images/bookings.svg"),
+    NavBarItem(label: "Payments", svgPath: "assets/images/wallets.svg"),
+    NavBarItem(label: "Settings", svgPath: "assets/images/settings.svg"),
+  ];
 
   const Custombottomnavbar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.items = customerItems,
+    this.badges = const {},
   });
 
   @override
@@ -37,10 +62,7 @@ class Custombottomnavbar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _buildNavItem(0, "assets/images/home.svg", "Home"),
-              _buildNavItem(1, "assets/images/bookings.svg", "Bookings"),
-              _buildNavItem(2, "assets/images/wallets.svg", "Payments"),
-              _buildNavItem(3, "assets/images/settings.svg", "Settings"),
+              for (int i = 0; i < items.length; i++) _buildNavItem(i, items[i]),
             ],
           ),
         ),
@@ -48,8 +70,9 @@ class Custombottomnavbar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, String svgIconPath, String label) {
+  Widget _buildNavItem(int index, NavBarItem item) {
     final isSelected = index == currentIndex;
+    final color = isSelected ? Colors.white : colors.textGray;
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),
@@ -58,7 +81,10 @@ class Custombottomnavbar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            Badge(
+              isLabelVisible: (badges[index] ?? 0) > 0,
+              label: Text((badges[index] ?? 0) > 99 ? '99+' : '${badges[index]}'),
+              child: Container(
               width: 40.w,
               height: 40.h,
               decoration: BoxDecoration(
@@ -66,16 +92,16 @@ class Custombottomnavbar extends StatelessWidget {
                 color: isSelected ? colors.primaryNew : Colors.transparent,
               ),
               child: Center(
-                child: SvgPicture.asset(
-                  svgIconPath,
-                  width: 24.w,
-                  height: 24.h,
-                  colorFilter: ColorFilter.mode(
-                    isSelected ? Colors.white : colors.textGray,
-                    BlendMode.srcIn,
-                  ),
-                ),
+                child: item.svgPath != null
+                    ? SvgPicture.asset(
+                        item.svgPath!,
+                        width: 24.w,
+                        height: 24.h,
+                        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                      )
+                    : Icon(item.icon, size: 24.sp, color: color),
               ),
+            ),
             ),
           ],
         ),
