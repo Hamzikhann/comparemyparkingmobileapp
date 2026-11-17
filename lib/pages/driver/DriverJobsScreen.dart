@@ -45,7 +45,7 @@ class _DriverJobsScreenState extends State<DriverJobsScreen> {
       _errorMessage = null;
     });
     try {
-      final response = await _repository.getBookingsForDriver();
+      final response = await _repository.getBookingsForDriver(showLoader: false);
       if (!mounted) return;
       setState(() {
         _active = response.assignedAssignments;

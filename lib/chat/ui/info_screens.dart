@@ -59,7 +59,7 @@ class MuteTile extends StatelessWidget {
       subtitle: c.isMuted
           ? Text(forever
               ? 'Always'
-              : 'Until ${DateFormat('d MMM, HH:mm').format(until!)}')
+              : 'Until ${DateFormat('d MMM, h:mm a').format(until!)}')
           : null,
       activeColor: colors.primaryNew,
       value: c.isMuted,
@@ -196,7 +196,7 @@ class _SharedMediaScreenState extends State<SharedMediaScreen> {
           return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(DateFormat('d MMM yyyy, HH:mm').format(m.createdAt),
+                Text(DateFormat('d MMM yyyy, h:mm a').format(m.createdAt),
                     style: TextStyle(fontSize: 11.sp, color: ChatColors.muted)),
                 SizedBox(height: 4.h),
                 m.type == 'audio' ? ChatVoiceBubble(m) : ChatFileBubble(m),
@@ -603,11 +603,9 @@ class _AllGroupsScreenState extends State<AllGroupsScreen> {
                       final x = g[i];
                       final member = x['isMember'] == true;
                       return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: colors.primaryNew.withOpacity(0.12),
-                          child:
-                              const Icon(Icons.group, color: colors.primaryNew),
-                        ),
+                        leading: GroupAvatar(
+                            x['avatarAttachmentId']?.toString(),
+                            radius: 20),
                         title: Text('${x['title'] ?? 'Group'}'),
                         subtitle: Text(
                             '${x['memberCount']} members${member ? ' · you are a member' : ''}'),

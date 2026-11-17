@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -546,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             backgroundImage: (Globals.user?.imageURL != null &&
                                     Globals.user!.imageURL!.isNotEmpty)
                                 ? (Globals.user!.imageURL!.startsWith('http')
-                                    ? NetworkImage(Globals.user!.imageURL!)
+                                    ? CachedNetworkImageProvider(Globals.user!.imageURL!)
                                     : FileImage(File(Globals.user!.imageURL!))
                                         as ImageProvider)
                                 : const AssetImage('assets/images/user.png'),

@@ -12,6 +12,23 @@ class BookingAdminResponse {
   });
 
   factory BookingAdminResponse.fromJson(Map<String, dynamic> json) {
+    // Current backend: admin list is paged { rows, total, summary } (shared with
+    // the website admin). Sort the rows into the groups the app shows.
+    final data = json['data'];
+    if (data is Map && data['rows'] is List) {
+      final all = (data['rows'] as List)
+          .map((e) => Parking.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      return BookingAdminResponse(
+        reservedParkings: all
+            .where((p) => p.status == 'Inprogress' || p.status == 'Started')
+            .toList(),
+        completedParkings: all.where((p) => p.status == 'Completed').toList(),
+        pendingParkings: all.where((p) => p.status == 'Pending').toList(),
+        allBookings: all,
+      );
+    }
+    // Older backend shape
     return BookingAdminResponse(
       reservedParkings: (json['data']['reservedParkings'] as List)
           .map((e) => Parking.fromJson(e))

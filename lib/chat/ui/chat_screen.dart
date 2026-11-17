@@ -840,7 +840,7 @@ class _ChatScreenState extends State<ChatScreen> {
               if (m.isEdited)
                 Text('edited  ',
                     style: TextStyle(fontSize: 10.sp, color: ChatColors.muted)),
-              Text(DateFormat('HH:mm').format(m.createdAt),
+              Text(DateFormat('h:mm a').format(m.createdAt),
                   style: TextStyle(fontSize: 10.sp, color: ChatColors.muted)),
               if (mine) ...[
                 SizedBox(width: 3.w),

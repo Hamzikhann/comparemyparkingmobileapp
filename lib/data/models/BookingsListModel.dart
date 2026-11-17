@@ -10,6 +10,20 @@ class BookingResponse {
   });
 
   factory BookingResponse.fromJson(Map<String, dynamic> json) {
+    // Admins get the paged list { rows, total, summary }; group it like the
+    // customer list (customers still get the grouped shape below).
+    if (json['rows'] is List) {
+      final all = (json['rows'] as List)
+          .map((e) => Parking.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      return BookingResponse(
+        reservedParkings: all
+            .where((p) => p.status == 'Inprogress' || p.status == 'Started')
+            .toList(),
+        pendingParkings: all.where((p) => p.status == 'Pending').toList(),
+        completedParkings: all.where((p) => p.status == 'Completed').toList(),
+      );
+    }
     return BookingResponse(
       reservedParkings: (json['reservedParkings'] as List?)
               ?.map((data) => Parking.fromJson(data))

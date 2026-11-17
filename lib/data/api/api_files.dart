@@ -20,6 +20,16 @@ class ApiFiles {
   static String getDrivers = "/api/users/list/employees";
   static String logout = "/api/users/logout";
   static String saveFcmToken = "/api/users/fcm-token";
+  // Admin app paged lists ({ limit, offset, search, ... } -> { rows, total })
+  static String adminPaymentsList = "/api/payment/admin/list";
+  static String adminUsersList = "/api/users/list";
+  // Admin actions, same as the website admin Bookings / Users pages
+  static String bookingDetail = "/api/booking/detail";
+  static String adminBookingUpdate = "/api/booking/update/data";
+  static String adminBookingEmail = "/api/booking/sendemail";
+  static String adminUserCreate = "/api/users/create";
+  static String adminUserUpdate = "/api/users/update";
+  static String adminUserDeactivate = "/api/users/deactivate";
   // Forgot password in the app: emailed 6-digit code, then a new password
   static String resetCodeSend = "/api/auth/v2/forgot/password";
   static String resetCodeVerify = "/api/auth/v2/forgot/verify";

@@ -7,7 +7,8 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/Driver.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
-import 'package:parkingapp/pages/admin/PaymentsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminPaymentsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminUsersScreen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:parkingapp/data/models/DashboardDataModel.dart';
 import 'package:parkingapp/data/models/AdminDashboardModel.dart';
@@ -44,8 +45,13 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     });
 
     try {
-      _bookingsFuture = _repository.getBookingsForAdmin();
-      await _bookingsFuture;
+      // Home only shows dashboard numbers; the full booking list lives on the
+      // Bookings tab (paged), so don't download every booking here.
+      _bookingsFuture = Future.value(BookingAdminResponse(
+          reservedParkings: [],
+          completedParkings: [],
+          pendingParkings: [],
+          allBookings: []));
 
       // Fetch dashboard data
       _dashboardData = await _repository.getDashboardData(_filter);
@@ -113,7 +119,8 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => PaymentScreenAdmin()));
+                          builder: (context) =>
+                              const AdminPaymentsScreen(standalone: true)));
                 },
                 onBackPressed: () {},
                 // Same logout as everyone else: stops this phone's pushes, clears chats
@@ -206,14 +213,22 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                         Row(
                                           children: [
                                             Expanded(
-                                              child: _buildStatCard(
-                                                "Users",
-                                                _mainDashboardData
-                                                        ?.data.stats.totalUsers
-                                                        .toString() ??
-                                                    "0",
-                                                Icons.people_outline,
-                                                Colors.green,
+                                              // Tap: the paged Users list
+                                              child: GestureDetector(
+                                                onTap: () => Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            const AdminUsersScreen())),
+                                                child: _buildStatCard(
+                                                  "Users",
+                                                  _mainDashboardData
+                                                          ?.data.stats.totalUsers
+                                                          .toString() ??
+                                                      "0",
+                                                  Icons.people_outline,
+                                                  Colors.green,
+                                                ),
                                               ),
                                             ),
                                             SizedBox(width: 16.w),

@@ -1,4 +1,5 @@
 import 'package:parkingapp/data/Globals.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -35,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
                         radius: 20.r,
                         backgroundImage:
                             (Globals.user!.imageURL!.startsWith('http'))
-                                ? NetworkImage(Globals.user!.imageURL!)
+                                ? CachedNetworkImageProvider(Globals.user!.imageURL!)
                                 : FileImage(File(Globals.user!.imageURL!))
                                     as ImageProvider,
                       ),

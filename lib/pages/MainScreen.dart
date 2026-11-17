@@ -7,6 +7,9 @@ import 'package:parkingapp/pages/HomeScreen.dart';
 import 'package:parkingapp/pages/PaymentHistoryScreen.dart';
 import 'package:parkingapp/pages/SettingsScreen.dart';
 import 'package:parkingapp/pages/admin/AdminHome.dart';
+import 'package:parkingapp/pages/admin/AdminBookingsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminPaymentsScreen.dart';
+import 'package:parkingapp/pages/admin/AdminUsersScreen.dart';
 import 'package:parkingapp/widgets/CustomBottomNavBar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -23,19 +26,22 @@ class _MainScreenState extends State<MainScreen> {
 
   List<Widget> get _screens => [
         _isAdmin ? const Adminhome() : HomeScreen(),
-        BookingsScreen(),
-        PaymentHistoryScreen(),
+        // Admins: paged lists of everyone's bookings/payments
+        _isAdmin ? const AdminBookingsScreen() : BookingsScreen(),
+        _isAdmin ? const AdminPaymentsScreen() : PaymentHistoryScreen(),
+        if (_isAdmin) const AdminUsersScreen(asTab: true),
         if (_isAdmin) const ChatsScreen(), // admins chat with drivers
         SettingsScreen(),
       ];
 
-  static const int _adminChatsTab = 3;
+  static const int _adminChatsTab = 4;
 
   List<NavBarItem> get _items => _isAdmin
       ? const [
           NavBarItem(label: "Home", svgPath: "assets/images/home.svg"),
           NavBarItem(label: "Bookings", svgPath: "assets/images/bookings.svg"),
           NavBarItem(label: "Payments", svgPath: "assets/images/wallets.svg"),
+          NavBarItem(label: "Users", icon: Icons.people_outline),
           NavBarItem(label: "Chats", icon: Icons.chat_bubble_outline),
           NavBarItem(label: "Settings", svgPath: "assets/images/settings.svg"),
         ]

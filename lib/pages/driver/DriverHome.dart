@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -89,7 +90,7 @@ class _DriverhomeState extends State<Driverhome> {
               radius: 22.r,
               backgroundImage: hasImage
                   ? (user.imageURL!.startsWith('http')
-                      ? NetworkImage(user.imageURL!)
+                      ? CachedNetworkImageProvider(user.imageURL!)
                       : FileImage(File(user.imageURL!)) as ImageProvider)
                   : const AssetImage('assets/images/user.png'),
             ),

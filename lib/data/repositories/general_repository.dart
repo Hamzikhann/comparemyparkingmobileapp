@@ -13,6 +13,8 @@ import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/data/api/api_files.dart';
 import 'package:parkingapp/services/push_token.dart';
+import 'package:parkingapp/widgets/paged_list.dart';
+import 'package:parkingapp/data/models/BookingsListModel.dart' as booking_list;
 import 'package:parkingapp/data/api/api_service.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
@@ -513,6 +515,11 @@ class GeneralRepository {
       apiEndpoint:
           ApiFiles.bookingsList, // Make sure you have this endpoint defined
       requestMethod: RequestMethod.post,
+      // Admins: the list is paged, ask for the newest 500. Customers and
+      // employees get their own full list and must not be sent paging fields.
+      requestData: Globals.roleTitle == "Administrator"
+          ? const {"limit": 500, "offset": 0}
+          : null,
       onLoad: () {
         EasyLoading.show(status: "Loading...");
       },
@@ -532,7 +539,9 @@ class GeneralRepository {
     return completer.future;
   }
 
-  Future<BookingDriverResponse> getBookingsForDriver() async {
+  /// [showLoader] false when the screen shows its own spinner.
+  Future<BookingDriverResponse> getBookingsForDriver(
+      {bool showLoader = true}) async {
     Completer<BookingDriverResponse> completer = Completer();
 
     server.makeApiRequest(
@@ -540,7 +549,7 @@ class GeneralRepository {
           ApiFiles.bookingsList, // Make sure you have this endpoint defined
       requestMethod: RequestMethod.post,
       onLoad: () {
-        EasyLoading.show(status: "Loading...");
+        if (showLoader) EasyLoading.show(status: "Loading...");
       },
       onSuccess: (Map<String, dynamic> res) {
         EasyLoading.dismiss();
@@ -566,6 +575,8 @@ class GeneralRepository {
     server.makeApiRequest(
       apiEndpoint: ApiFiles.bookingsList,
       requestMethod: RequestMethod.post,
+      // Admin list is paged on the backend: take the newest 500 (its maximum)
+      requestData: const {"limit": 500, "offset": 0},
       onLoad: () {
         EasyLoading.show(status: "Loading...");
       },
@@ -1411,6 +1422,101 @@ class GeneralRepository {
     return completer.future.timeout(const Duration(seconds: 30),
         onTimeout: () =>
             throw 'No connection. Please check your internet and try again.');
+  }
+
+  // ---------- Admin paged lists ----------
+
+  Map<String, dynamic> _pageBody(int offset, int limit,
+      [Map<String, dynamic> extra = const {}]) {
+    final body = <String, dynamic>{"limit": limit, "offset": offset};
+    extra.forEach((k, v) {
+      if (v != null && v.toString().trim().isNotEmpty) body[k] = v;
+    });
+    return body;
+  }
+
+  PageResult<T> _toPage<T>(
+      Map<String, dynamic> res, T Function(Map<String, dynamic>) parse) {
+    final data = res['data'];
+    final rows = (data is Map && data['rows'] is List)
+        ? data['rows'] as List
+        : const [];
+    final items =
+        rows.map((e) => parse(Map<String, dynamic>.from(e as Map))).toList();
+    final total = (data is Map && data['total'] is num)
+        ? (data['total'] as num).toInt()
+        : items.length;
+    return PageResult<T>(items, total);
+  }
+
+  /// Bookings, newest first. [status]: e.g. "Pending", "Inprogress", "Completed".
+  Future<PageResult<booking_list.Parking>> adminBookingsPage(
+      int offset, int limit,
+      {String? search, String? status}) async {
+    final res = await _postQuiet(ApiFiles.bookingsList,
+        _pageBody(offset, limit, {"search": search, "status": status}));
+    return _toPage(res, booking_list.Parking.fromJson);
+  }
+
+  /// Payments, newest first, with their booking and customer.
+  Future<PageResult<Map<String, dynamic>>> adminPaymentsPage(
+      int offset, int limit,
+      {String? search, String? startDate, String? endDate}) async {
+    final res = await _postQuiet(
+        ApiFiles.adminPaymentsList,
+        _pageBody(offset, limit,
+            {"search": search, "startDate": startDate, "endDate": endDate}));
+    return _toPage(res, (m) => m);
+  }
+
+  /// Users, newest first. [role]: "User", "GuestUser", "Employee", "Administrator".
+  Future<PageResult<Map<String, dynamic>>> adminUsersPage(int offset, int limit,
+      {String? search, String? role}) async {
+    final res = await _postQuiet(ApiFiles.adminUsersList,
+        _pageBody(offset, limit, {"search": search, "role": role}));
+    return _toPage(res, (m) => m);
+  }
+
+  // ---------- Admin actions (same endpoints as the website admin) ----------
+
+  /// Full booking: registrations, vehicles, package, driver assignment.
+  Future<Map<String, dynamic>> adminBookingDetail(String bookingId) async {
+    final res =
+        await _postQuiet(ApiFiles.bookingDetail, {"bookingId": bookingId});
+    final data = res['data'];
+    if (data is! Map) throw 'Booking not found';
+    return Map<String, dynamic>.from(data);
+  }
+
+  /// Edit a booking: dates/times, airport, status, customer, flights, vehicle.
+  Future<void> adminUpdateBooking(Map<String, dynamic> data) async {
+    await _postQuiet(ApiFiles.adminBookingUpdate, data);
+  }
+
+  /// Re-send the booking confirmation email. [email] empty = customer's own.
+  Future<void> adminSendBookingEmail(String bookingId, {String email = ''}) async {
+    final res = await _postQuiet(
+        ApiFiles.adminBookingEmail, {"id": bookingId, "useremail": email});
+    if (res['success'] == false) {
+      throw '${res['error'] ?? res['message'] ?? 'Email not sent'}';
+    }
+  }
+
+  /// Create an employee (driver) account. Returns the server message.
+  Future<void> adminCreateEmployee(Map<String, dynamic> data) async {
+    await _postQuiet(ApiFiles.adminUserCreate, {...data, "roleTitle": "Employee"});
+  }
+
+  /// Change a user's title, name and phone.
+  Future<void> adminUpdateUser(Map<String, dynamic> data) async {
+    await _postQuiet(ApiFiles.adminUserUpdate, data);
+  }
+
+  /// Deactivate an employee: logged out, upcoming jobs released.
+  Future<String> adminDeactivateEmployee(String userId) async {
+    final res =
+        await _postQuiet(ApiFiles.adminUserDeactivate, {"userId": userId});
+    return '${res['message'] ?? 'Employee deactivated'}';
   }
 
   /// Forgot password (app): emails a 6-digit code. Returns the server message.

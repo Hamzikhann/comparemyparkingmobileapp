@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:parkingapp/chat/chat_api.dart';
 import 'package:parkingapp/chat/chat_models.dart';
 import 'package:parkingapp/chat/chat_service.dart';
+import 'package:parkingapp/data/api/config.dart';
 import 'package:parkingapp/utils/colors.dart';
 
 /// Chat colours, built on the app palette.
@@ -113,7 +114,7 @@ String chatListTime(DateTime? t) {
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(t.year, t.month, t.day);
   final diff = today.difference(day).inDays;
-  if (diff == 0) return DateFormat('HH:mm').format(t);
+  if (diff == 0) return DateFormat('h:mm a').format(t);
   if (diff == 1) return 'Yesterday';
   if (diff < 7) return DateFormat('EEE').format(t);
   return DateFormat('dd/MM/yy').format(t);
@@ -138,7 +139,7 @@ String presenceText(ChatUser u) {
   final seen = s.lastSeen(u);
   if (seen == null) return '';
   final label = chatDayLabel(seen);
-  final time = DateFormat('HH:mm').format(seen);
+  final time = DateFormat('h:mm a').format(seen);
   if (label == 'Today') return 'last seen today at $time';
   if (label == 'Yesterday') return 'last seen yesterday at $time';
   return 'last seen $label';
@@ -229,8 +230,23 @@ class ConversationAvatar extends StatelessWidget {
           radius: radius,
           showOnline: showOnline);
     }
+    return GroupAvatar(c.avatarAttachmentId, radius: radius);
+  }
+}
+
+/// Group photo by attachment id, or the group icon when there is none.
+class GroupAvatar extends StatelessWidget {
+  final String? attachmentId;
+  final double radius;
+  const GroupAvatar(this.attachmentId, {super.key, this.radius = 24});
+
+  @override
+  Widget build(BuildContext context) {
     final icon = Icon(Icons.group, color: colors.primaryNew, size: radius.r);
-    final url = c.groupPhotoUrl;
+    final id = attachmentId;
+    final url = (id == null || id.isEmpty)
+        ? null
+        : '${AppConfig.baseUrl}/api/chat/media/${Uri.encodeComponent(id)}';
     return CircleAvatar(
       radius: radius.r,
       backgroundColor: colors.primaryNew.withOpacity(0.12),
@@ -239,7 +255,7 @@ class ConversationAvatar extends StatelessWidget {
           : ClipOval(
               child: CachedNetworkImage(
                 imageUrl: url,
-                cacheKey: 'group-${c.avatarAttachmentId.hashCode}',
+                cacheKey: 'group-${id.hashCode}',
                 httpHeaders: ChatApi.authHeaders,
                 width: radius.r * 2,
                 height: radius.r * 2,

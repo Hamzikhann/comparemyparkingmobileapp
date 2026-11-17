@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -94,8 +95,16 @@ class _EditprofileState extends State<Editprofile> {
             }
           }
 
+          // Download the new photo into the image cache while the loader is
+          // still up, so every screen shows it straight away.
+          if (newImageUrl.startsWith('http') && mounted) {
+            try {
+              await precacheImage(
+                  CachedNetworkImageProvider(newImageUrl), context);
+            } catch (_) {}
+          }
+          if (!mounted) return;
           setState(() {
-            print("newImageUrl: $newImageUrl");
             Globals.user!.imageURL = newImageUrl;
           });
 
@@ -240,7 +249,7 @@ class _EditprofileState extends State<Editprofile> {
                                                     .user!.imageURL!.isNotEmpty)
                                             ? (Globals.user!.imageURL!
                                                     .startsWith('http')
-                                                ? NetworkImage(
+                                                ? CachedNetworkImageProvider(
                                                     Globals.user!.imageURL!)
                                                 : FileImage(File(Globals
                                                         .user!.imageURL!))
