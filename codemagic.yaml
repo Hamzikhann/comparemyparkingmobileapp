@@ -1,0 +1,25 @@
+# Codemagic: iOS Simulator preview build (no Apple account or signing needed).
+# Output: Runner-simulator.zip -> upload to appetize.io to try the app in a browser.
+# Push notifications, Apple Pay and the camera don't work on a simulator.
+workflows:
+  ios-simulator-preview:
+    name: iOS Simulator preview (for Appetize)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.41.9 # same as pubspec.lock and the Windows PC
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events: [] # start builds by hand from the Codemagic website
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Build for iOS Simulator
+        script: flutter build ios --simulator --debug --no-codesign
+      - name: Zip the app for Appetize
+        script: |
+          cd build/ios/iphonesimulator
+          zip -r "$CM_BUILD_DIR/Runner-simulator.zip" Runner.app
+    artifacts:
+      - Runner-simulator.zip

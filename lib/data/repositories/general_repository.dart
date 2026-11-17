@@ -1450,12 +1450,29 @@ class GeneralRepository {
   }
 
   /// Bookings, newest first. [status]: e.g. "Pending", "Inprogress", "Completed".
+  /// [filters]: the website's filters (referenceNo, firstName, lastName, email,
+  /// phone, vehicleReg, startDate, endDate, month, year, airport, company,
+  /// createdFrom, createdTo). Empty values are left out.
   Future<PageResult<booking_list.Parking>> adminBookingsPage(
       int offset, int limit,
-      {String? search, String? status}) async {
-    final res = await _postQuiet(ApiFiles.bookingsList,
-        _pageBody(offset, limit, {"search": search, "status": status}));
+      {String? search,
+      String? status,
+      Map<String, dynamic> filters = const {}}) async {
+    final res = await _postQuiet(
+        ApiFiles.bookingsList,
+        _pageBody(
+            offset, limit, {"search": search, "status": status, ...filters}));
     return _toPage(res, booking_list.Parking.fromJson);
+  }
+
+  /// Company (package) names for the bookings filter.
+  Future<List<String>> adminBookingCompanies() async {
+    final res = await _postQuiet(ApiFiles.bookingsList,
+        {"limit": 1, "offset": 0, "includeFilterOptions": true});
+    final data = res['data'];
+    final opts = data is Map ? data['filterOptions'] : null;
+    final list = opts is Map ? opts['companies'] : null;
+    return list is List ? list.map((e) => '$e').toList() : <String>[];
   }
 
   /// Payments, newest first, with their booking and customer.

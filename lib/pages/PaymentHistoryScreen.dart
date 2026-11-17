@@ -299,7 +299,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   String _formatDate(String dateString) {
     try {
-      final date = DateTime.parse(dateString);
+      final date = DateTime.parse(dateString).toLocal();
       return DateFormat('dd MMM yyyy, hh:mm a').format(date);
     } catch (e) {
       return dateString;

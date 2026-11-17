@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:parkingapp/data/Globals.dart';
-import 'package:parkingapp/data/GlobalsBookingDetail.dart';
+import 'package:intl/intl.dart';
 import 'package:parkingapp/data/models/BookingsListModel.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 import 'package:parkingapp/pages/admin/admin_booking_actions.dart';
+import 'package:parkingapp/pages/admin/admin_booking_filters.dart';
 import 'package:parkingapp/pages/admin/admin_list_parts.dart';
-import 'package:parkingapp/routes/MyRoutes.dart';
 import 'package:parkingapp/widgets/paged_list.dart';
 
 /// Admin: all bookings, newest first, 20 at a time (infinite scroll),
@@ -23,20 +22,32 @@ class _AdminBookingsScreenState extends State<AdminBookingsScreen> {
   String _search = '';
   String? _status;
   int _reload = 0; // bump to reload the list after an edit
+  AdminBookingFilters _filters = AdminBookingFilters();
+  List<String>? _companies;
 
   static const _statuses = <String?, String>{
     null: 'All',
     'Pending': 'Pending',
+    'Confirmed': 'Confirmed',
     'Inprogress': 'In progress',
     'Started': 'Started',
     'Completed': 'Completed',
     'Claimed': 'Claimed',
+    'Cancelled': 'Cancelled',
   };
 
-  void _open(Parking booking) {
-    Globals.detailType = '';
-    GlobalsBookingDetail.bookingdetailuser = booking;
-    Navigator.pushNamed(context, MyRoutes.bookingDetailUser);
+  Future<void> _openFilters() async {
+    if (_companies == null) {
+      try {
+        _companies = await _repo.adminBookingCompanies();
+      } catch (_) {
+        _companies = const [];
+      }
+    }
+    if (!mounted) return;
+    final f = await showAdminBookingFilters(context,
+        current: _filters, companies: _companies ?? const []);
+    if (f != null && mounted) setState(() => _filters = f);
   }
 
   Future<void> _view(Parking b) async {
@@ -70,12 +81,40 @@ class _AdminBookingsScreenState extends State<AdminBookingsScreen> {
           children: [
             adminTabTitle('Bookings'),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: AdminSearchBox(
-                hint: 'Reference, name, email, phone or reg',
-                onChanged: (t) => setState(() => _search = t),
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
+              child: Row(children: [
+                Expanded(
+                  child: AdminSearchBox(
+                    hint: 'Reference, name, email, phone or reg',
+                    onChanged: (t) => setState(() => _search = t),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Filters',
+                  onPressed: _openFilters,
+                  icon: Badge(
+                    isLabelVisible: _filters.activeCount > 0,
+                    label: Text('${_filters.activeCount}'),
+                    child: const Icon(Icons.tune, color: kAdminGreen),
+                  ),
+                ),
+              ]),
             ),
+            if (_filters.activeCount > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Row(children: [
+                  Text(
+                      '${_filters.activeCount} filter${_filters.activeCount == 1 ? '' : 's'} on',
+                      style: TextStyle(color: Colors.grey.shade700)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () =>
+                        setState(() => _filters = AdminBookingFilters()),
+                    child: const Text('Clear'),
+                  ),
+                ]),
+              ),
             AdminFilterChips(
               options: _statuses,
               selected: _status,
@@ -84,14 +123,17 @@ class _AdminBookingsScreenState extends State<AdminBookingsScreen> {
             const SizedBox(height: 4),
             Expanded(
               child: PagedList<Parking>(
-                key: ValueKey('bookings|$_search|$_status|$_reload'),
+                key: ValueKey(
+                    'bookings|$_search|$_status|$_reload|${_filters.key}'),
                 fetch: (offset, limit) => _repo.adminBookingsPage(offset, limit,
-                    search: _search, status: _status),
+                    search: _search,
+                    status: _status,
+                    filters: _filters.toParams()),
                 header: (total) => adminCountHeader(total, 'bookings'),
                 emptyText: 'No bookings found',
                 itemBuilder: (context, b, _) => _BookingTile(
                   booking: b,
-                  onTap: () => _open(b),
+                  onTap: () => _view(b),
                   onView: () => _view(b),
                   onEdit: () => _edit(b),
                   onEmail: () => _email(b),
@@ -150,6 +192,8 @@ class _BookingTile extends StatelessWidget {
               style: muted),
           if (car != null && car.vehicleRegistration.isNotEmpty)
             Text('Vehicle: ${car.vehicleRegistration}', style: muted),
+          if (_created(booking.createdAt) != null)
+            Text('Created: ${_created(booking.createdAt)}', style: muted),
           Text(
               driver == null
                   ? 'No driver assigned'
@@ -165,6 +209,12 @@ class _BookingTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// "18/11/2026, 8:26 PM" in the viewer's own timezone.
+  static String? _created(String? raw) {
+    final d = raw == null ? null : DateTime.tryParse(raw);
+    return d == null ? null : DateFormat('dd/MM/yyyy, h:mm a').format(d.toLocal());
   }
 
   Widget _action(IconData icon, String label, VoidCallback onTap) => Expanded(

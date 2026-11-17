@@ -1837,7 +1837,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         try {
           if (booking.createdAt != null) {
             // Parse the createdAt timestamp
-            final createdAt = DateTime.parse(booking.createdAt!);
+            final createdAt = DateTime.parse(booking.createdAt!).toLocal();
 
             // Check if createdAt is after or equal to start date
             if (_filterCreatedAtStartDate != null) {

@@ -219,7 +219,7 @@ class _NotificationsScreenDriverState extends State<NotificationsScreenDriver> {
 
   Widget _buildNotificationCard(NotificationModel notification) {
     final dateTime =
-        DateTime.tryParse(notification.createdAt) ?? DateTime.now();
+        DateTime.tryParse(notification.createdAt)?.toLocal() ?? DateTime.now();
     final formattedDate = DateFormat('MMM d, yyyy - hh:mm a').format(dateTime);
 
     return Card(

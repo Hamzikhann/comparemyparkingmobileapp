@@ -207,7 +207,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationCard(NotificationModel notification) {
     final dateTime =
-        DateTime.tryParse(notification.createdAt) ?? DateTime.now();
+        DateTime.tryParse(notification.createdAt)?.toLocal() ?? DateTime.now();
     final formattedDate = DateFormat('MMM d, yyyy - hh:mm a').format(dateTime);
     final bookingIds =
         notification.user?.bookings.map((b) => b.id).toList() ?? [];

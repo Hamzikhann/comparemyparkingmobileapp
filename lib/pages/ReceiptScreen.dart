@@ -382,7 +382,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
   String _formatDate(String date) {
     try {
-      final parsedDate = DateTime.parse(date);
+      final parsedDate = DateTime.parse(date).toLocal();
       return DateFormat('dd MMM yyyy, hh:mm a').format(parsedDate);
     } catch (e) {
       return date;
