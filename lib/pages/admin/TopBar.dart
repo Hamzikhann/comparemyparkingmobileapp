@@ -25,7 +25,9 @@ class TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80.h,
+      // At least 80, but grows if the content needs more (the logout button
+      // is 48 px whatever the screen size), so it never overflows.
+      constraints: BoxConstraints(minHeight: 80.h),
       decoration: BoxDecoration(
         color: colors.secondarynew,
         borderRadius: BorderRadius.only(
@@ -35,6 +37,7 @@ class TopBar extends StatelessWidget {
       ),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 25.h),

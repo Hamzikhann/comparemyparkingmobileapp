@@ -2,6 +2,7 @@ import 'package:parkingapp/services/auth_actions.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingAdminModel.dart';
@@ -252,7 +253,8 @@ class _ReserveBookingScreenState extends State<Adminhome> {
                                             Expanded(
                                               child: _buildStatCard(
                                                 "Total Payments",
-                                                "£${_mainDashboardData?.data.stats.totalPayments.toString() ?? "0"}",
+                                                _money(_mainDashboardData
+                                                    ?.data.stats.totalPayments),
                                                 Icons.notifications_none,
                                                 Colors.orange,
                                               ),
@@ -375,6 +377,13 @@ class _ReserveBookingScreenState extends State<Adminhome> {
     }
   }
 
+  /// "102460.92" -> "£102,460.92"
+  String _money(String? raw) {
+    final n = double.tryParse(raw ?? '') ?? 0;
+    return NumberFormat.currency(locale: 'en_GB', symbol: '£', decimalDigits: 2)
+        .format(n);
+  }
+
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
     return Container(
@@ -417,13 +426,18 @@ class _ReserveBookingScreenState extends State<Adminhome> {
             ],
           ),
           SizedBox(height: 12.h),
+          // One line, shrinking to fit when the number is long (e.g. £102,460.92)
           Center(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 28.sp,
-                fontWeight: FontWeight.bold,
-                color: color,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 28.sp,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ),
           ),
