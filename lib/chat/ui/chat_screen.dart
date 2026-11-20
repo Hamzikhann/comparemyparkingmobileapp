@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/chat/chat_models.dart';
 import 'package:parkingapp/chat/chat_service.dart';
+import 'package:parkingapp/chat/ui/bot_report_sheet.dart';
 import 'package:parkingapp/chat/ui/chat_media.dart';
 import 'package:parkingapp/chat/ui/chat_widgets.dart';
 import 'package:parkingapp/chat/ui/forward_picker.dart';
@@ -604,6 +605,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (_chat.leftGroups.contains(_id))
                   _notMemberBar()
                 else ...[
+                  if (_conv?.isBotChat(_chat.meId) == true)
+                    BotReportBar(api: _chat.api),
                   _inputBar(),
                   if (_showEmoji) _emojiPicker(),
                 ],
@@ -626,7 +629,9 @@ class _ChatScreenState extends State<ChatScreen> {
             ? ''
             : c.isGroup
                 ? _memberNames(c)
-                : (other == null ? '' : presenceText(other)));
+                : c.isBotChat(me)
+                    ? 'Booking reports'
+                    : (other == null ? '' : presenceText(other)));
     return Material(
       color: Colors.white,
       elevation: 1,
@@ -1100,7 +1105,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (c == null) return;
     if (!c.isGroup) {
       final other = c.other(_chat.meId);
-      if (other == null) return;
+      // The Reports Bot has no contact page
+      if (other == null || c.isBotChat(_chat.meId)) return;
       Navigator.of(context).push(MaterialPageRoute(
           builder: (_) =>
               ContactInfoScreen(conversationId: c.id, user: other)));

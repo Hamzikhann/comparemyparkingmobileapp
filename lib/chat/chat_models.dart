@@ -447,6 +447,30 @@ class ChatConversation {
 
   String displayName(String meId) =>
       isGroup ? (title ?? 'Group') : (other(meId)?.name ?? 'Chat');
+
+  /// The admin's 1-to-1 chat with the Reports Bot (server role "Bot").
+  bool isBotChat(String meId) =>
+      !isGroup && (other(meId)?.role ?? '').toLowerCase() == 'bot';
+}
+
+/// A report requested from the Reports Bot (POST /chat/bot/report-request).
+class BotReportJob {
+  final String jobId;
+  final String airportName;
+  final String fromDate;
+  final String toDate;
+  final String format;
+  final String status; // queued | sent | processing | done | failed
+  final String? error;
+
+  BotReportJob.fromJson(Map<String, dynamic> j)
+      : jobId = (j['jobId'] ?? '').toString(),
+        airportName = (j['airportName'] ?? '').toString(),
+        fromDate = (j['fromDate'] ?? '').toString(),
+        toDate = (j['toDate'] ?? '').toString(),
+        format = (j['format'] ?? '').toString(),
+        status = (j['status'] ?? '').toString(),
+        error = j['error']?.toString();
 }
 
 // ------------------------------------------------------------------ cache

@@ -36,7 +36,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
         ),
       )
       ..loadRequest(Uri.parse(
-          'https://comparemyairportparking.com/terms-and-conditions'));
+          'https://comparemyairportparking.com/privacy-policy'));
   }
 
   @override

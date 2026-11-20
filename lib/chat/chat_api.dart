@@ -54,6 +54,41 @@ class ChatApi {
       ChatConversation.fromJson(Map<String, dynamic>.from(
           await _post('/conversations/direct', {'userId': userId})));
 
+  // ------------------------------------------------- reports bot (admins)
+
+  /// Opens (creates on first use) my chat with the Reports Bot.
+  Future<ChatConversation> botConversation() async => ChatConversation.fromJson(
+      Map<String, dynamic>.from(await _post('/bot/conversation')));
+
+  /// Active airports for the report form: (id, name).
+  Future<List<(int, String)>> botAirports() async =>
+      ((await _post('/bot/airports')) as List)
+          .map((a) => (
+                int.tryParse('${(a as Map)['id']}') ?? 0,
+                (a['name'] ?? '').toString()
+              ))
+          .where((a) => a.$1 > 0 && a.$2.isNotEmpty)
+          .toList();
+
+  /// Asks the bot for a report. Dates are YYYY-MM-DD; format pdf | xlsx | csv.
+  /// The request and the bot's replies arrive as normal chat messages.
+  Future<BotReportJob> botReportRequest({
+    required int airportId,
+    required String airportName,
+    required String fromDate,
+    required String toDate,
+    required String format,
+  }) async {
+    final data = Map<String, dynamic>.from(await _post('/bot/report-request', {
+      'airportId': airportId,
+      'airportName': airportName,
+      'fromDate': fromDate,
+      'toDate': toDate,
+      'format': format,
+    }));
+    return BotReportJob.fromJson(Map<String, dynamic>.from(data['job']));
+  }
+
   Future<ChatConversation> conversation(String conversationId) async =>
       ChatConversation.fromJson(Map<String, dynamic>.from(await _post(
           '/conversations/detail', {'conversationId': conversationId})));

@@ -45,6 +45,22 @@ class _ChatsScreenState extends State<ChatsScreen> {
         MaterialPageRoute(builder: (_) => ChatScreen(conversationId: c.id)));
   }
 
+  bool _openingBot = false;
+
+  /// Admins: open (create on first use) the chat with the Reports Bot.
+  Future<void> _openBot() async {
+    if (_openingBot) return;
+    _openingBot = true;
+    try {
+      final c = await _chat.api.botConversation();
+      if (mounted) _open(c);
+    } catch (e) {
+      _snack(e.toString());
+    } finally {
+      _openingBot = false;
+    }
+  }
+
   /// Long-press a chat: pin, mute, archive.
   Future<void> _chatActions(ChatConversation c) async {
     final choice = await showModalBottomSheet<String>(
@@ -191,6 +207,21 @@ class _ChatsScreenState extends State<ChatsScreen> {
                         trailing: Text('${archived.length}',
                             style: TextStyle(color: ChatColors.muted)),
                         onTap: () => setState(() => _showArchived = true),
+                      ),
+                    // Once the bot chat has messages it shows in the list itself
+                    if (_isAdmin &&
+                        !_showArchived &&
+                        _query.isEmpty &&
+                        !_chat.conversations.any((c) => c.isBotChat(me)))
+                      ListTile(
+                        leading: SizedBox(
+                            width: 48.r,
+                            child: Icon(Icons.smart_toy_outlined,
+                                color: colors.primaryNew)),
+                        title: const Text('Reports bot',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: const Text('Request booking reports'),
+                        onTap: _openBot,
                       ),
                     if (_isAdmin && !_showArchived)
                       ListTile(
