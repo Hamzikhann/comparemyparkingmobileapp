@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api.dart';
@@ -67,10 +69,13 @@ class APIService {
     final Map<String, List<MultipartFile>> fileMap = {};
 
     for (final fileInfo in files) {
-      final multipartFile = await MultipartFile.fromFile(
-        fileInfo.file.path,
-        filename: fileInfo.file.path.split('/').last,
-      );
+      // Web (staff desktop): the path is a browser blob URL, so send the bytes
+      final multipartFile = kIsWeb
+          ? await _webPhoto(fileInfo.file.path, files.indexOf(fileInfo))
+          : await MultipartFile.fromFile(
+              fileInfo.file.path,
+              filename: fileInfo.file.path.split('/').last,
+            );
 
       fileMap.putIfAbsent(fileInfo.fieldName, () => []).add(multipartFile);
     }
@@ -140,6 +145,16 @@ class APIService {
 enum RequestMethod { get, post }
 
 /// 📦 Helper for file uploads
+/// Web only: a picked photo (blob URL) as an upload part, typed from its first bytes.
+Future<MultipartFile> _webPhoto(String blobUrl, int index) async {
+  final bytes = await XFile(blobUrl).readAsBytes();
+  final png = bytes.length > 3 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E;
+  final ext = png ? 'png' : 'jpg';
+  return MultipartFile.fromBytes(bytes,
+      filename: 'photo_${DateTime.now().millisecondsSinceEpoch}_$index.$ext',
+      contentType: DioMediaType('image', png ? 'png' : 'jpeg'));
+}
+
 class MultipartFileInfo {
   final File file;
   final String fieldName;

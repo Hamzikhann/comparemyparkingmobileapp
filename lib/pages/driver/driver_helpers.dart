@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
@@ -71,6 +72,11 @@ Future<void> openBookingLocation(BuildContext context, String bookingID) async {
     final appleMapsUrl =
         Uri.parse("http://maps.apple.com/?q=$latitude,$longitude");
 
+    if (kIsWeb) {
+      // Web (staff desktop): open Google Maps in a new tab
+      await launchUrl(googleMapsUrl, webOnlyWindowName: '_blank');
+      return;
+    }
     if (Platform.isAndroid) {
       if (await canLaunchUrl(googleMapsUrl)) {
         await launchUrl(googleMapsUrl);

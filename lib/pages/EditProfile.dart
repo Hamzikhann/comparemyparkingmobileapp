@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -243,7 +244,7 @@ class _EditprofileState extends State<Editprofile> {
                                   shape: BoxShape.circle,
                                   image: DecorationImage(
                                     image: _pickedImage != null
-                                        ? FileImage(File(_pickedImage!.path))
+                                        ? localImageProvider(_pickedImage!.path)
                                         : (Globals.user?.imageURL != null &&
                                                 Globals
                                                     .user!.imageURL!.isNotEmpty)
@@ -251,8 +252,8 @@ class _EditprofileState extends State<Editprofile> {
                                                     .startsWith('http')
                                                 ? CachedNetworkImageProvider(
                                                     Globals.user!.imageURL!)
-                                                : FileImage(File(Globals
-                                                        .user!.imageURL!))
+                                                : localImageProvider(Globals
+                                                        .user!.imageURL!)
                                                     as ImageProvider)
                                             : const AssetImage(
                                                 'assets/images/user.png'),

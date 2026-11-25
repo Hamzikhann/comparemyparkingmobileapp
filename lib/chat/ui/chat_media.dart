@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:open_file/open_file.dart';
@@ -124,7 +126,18 @@ class ChatImageBubble extends StatelessWidget {
     final w = 230.w;
     final h = (w / a.aspectRatio).clamp(120.h, 320.h);
     final Widget img = local != null
-        ? Image.file(File(local), fit: BoxFit.cover, width: w, height: h)
+        ? localImage(local, fit: BoxFit.cover, width: w, height: h)
+        : kIsWeb
+            ? ChatWebImage(a.id,
+                fit: BoxFit.cover,
+                width: w,
+                height: h,
+                error: Container(
+                    width: w,
+                    height: h,
+                    color: Colors.black12,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image, color: Colors.grey)))
         : CachedNetworkImage(
             imageUrl: a.url,
             cacheKey: a.cacheKey,
@@ -171,17 +184,32 @@ class ChatImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ImageProvider provider = localPath != null
-        ? FileImage(File(localPath!)) as ImageProvider
+    // Web version: server files load through a direct link
+    if (kIsWeb && localPath == null) {
+      return FutureBuilder<String?>(
+        future: ChatService.instance.webLink(attachment.id),
+        builder: (context, s) => _view(s.data == null
+            ? null
+            : NetworkImage(s.data!,
+                webHtmlElementStrategy: WebHtmlElementStrategy.fallback)),
+      );
+    }
+    return _view(localPath != null
+        ? localImageProvider(localPath!)
         : CachedNetworkImageProvider(attachment.url,
-            cacheKey: attachment.cacheKey, headers: ChatApi.authHeaders);
+            cacheKey: attachment.cacheKey, headers: ChatApi.authHeaders));
+  }
+
+  Widget _view(ImageProvider? provider) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
           elevation: 0),
-      body: PhotoView(
+      body: provider == null
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : PhotoView(
         imageProvider: provider,
         minScale: PhotoViewComputedScale.contained,
         maxScale: PhotoViewComputedScale.covered * 4,
@@ -220,10 +248,12 @@ class ChatVideoBubble extends StatelessWidget {
           color: const Color(0xFF1F2933),
           child: Stack(children: [
             if (thumb != null)
-              Positioned.fill(child: Image.file(File(thumb), fit: BoxFit.cover))
+              Positioned.fill(child: localImage(thumb, fit: BoxFit.cover))
             else if (a.hasThumbnail)
               Positioned.fill(
-                child: CachedNetworkImage(
+                child: kIsWeb
+                    ? ChatWebImage(a.id, thumb: true, fit: BoxFit.cover)
+                    : CachedNetworkImage(
                   imageUrl: a.thumbUrl,
                   cacheKey: '${a.cacheKey}-thumb',
                   httpHeaders: ChatApi.authHeaders,
@@ -268,16 +298,33 @@ class ChatVideoPlayer extends StatefulWidget {
 }
 
 class _ChatVideoPlayerState extends State<ChatVideoPlayer> {
-  late final VideoPlayerController _c;
+  // Set straight away on the phone; on web after the direct link arrives
+  VideoPlayerController? _ctrl;
+  VideoPlayerController get _c => _ctrl!;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _c = widget.localPath != null
-        ? VideoPlayerController.file(File(widget.localPath!))
+    if (kIsWeb && widget.localPath == null) {
+      ChatService.instance.webLink(widget.attachment.id).then((url) {
+        if (!mounted) return;
+        if (url == null) {
+          setState(() => _error = 'Could not play this video');
+          return;
+        }
+        setState(() => _start(VideoPlayerController.networkUrl(Uri.parse(url))));
+      });
+      return;
+    }
+    _start(widget.localPath != null
+        ? localVideo(widget.localPath!)
         : VideoPlayerController.networkUrl(Uri.parse(widget.attachment.url),
-            httpHeaders: ChatApi.authHeaders);
+            httpHeaders: ChatApi.authHeaders));
+  }
+
+  void _start(VideoPlayerController c) {
+    _ctrl = c;
     _c.initialize().then((_) {
       if (!mounted) return;
       setState(() {});
@@ -292,13 +339,13 @@ class _ChatVideoPlayerState extends State<ChatVideoPlayer> {
 
   @override
   void dispose() {
-    _c.dispose();
+    _ctrl?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final v = _c.value;
+    final v = _ctrl?.value ?? const VideoPlayerValue.uninitialized();
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -399,13 +446,21 @@ class _ChatVoiceBubbleState extends State<ChatVoiceBubble> {
     }
     setState(() => _loading = true);
     try {
-      final local = widget.m.outgoing?.localPath;
-      final path = local ??
-          (await ChatService.instance.fileFor(_a,
-                  onProgress: (v) => setState(() => _downloadProgress = v)))
-              .path;
+      final local = widget.m.outgoing?.localPath ??
+          (kIsWeb ? ChatService.instance.localPathFor(_a) : null);
       final player = AudioPlayer();
-      _dur = await player.setFilePath(path);
+      if (kIsWeb) {
+        // Web version: my recording's blob: URL, or the direct link
+        final url = local ?? await ChatService.instance.webLink(_a.id);
+        if (url == null) throw Exception('no link');
+        _dur = await player.setUrl(url);
+      } else {
+        final path = local ??
+            (await ChatService.instance.fileFor(_a,
+                    onProgress: (v) => setState(() => _downloadProgress = v)))
+                .path;
+        _dur = await player.setFilePath(path);
+      }
       _subs.add(player.positionStream.listen((d) {
         if (mounted) setState(() => _pos = d);
       }));
@@ -551,8 +606,21 @@ class _ChatFileBubbleState extends State<ChatFileBubble> {
   double? _progress;
   CancelToken? _token;
 
+  /// Web version: the browser downloads the file from its direct link.
+  Future<void> _openWeb(ChatAttachment a) async {
+    if (a.id.isEmpty) return; // still uploading
+    final url = await ChatService.instance.webLink(a.id, download: true);
+    final ok = url != null &&
+        await launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not download the file')));
+    }
+  }
+
   Future<void> _open() async {
     final a = widget.m.attachment!;
+    if (kIsWeb) return _openWeb(a);
     if (_token != null) {
       _token!.cancel();
       return;
@@ -696,7 +764,7 @@ class _ChatMediaPreviewState extends State<ChatMediaPreview> {
     _video?.dispose();
     _video = null;
     if (_items[i].isVideo) {
-      final c = VideoPlayerController.file(File(_items[i].path));
+      final c = localVideo(_items[i].path);
       _video = c;
       c.initialize().then((_) {
         if (mounted && _video == c) setState(() {});
@@ -721,12 +789,12 @@ class _ChatMediaPreviewState extends State<ChatMediaPreview> {
 
   Widget _page_(PreviewItem item, int i) {
     if (!item.isVideo) {
-      return PhotoView(imageProvider: FileImage(File(item.path)));
+      return PhotoView(imageProvider: localImageProvider(item.path));
     }
     final v = _video;
     if (i != _index || v == null || !v.value.isInitialized) {
       return item.thumbPath != null
-          ? Image.file(File(item.thumbPath!), fit: BoxFit.contain)
+          ? localImage(item.thumbPath!, fit: BoxFit.contain)
           : const Center(child: CircularProgressIndicator(color: Colors.white));
     }
     return Center(
@@ -799,7 +867,7 @@ class _ChatMediaPreviewState extends State<ChatMediaPreview> {
                       borderRadius: BorderRadius.circular(4.r),
                       child: Stack(fit: StackFit.expand, children: [
                         img != null
-                            ? Image.file(File(img), fit: BoxFit.cover)
+                            ? localImage(img, fit: BoxFit.cover)
                             : Container(color: Colors.white12),
                         if (it.isVideo)
                           Icon(Icons.videocam,

@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,15 +23,19 @@ import 'package:parkingapp/chat/ui/info_screens.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:parkingapp/utils/colors.dart';
+import 'package:parkingapp/web/web_frame.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// One conversation: messages, ticks, typing, reply, emoji, location.
 class ChatScreen extends StatefulWidget {
   final String conversationId;
-  const ChatScreen({super.key, required this.conversationId});
+  const ChatScreen(
+      {super.key, required this.conversationId, this.embedded = false});
+
+  /// Web desktop layout: shown beside the chat list (no back arrow).
+  final bool embedded;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -61,6 +67,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _focus.addListener(() {
       if (_focus.hasFocus && _showEmoji) setState(() => _showEmoji = false);
     });
+    // Desktop browser: Enter sends, Shift+Enter adds a new line
+    if (kIsWeb) _focus.onKeyEvent = _onInputKey;
     _load();
   }
 
@@ -161,7 +169,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<String> _tempPath(String ext) async =>
       '${(await getTemporaryDirectory()).path}/chat_${DateTime.now().microsecondsSinceEpoch}.$ext';
 
-  bool _isVideoPath(String p) => mimeForPath(p).startsWith('video/');
+  // Web version: picked media is a blob: URL with no file name in it, so
+  // keep what the picker said about each one
+  final Map<String, XFile> _webPicked = {};
+
+  String _mimeOf(String p) {
+    final x = _webPicked[p];
+    if (x == null) return mimeForPath(p);
+    final m = x.mimeType ?? '';
+    return m.isNotEmpty ? m : mimeForPath(x.name);
+  }
+
+  String _nameOf(String p) =>
+      _webPicked[p]?.name ?? p.split(RegExp(r'[\\/]')).last;
+
+  bool _isVideoPath(String p) => _mimeOf(p).startsWith('video/');
 
   /// Camera: take a photo or record a video, then preview + send.
   Future<void> _openCamera() async {
@@ -191,6 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ? await _picker.pickImage(source: ImageSource.camera)
           : await _picker.pickVideo(source: ImageSource.camera);
       if (x == null) return;
+      if (kIsWeb) _webPicked[x.path] = x;
       await _previewAndSend([x.path], forceVideo: choice == 'video');
     } catch (e) {
       debugPrint('chat: camera failed: $e');
@@ -204,6 +227,11 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final picked = await _picker.pickMultipleMedia(limit: _maxPick);
       if (picked.isEmpty) return;
+      if (kIsWeb) {
+        for (final x in picked) {
+          _webPicked[x.path] = x;
+        }
+      }
       var paths = picked.map((x) => x.path).toList();
       if (paths.length > _maxPick) {
         paths = paths.sublist(0, _maxPick);
@@ -222,7 +250,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final items = <PreviewItem>[];
     for (final p in paths) {
       final isVideo = forceVideo || _isVideoPath(p);
-      final size = await File(p).length();
+      final size = await localLength(p);
       if (isVideo && size > 100 * _mb) {
         _snack('Videos can be at most 100 MB (one was skipped)');
         continue;
@@ -247,6 +275,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// First frame of a video as a small JPEG (shown in the chat bubble).
   Future<String?> _videoThumb(String path) async {
+    if (kIsWeb) return null; // not available in a browser
     try {
       return await VideoThumbnail.thumbnailFile(
           video: path,
@@ -261,6 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<OutgoingMedia?> _prepareImage(String original) async {
+    if (kIsWeb) return _prepareImageWeb(original);
     try {
       // Shrink before upload (saves data; keeps good quality)
       final out = await FlutterImageCompress.compressAndGetFile(
@@ -290,12 +320,38 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Web version: no compression in a browser, so the photo goes as picked.
+  Future<OutgoingMedia?> _prepareImageWeb(String blobUrl) async {
+    try {
+      final bytes = await localBytes(blobUrl);
+      if (bytes.length > 20 * _mb) {
+        _snack('Photos can be at most 20 MB (one was skipped)');
+        return null;
+      }
+      final img = await decodeImageFromList(bytes);
+      final mime = _mimeOf(blobUrl);
+      return OutgoingMedia(
+        localPath: blobUrl,
+        bytes: bytes,
+        kind: 'image',
+        mimeType: mime.startsWith('image/') ? mime : 'image/jpeg',
+        fileName: _nameOf(blobUrl),
+        sizeBytes: bytes.length,
+        width: img.width,
+        height: img.height,
+      );
+    } catch (e) {
+      debugPrint('chat: photo prepare failed: $e');
+      _snack('Could not use one of the photos');
+      return null;
+    }
+  }
+
   Future<OutgoingMedia?> _prepareVideo(PreviewItem it) async {
     try {
-      final file = File(it.path);
-      final size = await file.length();
+      final size = await localLength(it.path);
       int? durMs, w, h, thumbSize;
-      final probe = VideoPlayerController.file(file);
+      final probe = localVideo(it.path);
       try {
         await probe.initialize();
         durMs = probe.value.duration.inMilliseconds;
@@ -313,12 +369,12 @@ class _ChatScreenState extends State<ChatScreen> {
         w = img.width;
         h = img.height;
       }
-      final mime = mimeForPath(it.path);
+      final mime = _mimeOf(it.path);
       return OutgoingMedia(
         localPath: it.path,
         kind: 'video',
         mimeType: mime.startsWith('video/') ? mime : 'video/mp4',
-        fileName: it.path.split(RegExp(r'[\\/]')).last,
+        fileName: _nameOf(it.path),
         sizeBytes: size,
         durationMs: durMs,
         width: w,
@@ -336,9 +392,13 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _pickDocument() async {
     Navigator.pop(context);
     try {
-      final r = await FilePicker.platform.pickFiles(allowMultiple: true);
+      // Web version: no file paths in a browser, so read the contents
+      final r = await FilePicker.platform
+          .pickFiles(allowMultiple: true, withData: kIsWeb);
       if (r == null || r.files.isEmpty) return;
-      var files = r.files.where((f) => f.path != null).toList();
+      var files = r.files
+          .where((f) => kIsWeb ? f.bytes != null : f.path != null)
+          .toList();
       if (files.length > _maxPick) {
         files = files.sublist(0, _maxPick);
         _snack(
@@ -386,7 +446,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (ok != true) return;
       for (final f in files) {
         _sendFile(OutgoingMedia(
-          localPath: f.path!,
+          localPath: kIsWeb ? '' : f.path!,
+          bytes: kIsWeb ? f.bytes : null,
           kind: 'file',
           mimeType: mimeForPath(f.name),
           fileName: f.name,
@@ -413,6 +474,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Duration _recElapsed = Duration.zero;
   Timer? _recTimer;
   String? _recPath;
+  AudioEncoder _recEncoder = AudioEncoder.aacLc;
   static const _maxVoice = Duration(minutes: 15);
 
   Future<bool> _startRecording({required bool locked}) async {
@@ -422,10 +484,17 @@ class _ChatScreenState extends State<ChatScreen> {
       _snack('Microphone permission is needed for voice notes');
       return false;
     }
-    _recPath = await _tempPath('m4a');
+    // Web version: the browser picks the format (AAC where it can, so phones
+    // play it; WAV otherwise) and hands back a blob: URL, not a file
+    var encoder = AudioEncoder.aacLc;
+    if (kIsWeb && !await _recorder.isEncoderSupported(encoder)) {
+      encoder = AudioEncoder.wav;
+    }
+    _recEncoder = encoder;
+    _recPath = kIsWeb ? '' : await _tempPath('m4a');
     await _recorder.start(
-        const RecordConfig(
-            encoder: AudioEncoder.aacLc,
+        RecordConfig(
+            encoder: encoder,
             bitRate: 64000,
             sampleRate: 44100,
             numChannels: 1),
@@ -477,21 +546,24 @@ class _ChatScreenState extends State<ChatScreen> {
         _recPaused = false;
       });
     }
-    if (path == null) return;
-    final file = File(path);
+    if (path == null || path.isEmpty) return;
     if (!send || cancelled || elapsed < const Duration(seconds: 1)) {
-      if (await file.exists()) await file.delete();
+      if (!kIsWeb) {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      }
       if (send && !cancelled) {
         _snack('Too short. Tap or hold the mic to record.');
       }
       return;
     }
+    final wav = _recEncoder == AudioEncoder.wav;
     _sendFile(OutgoingMedia(
       localPath: path,
       kind: 'audio',
-      mimeType: 'audio/mp4',
-      fileName: 'voice-note.m4a',
-      sizeBytes: await file.length(),
+      mimeType: wav ? 'audio/wav' : 'audio/mp4',
+      fileName: wav ? 'voice-note.wav' : 'voice-note.m4a',
+      sizeBytes: await localLength(path),
       durationMs: elapsed.inMilliseconds.clamp(0, _maxVoice.inMilliseconds),
     ));
   }
@@ -618,6 +690,26 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Web sidebar layout (wide window, mouse + keyboard).
+  bool get _desk => kIsWeb && WebFrame.inDesktopShell(context);
+
+  KeyEventResult _onInputKey(FocusNode node, KeyEvent e) {
+    if (!_desk ||
+        e is! KeyDownEvent ||
+        (e.logicalKey != LogicalKeyboardKey.enter &&
+            e.logicalKey != LogicalKeyboardKey.numpadEnter) ||
+        HardwareKeyboard.instance.isShiftPressed) {
+      return KeyEventResult.ignored;
+    }
+    if (_input.text.trim().isNotEmpty || _editing != null) _send();
+    return KeyEventResult.handled;
+  }
+
+  /// Message bubbles: wider on desktop (the pane is much wider than a phone).
+  double get _bubbleMax => _desk
+      ? (MediaQuery.sizeOf(context).width * 0.62).clamp(280.0, 620.0)
+      : 0.78.sw;
+
   Widget _header() {
     final me = _chat.meId;
     final c = _conv;
@@ -639,9 +731,12 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: EdgeInsets.symmetric(vertical: 8.h),
         child: Row(
           children: [
-            IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.maybePop(context)),
+            if (widget.embedded)
+              SizedBox(width: 12.w)
+            else
+              IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.maybePop(context)),
             if (c != null)
               GestureDetector(
                   onTap: _openInfo, child: ConversationAvatar(c, radius: 20))
@@ -722,7 +817,9 @@ class _ChatScreenState extends State<ChatScreen> {
       child: ListView.builder(
         controller: _scroll,
         reverse: true,
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        padding: _desk
+            ? const EdgeInsets.symmetric(horizontal: 28, vertical: 12)
+            : EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         itemCount: msgs.length + (_chat.hasMore(_id) ? 1 : 0),
         itemBuilder: (_, i) {
           if (i == msgs.length) {
@@ -793,7 +890,7 @@ class _ChatScreenState extends State<ChatScreen> {
         : null;
 
     final bubble = Container(
-      constraints: BoxConstraints(maxWidth: 0.78.sw),
+      constraints: BoxConstraints(maxWidth: _bubbleMax),
       margin: EdgeInsets.only(top: grouped ? 2.h : 6.h),
       padding: EdgeInsets.fromLTRB(10.w, 6.h, 10.w, 5.h),
       decoration: BoxDecoration(
@@ -878,6 +975,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: GestureDetector(
         onLongPress: () => _actions(m),
+        // Desktop: right-click opens the same message menu
+        onSecondaryTap: _desk ? () => _actions(m) : null,
         onTap: m.sendState == SendState.failed ? () => _chat.retry(m) : null,
         child: Align(
           alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -1161,7 +1260,7 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: 0.8.sw),
+          constraints: BoxConstraints(maxWidth: _desk ? 560 : 0.8.sw),
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
           decoration: BoxDecoration(
             color: const Color(0xFFFFF5D6),
@@ -1568,7 +1667,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 onChanged: (_) => _chat.userTyping(_id),
                 decoration: InputDecoration(
-                  hintText: 'Message',
+                  hintText: _desk
+                      ? 'Type a message (Enter to send, Shift+Enter for a new line)'
+                      : 'Message',
                   counterText: '',
                   filled: true,
                   fillColor: ChatColors.background,
@@ -1620,21 +1721,23 @@ class _ChatScreenState extends State<ChatScreen> {
               title: const Text('My current location'),
               onTap: _shareLocation,
             ),
-            ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.pink.shade400,
-                child: const Icon(Icons.camera_alt, color: Colors.white),
+            // Desktop browsers: no camera (it would open the same file dialog)
+            if (!_desk)
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.pink.shade400,
+                  child: const Icon(Icons.camera_alt, color: Colors.white),
+                ),
+                title: const Text('Camera'),
+                subtitle: const Text('Take a photo or record a video'),
+                onTap: _openCamera,
               ),
-              title: const Text('Camera'),
-              subtitle: const Text('Take a photo or record a video'),
-              onTap: _openCamera,
-            ),
             ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.purple.shade400,
                 child: const Icon(Icons.photo_library, color: Colors.white),
               ),
-              title: const Text('Gallery'),
+              title: Text(_desk ? 'Photos and videos' : 'Gallery'),
               subtitle: const Text('Photos and videos, up to 5'),
               onTap: _openGallery,
             ),

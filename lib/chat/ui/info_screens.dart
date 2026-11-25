@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:parkingapp/chat/chat_api.dart';
@@ -157,7 +159,9 @@ class _SharedMediaScreenState extends State<SharedMediaScreen> {
             child: Stack(fit: StackFit.expand, children: [
               Container(color: const Color(0xFF1F2933)),
               if (url != null)
-                CachedNetworkImage(
+                kIsWeb
+                    ? ChatWebImage(a.id, thumb: isVideo, fit: BoxFit.cover)
+                    : CachedNetworkImage(
                   imageUrl: url,
                   cacheKey: isVideo ? '${a.cacheKey}-thumb' : a.cacheKey,
                   httpHeaders: ChatApi.authHeaders,

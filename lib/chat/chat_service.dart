@@ -3,12 +3,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:parkingapp/chat/chat_api.dart';
 import 'package:parkingapp/chat/chat_models.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/config.dart';
+import 'package:parkingapp/services/job_push.dart';
+import 'package:parkingapp/web/web_notify.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:uuid/uuid.dart';
 
@@ -70,6 +74,7 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _loadCache(); // instant list + readable offline, then refreshed live
     _connect();
+    if (kIsWeb) addListener(_webTitle);
     refreshConversations();
   }
 
@@ -89,6 +94,11 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _loadCache() async {
+    // Web (staff desktop): no file cache, chats load from the server
+    if (kIsWeb) {
+      _cacheReady = true;
+      return;
+    }
     final forUser = meId;
     try {
       final f = await _cacheFile(forUser);
@@ -128,6 +138,7 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Logout: remove this user's cached chats from the phone.
   Future<void> _deleteCache(String userId) async {
+    if (kIsWeb) return;
     try {
       final f = await _cacheFile(userId);
       if (await f.exists()) await f.delete();
@@ -138,7 +149,7 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _saveCache() async {
     final forUser = _startedFor;
-    if (!_started || forUser == null) return;
+    if (kIsWeb || !_started || forUser == null) return;
     try {
       final data = {
         'conversations': [for (final c in conversations) c.toJson()],
@@ -175,6 +186,10 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
     leftGroups.clear();
     WidgetsBinding.instance.removeObserver(this);
     _backgroundTimer?.cancel();
+    if (kIsWeb) {
+      removeListener(_webTitle);
+      webSetUnreadCount(0);
+    }
     _socket?.dispose();
     _socket = null;
     connected = false;
@@ -245,6 +260,10 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
       connected = false;
       notifyListeners();
     });
+    // Web only: job alerts come over the socket (the phone gets them by push)
+    if (kIsWeb) {
+      s.on('job:alert', (d) => _onJobAlert(Map<String, dynamic>.from(d)));
+    }
     s.on('chat:message', (d) => _onMessage(Map<String, dynamic>.from(d)));
     s.on('chat:receipt', (d) => _onReceipt(Map<String, dynamic>.from(d)));
     s.on('chat:typing', (d) => _onTyping(Map<String, dynamic>.from(d)));
@@ -492,7 +511,7 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
         f.cancelToken = token;
         var lastTick = DateTime.now();
         await api.uploadFile(target, f.localPath, f.sizeBytes,
-            cancelToken: token, onProgress: (p) {
+            bytes: f.bytes, cancelToken: token, onProgress: (p) {
           f.progress = p;
           final now = DateTime.now();
           if (now.difference(lastTick).inMilliseconds > 150 || p >= 1) {
@@ -502,7 +521,8 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
         });
         f.uploaded = true;
         f.cancelToken = null;
-        _localFiles[id] = f.localPath;
+        f.bytes = null; // web: free the memory once sent
+        if (f.localPath.isNotEmpty) _localFiles[id] = f.localPath;
       }
       await _deliver(m);
     } on DioException catch (e) {
@@ -542,6 +562,29 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
     await api.download(a, file.path,
         onProgress: onProgress, cancelToken: cancelToken);
     return file;
+  }
+
+  // Web version: direct file links, reused for 50 minutes (they last 60)
+  final Map<String, (DateTime, Future<String?>)> _webLinks = {};
+
+  /// Web version: a direct link to an attachment for <img>/<video>/<audio>.
+  Future<String?> webLink(String attachmentId,
+      {bool thumb = false, bool download = false}) {
+    final key = '$attachmentId|$thumb|$download';
+    final hit = _webLinks[key];
+    if (hit != null &&
+        DateTime.now().difference(hit.$1) < const Duration(minutes: 50)) {
+      return hit.$2;
+    }
+    final f = api
+        .mediaLink(attachmentId, thumb: thumb, download: download)
+        .catchError((Object e) {
+      _webLinks.remove(key);
+      debugPrint('chat: media link failed: $e');
+      return null;
+    });
+    _webLinks[key] = (DateTime.now(), f);
+    return f;
   }
 
   /// My original file for an attachment I sent from this phone, if any.
@@ -698,6 +741,31 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (activeConversationId == m.conversationId) markRead(m.conversationId);
     }
+    if (kIsWeb && !fromMe) _webMessageAlert(m);
+  }
+
+  // ------------------------------------------------ web (staff desktop) alerts
+
+  void _webTitle() => webSetUnreadCount(totalUnread);
+
+  void _webMessageAlert(ChatMessage m) {
+    final c = conversationById(m.conversationId);
+    if (c == null || c.isMuted || m.type == 'system') return;
+    final looking = activeConversationId == m.conversationId && !webPageInBackground;
+    if (looking) return;
+    webBeep();
+    if (!webPageInBackground) return; // the app is on screen: sound is enough
+    final sender = c.members.where((x) => x.id == m.senderId).map((x) => x.name).firstOrNull ?? '';
+    final title = c.type == 'group' ? c.displayName(meId) : (sender.isNotEmpty ? sender : c.displayName(meId));
+    final body = c.type == 'group' && sender.isNotEmpty ? '$sender: ${m.previewText}' : m.previewText;
+    webShowNotification(title, body, tag: 'chat-${m.conversationId}');
+  }
+
+  void _onJobAlert(Map<String, dynamic> d) {
+    jobPushTick.value++; // refresh the job list + badge
+    webBeep();
+    webShowNotification(d['title']?.toString() ?? 'Job update', d['body']?.toString() ?? '',
+        tag: 'job-${d['bookingId'] ?? ''}');
   }
 
   /// Adds a server message, replacing my local "sending" copy if it matches.
@@ -814,7 +882,7 @@ class ChatService extends ChangeNotifier with WidgetsBindingObserver {
       kind: 'image',
       mimeType: 'image/jpeg',
       fileName: 'group.jpg',
-      sizeBytes: await File(path).length(),
+      sizeBytes: await localLength(path),
     );
     final (id, target, _) = await api.uploadInit(convId, f);
     await api.uploadFile(target, path, f.sizeBytes);

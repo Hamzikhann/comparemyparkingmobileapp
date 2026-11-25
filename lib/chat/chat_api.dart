@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:parkingapp/chat/chat_models.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/api/api.dart';
@@ -288,19 +291,27 @@ class ChatApi {
 
   /// Step 2: PUT a file. [target] is either {url, headers} (DigitalOcean
   /// Spaces, signed) or {path, headers} (our own server, needs the login).
+  /// [bytes]: web version, the file's contents (a browser has no file path).
   Future<void> uploadFile(Map<String, dynamic> target, String path, int size,
-      {void Function(double)? onProgress, CancelToken? cancelToken}) async {
+      {void Function(double)? onProgress,
+      CancelToken? cancelToken,
+      Uint8List? bytes}) async {
     final signedUrl = target['url']?.toString();
     final url = signedUrl ?? '${AppConfig.baseUrl}/api/chat${target['path']}';
     final headers = <String, dynamic>{
       ...Map<String, dynamic>.from((target['headers'] as Map?) ?? {}),
-      Headers.contentLengthHeader: size,
+      // A browser sets Content-Length itself (and refuses it from code)
+      if (!kIsWeb) Headers.contentLengthHeader: size,
       if (signedUrl == null) ...authHeaders,
     };
     try {
       await _files.put(
         url,
-        data: File(path).openRead(),
+        data: bytes != null
+            ? Stream.value(bytes)
+            : kIsWeb
+                ? XFile(path).openRead()
+                : File(path).openRead(),
         options: Options(headers: headers),
         cancelToken: cancelToken,
         onSendProgress: (sent, total) {
@@ -316,6 +327,23 @@ class ChatApi {
           ? data['message'].toString()
           : 'Upload failed. Check your connection and try again.');
     }
+  }
+
+  /// Web version: a direct, short-lived link to an attachment (null when the
+  /// server keeps files on its own disk).
+  Future<String?> mediaLink(String attachmentId,
+      {bool thumb = false, bool download = false}) async {
+    final data = await _post('/media/link', {
+      'attachmentId': attachmentId,
+      if (thumb) 'thumb': true,
+      if (download) 'download': true,
+    });
+    final m = data as Map?;
+    final url = m?['url']?.toString();
+    if (url != null && url.isNotEmpty) return url;
+    // File on the backend's own disk: signed link under the API root
+    final path = m?['path']?.toString();
+    return path == null ? null : '${AppConfig.baseUrl}/api$path';
   }
 
   /// Downloads a chat file to [savePath] (follows the Spaces redirect).

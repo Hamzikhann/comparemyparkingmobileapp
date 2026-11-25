@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/pages/LoginScreen.dart';
 import 'dart:async'; // Import Future.delayed
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -61,6 +63,18 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate to the appropriate screen after a delay
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
+      // Web is the staff-only version: employees go to their home, anyone
+      // else to the login screen (no intro, guest or sign-up flow)
+      if (kIsWeb) {
+        final staff = Globals.user != null && Globals.roleTitle == "Employee";
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  staff ? const DriverMainScreen() : const LoginScreen()),
+        );
+        return;
+      }
       if (Globals.user != null) {
         if (Globals.roleTitle == "Employee") {
           Navigator.pushReplacement(

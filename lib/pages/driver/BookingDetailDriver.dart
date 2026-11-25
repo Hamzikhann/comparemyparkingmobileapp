@@ -1,5 +1,9 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/web/web_driver_pages.dart' show WebJobDetail;
+import 'package:parkingapp/web/web_frame.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -34,6 +38,16 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
   @override
   Widget build(BuildContext context) {
     final job = _job;
+    // Web, sidebar layout: desktop page (same actions as below)
+    if (kIsWeb && job != null && WebFrame.inDesktopShell(context)) {
+      return WebJobDetail(
+        job: job,
+        submitting: _submitting,
+        onBack: () => Navigator.of(context).pop(),
+        onAction: () => _onActionPressed(job, job.isStarted),
+        onWhatsApp: _launchWhatsApp,
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -278,12 +292,14 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                   SizedBox(height: 8.h),
                   Row(
                     children: [
-                      IconButton.filledTonal(
-                        onPressed: images.length >= 5
-                            ? null
-                            : () => pick(ImageSource.camera),
-                        icon: const Icon(Icons.camera_alt),
-                      ),
+                      // Desktop browsers have no camera picker (same file dialog)
+                      if (!(kIsWeb && WebFrame.inDesktopShell(context)))
+                        IconButton.filledTonal(
+                          onPressed: images.length >= 5
+                              ? null
+                              : () => pick(ImageSource.camera),
+                          icon: const Icon(Icons.camera_alt),
+                        ),
                       IconButton.filledTonal(
                         onPressed: images.length >= 5
                             ? null
@@ -304,7 +320,7 @@ class BookingdetaildriverState extends State<Bookingdetaildriver> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(images[i],
+                                    child: localImage(images[i].path,
                                         width: 60,
                                         height: 60,
                                         fit: BoxFit.cover),

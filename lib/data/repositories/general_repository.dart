@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -997,6 +998,11 @@ class GeneralRepository {
 
       if (pictures != null && pictures.isNotEmpty) {
         for (var file in pictures) {
+          // Web (staff desktop): no file system; the picker already shrank it
+          if (kIsWeb) {
+            compressedPictures.add(file);
+            continue;
+          }
           final targetPath = '${file.path}_compressed.jpg';
 
           final compressedFile = await FlutterImageCompress.compressAndGetFile(

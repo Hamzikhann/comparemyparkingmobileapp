@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -132,6 +133,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
     await _run(() async {
       final user = await _repo.resetPasswordWithCode(_resetToken, password);
+      // The web version is for employees only: don't log anyone else in
+      if (kIsWeb && user.roleTitle != "Employee") {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Password changed. This web version is for staff only, so please log in on the mobile app or the website.')));
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(MyRoutes.selectionRoute, (r) => false);
+        return;
+      }
       Globals.user = user;
       Globals.roleTitle = user.roleTitle;
       PushToken.sync();

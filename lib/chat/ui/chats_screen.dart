@@ -12,7 +12,13 @@ import 'package:parkingapp/widgets/TopBar.dart';
 
 /// Chats tab: conversations with last message, time, ticks and unread badges.
 class ChatsScreen extends StatefulWidget {
-  const ChatsScreen({super.key});
+  const ChatsScreen({super.key, this.onOpen, this.selectedId});
+
+  /// Web desktop layout: open the chat in the side pane instead of a new page.
+  final void Function(String conversationId)? onOpen;
+
+  /// Web desktop layout: the chat shown in the side pane (highlighted).
+  final String? selectedId;
 
   @override
   State<ChatsScreen> createState() => _ChatsScreenState();
@@ -41,6 +47,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
       (Globals.user?.roleTitle ?? '').toLowerCase() == 'administrator';
 
   void _open(ChatConversation c) {
+    if (widget.onOpen != null) return widget.onOpen!(c.id);
     Navigator.push(context,
         MaterialPageRoute(builder: (_) => ChatScreen(conversationId: c.id)));
   }
@@ -332,6 +339,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
     return ListTile(
       onTap: () => _open(c),
       onLongPress: () => _chatActions(c),
+      selected: widget.selectedId == c.id,
+      selectedTileColor: const Color(0xFFEAF1ED),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       leading: ConversationAvatar(c, showOnline: !c.isGroup),
       title: Row(

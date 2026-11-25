@@ -39,7 +39,8 @@ Add Flutter to PATH (e.g. in `~/.zshrc`: `export PATH="$HOME/dev/flutter/bin:$PA
 
 ## 4. Before building: decisions
 
-- **Version number** in `pubspec.yaml` is currently `1.0.1+8`. Both stores reject a build number they have already seen. Check the live version in Play Console and App Store Connect, then raise it (e.g. `1.0.2+9`).
+- **Version number** in `pubspec.yaml` is currently `1.0.3+10` (Android 10 is live on Play). App Store Connect shows iOS **1.0** live, so `1.0.3 (10)` is accepted for iOS as it is. Both stores reject a build number they have already seen: for a second iOS upload raise only the number after `+` (e.g. `1.0.3+11`).
+- **Export compliance:** `ITSAppUsesNonExemptEncryption = false` is set in `ios/Runner/Info.plist` (the app only uses the HTTPS built into iOS), so App Store Connect does not ask about encryption for each build.
 - **Backend:** `lib/data/api/config.dart` has `useLocalBackend = false` (live comparemyairportparking.com). Must stay `false` for store builds.
 - **Stripe key** in `lib/main.dart` is the LIVE key (correct for store builds; real charges).
 - Backend + website changes must be deployed to the live server first (the app depends on them).

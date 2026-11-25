@@ -1,6 +1,7 @@
-import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -21,6 +22,15 @@ void _snack(BuildContext context, String m) =>
 
 /// Pick a group photo from the gallery, shrunk to a small JPEG.
 Future<String?> pickGroupPhoto() async {
+  // Web version: the browser picker shrinks it (no compress plugin there)
+  if (kIsWeb) {
+    final x = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 640,
+        maxHeight: 640,
+        imageQuality: 80);
+    return x?.path;
+  }
   final x = await ImagePicker().pickImage(source: ImageSource.gallery);
   if (x == null) return null;
   final out = await FlutterImageCompress.compressAndGetFile(x.path,
@@ -279,7 +289,7 @@ class _GroupDetailsScreenState extends State<_GroupDetailsScreen> {
             child: CircleAvatar(
               radius: 30.r,
               backgroundColor: colors.primaryNew.withOpacity(0.12),
-              backgroundImage: _photo == null ? null : FileImage(File(_photo!)),
+              backgroundImage: _photo == null ? null : localImageProvider(_photo!),
               child: _photo == null
                   ? Icon(Icons.add_a_photo, color: colors.primaryNew)
                   : null,

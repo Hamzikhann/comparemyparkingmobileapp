@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:parkingapp/web/web_frame.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,6 +75,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Web is the staff desktop version: no Firebase, Stripe or phone
+  // notifications there (alerts come over the chat socket instead).
+  if (!kIsWeb) {
   await Firebase.initializeApp();
 
   // Stripe setup
@@ -91,6 +96,7 @@ void main() async {
 
   // Initialize download notification service
   await NotificationService().initialize();
+  }
 
   runApp(
     MultiProvider(
@@ -114,11 +120,17 @@ class MyApp extends StatelessWidget {
       ..loadingStyle = EasyLoadingStyle.light
       ..indicatorType = EasyLoadingIndicatorType.ring;
 
+    // Web (staff desktop version): phone-width column, see WebFrame
+    if (kIsWeb) return WebFrame(builder: (_) => _app());
     return ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (context, child) {
+      builder: (context, child) => _app(),
+    );
+  }
+
+  Widget _app() {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey, // ✅ Required for global navigation
@@ -133,7 +145,13 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Archivo',
           ),
           home: const SplashScreen(),
-          routes: {
+          routes: appRoutes,
+        );
+  }
+}
+
+/// Named routes (also used by the web desktop layout's content pane).
+final Map<String, WidgetBuilder> appRoutes = {
             '/login': (context) => LoginScreen(),
             '/signUp': (context) => SignupScreen(),
             '/forgot': (context) => Forgotpassword(),
@@ -159,17 +177,14 @@ class MyApp extends StatelessWidget {
             '/packageDetail': (context) => PackageDetailScreen(),
             '/bookingConfirmation': (context) => BookingConfirmationScreen(),
             '/home': (context) => HomeScreen(),
-            '/selection': (context) => const LoginSelectionScreen(),
+            // Web is staff-only: straight to login, no guest/sign-up choice
+            '/selection': (context) =>
+                kIsWeb ? LoginScreen() : const LoginSelectionScreen(),
             '/claimDetail': (context) => BookingClaimDetailScreen(
                   bookingData: ModalRoute.of(context)!.settings.arguments
                       as Map<String, dynamic>,
                 ),
-          },
-        );
-      },
-    );
-  }
-}
+};
 
 Future<void> setupNotifications() async {
   final FirebaseMessaging messaging = FirebaseMessaging.instance;

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
@@ -157,7 +158,8 @@ class _LoginPageState extends State<LoginScreen> {
                           ),
                         ),
                         SizedBox(height: 56.h),
-                        // Sign up link
+                        // Sign up link (not on the staff-only web version)
+                        if (!kIsWeb)
                         Center(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -239,6 +241,17 @@ class _LoginPageState extends State<LoginScreen> {
 
   Future<void> signin(String userName, String password) async {
     GeneralRepository().signin(userName, password).then((value) {
+      // The web version is for employees only
+      if (kIsWeb && value.roleTitle != "Employee") {
+        Alertify.showAlert(
+          duration: 4,
+          alertKey: 'login',
+          message:
+              'This web version is for staff only. Please use the mobile app or the website.',
+          type: AlertType.error,
+        );
+        return;
+      }
       Alertify.showAlert(
         duration: 1,
         alertKey: 'login',

@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -253,7 +255,13 @@ class GroupAvatar extends StatelessWidget {
       child: url == null
           ? icon
           : ClipOval(
-              child: CachedNetworkImage(
+              child: kIsWeb
+                  ? ChatWebImage(id!,
+                      width: radius.r * 2,
+                      height: radius.r * 2,
+                      fit: BoxFit.cover,
+                      error: icon)
+                  : CachedNetworkImage(
                 imageUrl: url,
                 cacheKey: 'group-${id.hashCode}',
                 httpHeaders: ChatApi.authHeaders,

@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/repositories/general_repository.dart';
 
@@ -12,6 +13,7 @@ class PushToken {
 
   /// This phone's token, or null if Firebase can't give one right now.
   static Future<String?> current() async {
+    if (kIsWeb) return null;
     try {
       final token = await FirebaseMessaging.instance.getToken();
       return (token == null || token.isEmpty) ? null : token;
@@ -34,7 +36,7 @@ class PushToken {
   }
 
   static void _listenForRefresh() {
-    if (_listening) return;
+    if (_listening || kIsWeb) return; // no Firebase on the web version
     _listening = true;
     FirebaseMessaging.instance.onTokenRefresh
         .listen((token) => sync(token), onError: (_) {});

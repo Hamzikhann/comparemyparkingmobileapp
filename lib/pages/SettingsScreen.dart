@@ -1,6 +1,7 @@
 import 'package:parkingapp/data/Globals.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'dart:io';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/routes/MyRoutes.dart';
@@ -37,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
                         backgroundImage:
                             (Globals.user!.imageURL!.startsWith('http'))
                                 ? CachedNetworkImageProvider(Globals.user!.imageURL!)
-                                : FileImage(File(Globals.user!.imageURL!))
+                                : localImageProvider(Globals.user!.imageURL!)
                                     as ImageProvider,
                       ),
                     )

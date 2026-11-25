@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:parkingapp/data/api/config.dart';
 
@@ -180,8 +181,10 @@ class OutgoingMedia {
   Object? cancelToken; // dio CancelToken while uploading
   final String? thumbPath; // JPEG first frame (videos)
   final int? thumbSizeBytes;
+  Uint8List? bytes; // web version: the file's contents (no file path there)
 
   OutgoingMedia({
+    this.bytes,
     required this.localPath,
     required this.kind,
     required this.mimeType,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:parkingapp/chat/web_media.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:parkingapp/data/Globals.dart';
 import 'package:parkingapp/data/models/BookingListDriverModel.dart';
@@ -91,7 +92,7 @@ class _DriverhomeState extends State<Driverhome> {
               backgroundImage: hasImage
                   ? (user.imageURL!.startsWith('http')
                       ? CachedNetworkImageProvider(user.imageURL!)
-                      : FileImage(File(user.imageURL!)) as ImageProvider)
+                      : localImageProvider(user.imageURL!) as ImageProvider)
                   : const AssetImage('assets/images/user.png'),
             ),
             SizedBox(width: 10.w),
