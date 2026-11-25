@@ -35,7 +35,9 @@ Add Flutter to PATH (e.g. in `~/.zshrc`: `export PATH="$HOME/dev/flutter/bin:$PA
    flutter pub get
    cd ios && pod install && cd ..
    ```
-5. Open `ios/Runner.xcworkspace` in Xcode (the workspace, not the .xcodeproj). Runner target > Signing & Capabilities: team BC93M26DDS, "Automatically manage signing" on. Check capabilities: Push Notifications, Background Modes (remote notifications), Apple Pay with the merchant ID above.
+5. Open `ios/Runner.xcworkspace` in Xcode (the workspace, not the .xcodeproj). Runner target > Signing & Capabilities: team BC93M26DDS, "Automatically manage signing" on. Check capabilities: Background Modes (remote notifications), Apple Pay with the merchant ID above.
+6. **Required (checked 2026-11-26): add Push Notifications.** The project does not have it yet (`Runner.entitlements` only has Apple Pay, no `aps-environment`), so iPhones cannot receive any notifications. Signing & Capabilities > **+ Capability** > **Push Notifications**. Xcode adds `aps-environment` to the entitlements and turns Push on for the App ID. Commit the changed `Runner.entitlements` / project file afterwards.
+7. Firebase must have the **APNs auth key (.p8)** uploaded for `com.comparemyparking` (Project settings > Cloud Messaging > Apple app configuration, production and development, Team ID BC93M26DDS). It was missing on 2026-11-26.
 
 ## 4. Before building: decisions
 
